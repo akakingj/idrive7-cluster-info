@@ -97,7 +97,7 @@ mgu.run({
             onFresh: D.onFresh,
         });
         let cluster = start();
-        let lastVehicle = null;
+        let lastVehicle = null, lastModeGear = null;
         // the engine-unit readings the layout shows, read fast while it shows
         setInterval(() => {
             if (showing()) D.want((layout.needs || []).concat(require('./layout_common').focus.needs(options())));
@@ -105,6 +105,13 @@ mgu.run({
             // the vehicle found (Settings > Vehicle: Auto): the layout redrawn for it once known
             const v = D.vehicle().vehicle;
             if (v !== lastVehicle) { if (lastVehicle) cluster.rebuild(); lastVehicle = v; }
+            // drive mode and gear changes in the log (timestamped), beside the cluster's target changes: what the
+            // KOMBI does to the layout on a mode change (the stock cluster back for a few seconds) shows in one log
+            const dn = data(), mg = (dn.driveMode || '-') + ' / ' + (dn.gear == null ? '-' : dn.gear);
+            if (mg !== lastModeGear) {
+                if (lastModeGear !== null && !dn.demo) log.info('drive mode / gear: ' + lastModeGear + ' -> ' + mg + '   (cluster: ' + JSON.stringify(cluster.status()) + ')');
+                lastModeGear = mg;
+            }
         }, 500);
         settings.onChange((k) => {
             if (k === 'clusterSlot') { cluster.stop(); cluster = start(); return; }
