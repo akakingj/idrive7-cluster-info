@@ -253,6 +253,22 @@
       ]
     },
     {
+      "key": "cluster",
+      "label": "Cluster",
+      "type": "choice",
+      "default": "standard",
+      "options": [
+        [
+          "standard",
+          "Standard (X5 and other G models)"
+        ],
+        [
+          "m",
+          "M car: two more boxes in the middle, readings moved round them"
+        ]
+      ]
+    },
+    {
       "key": "boxClear",
       "label": "Draw around the gear box (Digital dash)",
       "type": "choice",
