@@ -3,18 +3,29 @@
 *Part of [iDrive 7 cluster apps](../../README.md), with Cluster Info and [Cluster Centre](../cluster_centre/README.md).*
 
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
-itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro,
-Track and Pulse), each in comfort, sport and efficient colours (following the selector's S / M
-programme, or chosen), each with four centres: the **readings**, **Waze** (Waze on cluster, or the stock map, shows in
-the middle), **Cluster Centre's pages** (temperatures, boost, xDrive and the rest, drawn full size in the
-middle by the Cluster Centre app, Show on), or the **stock** centre content. Waze and Cluster Centre both need
-**Central display area: Map view** on the car.
+itself**. Six original layouts (Analog sport, Digital round, Modern wide, Digital dash, Retro and Pulse), held
+to what a car maker would ship, each in comfort, sport and efficient colours (following the selector's S / M
+programme, or chosen), each with three centres: the **readings**, **Waze** or the **stock** centre content.
+
+With the car's own bottom strip (the default) the strip shows the gear, the drive mode, the ranges, the time and the
+outside temperature, so no layout shows them a second time: the places the time and temperature had show the
+battery's temperature (intake air on a petrol or diesel car) and the xDrive split, and where a layout had its gear
+it now has the digital speed or another reading. With **Waze** in the centre, Waze on cluster (0.9.107 or later,
+[eroobeeroo/idrive-apps](https://github.com/eroobeeroo/idrive-apps)) draws the map in the layout's own panel,
+above it, filling the window exactly; under the layout the cluster drew its own map screen (its speed, edge shading)
+over the map. Needs **Central display area: Map view** on the car.
+
+Every reading goes to the cluster within a frame of arriving: the needles and bars at 60 updates a second, the
+digits and the road's motion every frame, and the battery's power the moment eDrive Live reads it (it writes each
+reading at once and this app watches for it, instead of a quarter-second file cycle and a half-second scan). The
+battery's own pace sets the limit: its current answers 10-20 times a second over diagnostics.
 
 ### Analog sport
 
 Deep analog dials with satin metal bezels and warm backlit markings, coolant and oil dials set into them, and a
-slim display with the time, outside temperature, gear, digital speed, fuel and electric range and the
-battery's charge.
+slim display between them with the digital speed, large, and the battery's power. On a plug-in hybrid in an
+electric mode the rev counter reads the battery's power (0-100 kW); in the hybrid, sport and battery control modes
+it is the rev counter with a small power gauge inside.
 
 ![Analog sport](../../docs/analog_sport.png)
 
@@ -25,8 +36,9 @@ battery's charge.
 ### Digital round
 
 Round dials drawn as a display, a lit arc running to each needle, the fuel range in the speedometer and the
-electric range and charge in the rev counter, and a card with the P R N D row, gear, speed and oil and
-coolant arcs.
+electric range and charge in the rev counter, oil and coolant arcs set into the dials, and a card between them
+with the digital speed and the battery's power. The rev counter turns power gauge in the electric modes, as
+Analog sport's does.
 
 ![Digital round](../../docs/digital_round.png)
 
@@ -38,8 +50,8 @@ coolant arcs.
 
 No round dials: segmented arcs frame the cluster, a hairline outside each. With the car's own bottom strip (the
 default) it is laid out like a new car's: the speed large in the middle over the road ahead (its lane line runs
-toward you with the speed, animated by the cluster itself), the selector and drive mode on a glass chip left of
-the speed, the gear and engine speed on one right of it, a glass card on the left with the battery's power, a
+toward you with the car, the dashes 3 m in 12 as painted, moved by the distance actually driven each frame), the
+battery's temperature and the engine speed in the top corners, a glass card on the left with the battery's power, a
 centre-zero bar (regenerating left, drawing right) and its trend, and one on the right with oil, coolant, the
 charge and the xDrive split, each with its icon, over a softly lit, finely dotted background. Its colours follow
 the drive mode. On a plug-in hybrid the right arc
@@ -51,7 +63,7 @@ from behind (every car is a 3D model of our own, rendered once by `tools/render_
 shipped as a small texture the cluster samples at the size each car needs), the car the cruise control follows (its tail lights lit when it brakes), the nearest car in each lane
 beside (orange with a lane change warning), the lane edges green while the steering assist holds the lane (orange
 on a lane departure warning), the cruise control's gap as bars ahead of your car, and its set speed and ASSIST over
-the road. Without the assistant (or on a car without it) the road shows the lanes and your car alone. The feeds
+the road. Without the assistant (or on a car without it) the road shows the lanes and your car alone. The cars glide between the assistant's updates instead of jumping. The feeds
 haven't been read on a car yet: each source's first values go to the log ('dap raw ...'), and how far a unit of an
 object's position is lives in config.dap.posScale, to be set from a drive's log. Full screen or with the map, it keeps its earlier layout.
 
@@ -64,12 +76,11 @@ object's position is lives in config.dap.posScale, to be set from a drive's log.
 ### Digital dash
 
 No dials at all, as much as the car tells: the engine speed as a long segmented bar under the camera's cowl,
-the drive mode and engine on / off at its right end, the speed and battery power (charging or drawing) on the
-left, the gear beside the KOMBI's dark box and the charge and ranges below it on the right, and six tiles in
+the speed and battery power (charging or drawing) on the left, the charge large on the right with the xDrive
+split under it, and six tiles in
 the middle (oil, coolant, gearbox oil, intake air, the battery's temperature, boost; boost reads `--` with
 the engine off), each with a trend line of its last two minutes and a bar that turns red where it is too
-hot. Time, outside and the xDrive split along the bottom of the side columns. With the map in the centre the
-tiles become a strip under it. 60 pieces: within the 64 layers the renderer gives an app.
+hot. With the map in the centre the tiles become a strip under it. 60 pieces: within the 64 layers the renderer gives an app.
 
 Every layout keeps its readings off what the glass hides (from photos of a G05): the slanted top
 corners, the camera's cowl over the top middle (to y 128), the KOMBI's dark box right of centre and its
@@ -82,55 +93,29 @@ small eDrive box at the top right (`layout_common.js`; `tools/clearance.js` chec
 |---|---|
 | ![](../../docs/digital_dash_sport.png) | ![](../../docs/digital_dash_map.png) |
 
-### Freedom
-
-Over the top and American: the stars and stripes wave behind everything, bald eagles fly across and
-fireworks go off in red, white and blue, all drawn and moved by the cluster itself (`shaders.js`: `FLAG_FS`,
-`EAGLE_FS`, `FIREWORKS_FS`, on the renderer's clock, so nothing is sent to animate them). Over it: a huge speed
-inside a red-to-blue tach arc, the gear, the drive mode under a FREEDOM banner, a gold-edged plaque of readings
-along the bottom, and the battery power (or engine torque) with the xDrive split right of the KOMBI's bracket.
-
-![Freedom](../../docs/freedom.png)
-
 ### Retro
 
 A tribute to the round-dial clusters of the 1980s and 90s: matte black faces with a thin dark rim, numerals
 and ticks lit orange the way those clusters glowed at night, long slim red-orange needles over black hub caps.
 A fuel gauge is set into the speedometer (the reserve in red), an economy gauge into the tach (the battery's
 power on a plug-in hybrid, recuperation left of the top; boost with Vehicle: ICE), a small coolant gauge sits
-between the dials over an amber LCD with the gear, the speed and the drive mode, and the ranges and the charge
-are right of the KOMBI's box. With the engine off the tach's legend reads the battery's power. Comfort colours
+between the dials over an amber LCD with the speed. With the engine off the tach's legend reads the battery's power. Comfort colours
 are the classic orange, Sport a deeper red-orange, Efficient white daytime markings. An original design: no
 maker's marks or names.
 
 ![Retro](../../docs/retro.png)
 
-| Sport colours (engine off) | Efficient colours |
+| Sport colours | Efficient colours |
 |---|---|
 | ![](../../docs/retro_sport.png) | ![](../../docs/retro_efficient.png) |
 
-### Track
-
-A motorsport data display: a row of shift lights (green, yellow, then red, all flashing red 300 rpm before
-the red line) over a segmented rpm bar, a huge gear with the engine speed in the middle, tiles for oil,
-coolant, boost and battery power either side of it (timing and torque with Vehicle: ICE), the speed large on
-the left with a **0-60 timer** (it times every run from a stop to 60 mph, or 0-100 km/h, and keeps the best of
-the drive) and the drive's peak power (or boost), and the ranges and charge right of the KOMBI's box.
-
-![Track](../../docs/track.png)
-
-| Sport colours at the shift point |
-|---|
-| ![](../../docs/track_sport.png) |
-
 ### Pulse
 
-Made for the car's own bottom strip, in large type: the speed large in the middle, the gear beside it, and one long segmented
-bar under them for the engine speed, nearly the panel's width, red from the red line. A slim row along the bottom
-holds oil, coolant, the fuel and electric ranges, the charge (with its bar) and battery power (boost, timing and
-torque with Vehicle: ICE); the time, the drive mode and the outside temperature run along the top. Its colours
-follow the drive mode. With Waze or Cluster Centre's pages in the centre the speed and gear sit either side of it and
-the rpm bar runs under it.
+Made for the car's own bottom strip, in large type: the speed large in the middle with the battery's power and the
+engine speed either side of it at the same height, one long segmented bar under all three for the engine speed,
+nearly the panel's width, red from the red line, and one row along the bottom: oil, coolant, the charge, the
+battery's temperature and the xDrive split. Its colours follow the drive mode. With Waze in the centre the speed
+sits beside it and the rpm bar runs under it.
 
 ![Pulse](../../docs/pulse.png)
 
@@ -189,9 +174,8 @@ disappears into the background; Settings > Frame behind the gear box puts a grey
 
 **M cars** (Settings > Cluster > M car): an M car's KOMBI leaves two more dark boxes in the middle of the
 panel while a layout is up, over whatever is drawn there. With the setting on, each layout moves its readings
-round them: Digital dash makes its middle and right top tiles one line high above the boxes, Track moves its gear
-card and right tiles below them, Modern wide moves its centre readings and gear below them, Freedom moves the
-speed to the left and the gear to the right, and the panel between the dials narrows. The rev counters of
+round them: Digital dash makes its middle and right top tiles one line high above the boxes, Modern wide moves its
+centre readings and gear below them, and the panel between the dials narrows. The rev counters of
 Analog sport, Digital round and Retro are too big to move out of the middle, so the boxes still sit on their
 faces. The boxes' places were measured from one photo of a car (`layout_common.M_BOXES`, to within about 10 px):
 a straight-on photo would tighten them. With Bottom strip
@@ -203,7 +187,7 @@ temperature and the electric range, and the warning lights; 660 just touched the
 black boxes some cars' KOMBIs leave over a full-screen layout go away. Found and tested on cars by thatgrayg22.
 With nothing of the KOMBI's to keep clear of, each layout takes its centred form there: the round dials of Analog
 sport, Digital round and Retro stand either side of the middle again as first drawn, sized to end above the
-strip; the side columns of Track, Digital dash and Freedom balance either side of the middle; Modern wide's arcs
+strip; Digital dash's side columns balance either side of the middle; Modern wide's arcs
 end higher. The layouts' own fuel and electric range numbers are left out (the strip shows both), and with the
 readings in the centre a fuel gauge sits above the strip's fuel range (bottom left) and a charge gauge above its
 electric range (bottom right), bars with no numbers. `tools/preview.js --strip` shows it.
@@ -315,7 +299,7 @@ module.exports = {
 };
 ```
 
-`o` holds the options (units, red zone, rev scale, centre: `info`, `map` or `stock`; Cluster Centre's pages come as `map`); `d` the car's data
+`o` holds the options (units, red zone, rev scale, centre: `info`, `map` or `stock`); `d` the car's data
 (`speed` km/h, `rpm`, `gear`, `stage`, `mode`, `oil`, `coolant`, `outside` °C, `soc` %, `kw`, `erange` and
 `frange` km); `t` the layout's palette for the look now. Texts use the glyphs in `font.js`; add more there.
 

@@ -109,6 +109,5 @@ first: the pages appear in the centre with Map view, the stock dials and warning
 shift light keeps up with the engine. While this shows, it covers a Waze map in the centre; turn **Show in
 the cluster** off for the map.
 
-**With Cluster Layouts:** a layout normally covers the whole panel, so the pages wait while one shows. Set the
-layout's **Centre of the cluster** to **Cluster Centre's pages** and they show in the layout's centre window,
-at full size (the layout hides the stock readouts that **Size in the centre** keeps clear of).
+**With Cluster Layouts:** a layout covers the whole panel, so the pages wait while one shows. (Showing them in a
+layout's centre window is retired: it did not work reliably on the car.)

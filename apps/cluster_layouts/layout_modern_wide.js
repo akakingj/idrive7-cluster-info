@@ -61,13 +61,37 @@ const KW_MAX = 100;
 /* the driving assistant's state as the road shader's uniforms: a distance d metres ahead at depth 1/(1 + d/16) */
 const depth = (x) => (typeof x === 'number' && x > 0 ? 1 / (1 + x / 16) : 0);
 function roadState(D) {
-    if (!D) return { u_dap: [0, 0, 0, 0], u_lead: [0, 0, 0, 0], u_side: [0, 0, 0, 0], u_ldw: [0, 0] };
-    const r2 = (v) => Math.round(v * 100) / 100, L = D.lead;
+    if (!D) return { u_dap: [0, 0, 0, 0], u_ldw: [0, 0] };
     return {
         u_dap: [1, D.assist ? 1 : 0, D.acc && D.acc.on ? 1 : 0, D.acc && D.acc.on && D.acc.gap ? D.acc.gap : 0],
-        u_lead: L ? [1, r2(depth(L.x)), r2(typeof L.y === 'number' ? L.y / 3.6 : 0), L.brake ? 1 : 0] : [0, 0, 0, 0],
-        u_side: [D.left ? r2(depth(D.left.x)) : 0, D.right ? r2(depth(D.right.x)) : 0, D.lcw && D.lcw.left ? 1 : 0, D.lcw && D.lcw.right ? 1 : 0],
         u_ldw: [D.ldw && D.ldw.left ? 1 : 0, D.ldw && D.ldw.right ? 1 : 0],
+    };
+}
+/*
+ * The road's motion, every frame (engine.js frame): the distance driven from the speed (the lane dashes go by
+ * with the car, standing still when it does), and the cars eased towards where the assistant last put them (its
+ * object list comes ~10 times a second: they glide between its updates instead of jumping), in and out of view
+ * as they come and go.
+ */
+function roadMotion() {
+    let run = 0;
+    const cars = { lead: { d: 0, y: 0, a: 0 }, left: { d: 0, a: 0 }, right: { d: 0, a: 0 } };
+    const ease = (c, want, k) => {
+        if (want) { c.d = c.a > 0.01 ? c.d + (depth(want.x) - c.d) * k : depth(want.x); if (want.y !== undefined) c.y += ((typeof want.y === 'number' ? want.y / 3.6 : 0) - c.y) * k; }
+        c.a += ((want ? 1 : 0) - c.a) * k;
+        return c.a > 0.02 ? c.d : 0;
+    };
+    const r3 = (v) => Math.round(v * 1000) / 1000;
+    return (d, dt) => {
+        const D = d.dap, kmh = C.isNum(d.speed) ? Math.max(0, d.speed) : 0;
+        run = (run + kmh / 3.6 * dt / 1000) % 1200;
+        const k = 1 - Math.exp(-dt / 90);
+        const L = ease(cars.lead, D && D.lead, k), l = ease(cars.left, D && D.left, k), r = ease(cars.right, D && D.right, k);
+        return {
+            u_run: [Math.round(run * 100) / 100],
+            u_lead: [L > 0 ? 1 : 0, r3(L), r3(cars.lead.y), D && D.lead && D.lead.brake ? 1 : 0],
+            u_side: [r3(l), r3(r), D && D.lcw && D.lcw.left ? 1 : 0, D && D.lcw && D.lcw.right ? 1 : 0],
+        };
     };
 }   // the tach as a power gauge, and the small gauge inside it: kW of battery draw
 
@@ -78,7 +102,6 @@ function newCar(o, arcs, gearC, rpmTxt) {
         params: Object.assign({}, a.params, { u_geo: [a.params.u_geo[0], a.params.u_geo[1], a.params.u_geo[2] + 30, 3], u_span: [a.params.u_span[0], a.params.u_span[1], 0, 0], u_marks: [0, 0, 0, 0], u_red: [2] }),
         colors: (t) => ({ track: t.rule, fill0: t.fill1, fill1: t.tip, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
     }));
-    const lit = (t) => ({ color: [t.glow, 1], glow: [t.glow, 0.6] });
     const L = { x: 330, y: 340, w: 300, h: 262 }, R = { x: 1290, y: 340, w: 300, h: 262 };
     const cell = (i, id, ic, value, label, colour) => {
         const cx = R.x + 12 + (i % 2) * 144, cy = R.y + 14 + Math.floor(i / 2) * 124;
@@ -91,25 +114,18 @@ function newCar(o, arcs, gearC, rpmTxt) {
         // the road ahead as the driving assistant sees it (dap.js: d.dap; without it, the lanes and the car alone)
         { key: 'road', kind: 'road', x: 650, y: 346, w: 620, h: 296, value: (d) => (C.isNum(d.speed) ? Math.min(1, C.speedIn(o, d.speed) / sc.max) : 0), max: 1,
             colors: (t) => ({ line: t.tip, glow: t.glow, surface: t.road, assist: t.regen, acc: t.glow, warn: '#ff9f0a', car: '#8d9aa8', ego: '#dfe7ef' }),
-            dyn: (d) => roadState(d.dap), textures: { u_cars: carSprite }, params: { u_anchor: [carSprite().anchor.cx, carSprite().anchor.bottom, carSprite().anchor.width, 0] } },
+            dyn: (d) => roadState(d.dap), frame: roadMotion(), textures: { u_cars: carSprite }, params: { u_anchor: [carSprite().anchor.cx, carSprite().anchor.bottom, carSprite().anchor.width, 0] } },
         // the cruise control's set speed and the steering assist, at the top of the road while they're on
         C.text('accSet', 660, 350, 200, 26, (d) => (d.dap && d.dap.acc && d.dap.acc.on && C.isNum(d.dap.acc.set) ? 'SET ' + d.dap.acc.set : ''), (t) => ({ color: [t.glow, 1], glow: [t.glow, 0.5] }), { align: 0 }),
         C.text('assistOn', 1060, 350, 200, 26, (d) => (d.dap && d.dap.assist ? 'ASSIST' : ''), (t) => ({ color: [t.regen, 1], glow: [t.regen, 0.5] }), { align: 1, tracking: 0.14 }),
     ].concat(hair, arcs, [
         // the top: the time and the outside temperature, inside the glass's slanted corners
         C.text('clock', 330, 136, 240, 42, C.clock, txt, { align: 0 }),
-        C.text('outside', 1350, 136, 240, 42, (d) => C.outsideText(o, d.outside), txt, { align: 1 }),
+        // (the right: the engine speed, or ENGINE OFF; the gear and the drive mode are the car's own strip's)
+        C.text('rpmDigits', 1350, 136, 240, 42, rpmTxt, txt, { align: 1 }),
         // the speed, large, in the middle
         C.text('speedDigits', 700, 140, 520, 176, (d) => C.speedText(o, d), big),
         C.text('speedUnit', 700, 314, 520, 24, C.speedUnit(o), lbl, { tracking: 0.3 }),
-        // left chip: the selector and the drive mode; right chip: the gear and the engine speed
-        card('selChip', 520, 172, 170, 116),
-    ], 'PRND'.split('').map((ch, i) => C.text('sel' + ch, 534 + i * 36, 186, 34, 34, ch,
-        (t, d) => (C.selectorLit(d) === ch ? { color: [ch === 'R' ? t.red : t.glow, 1], glow: [t.glow, 0.9] } : { color: [t.dim, 1], glow: [t.glow, 0] }))), [
-        C.text('mode', 526, 236, 158, 24, C.modeText, lit, { tracking: 0.18 }),
-        card('gearChip', 1230, 172, 170, 116),
-        C.text('gear', 1230, 176, 170, 86, C.gearText, gearC),
-        C.text('rpmDigits', 1230, 260, 170, 20, rpmTxt, lbl, { tracking: 0.08 }),
         // left card: the battery's power (or the engine's torque), a centre-zero bar and its trend
         card('powerCard', L.x, L.y, L.w, L.h),
         C.text('kwLbl', L.x + 20, L.y + 16, L.w - 40, 18, C.focus.powerLabel(o, true), lbl, { align: 0, tracking: 0.14 }),
@@ -144,7 +160,8 @@ module.exports = {
     pieces(o) {
         const s = C.speedScale(o), r = C.rpmScale(o);
         // a plug-in hybrid (Show: eDrive): the tach turns into the battery's power gauge while the engine is off
-        const ev = !C.engineFocus(o) && o.vehicle !== 'ice', evOff = (d) => ev && d.engineOn === false;
+        // (in an electric eDrive mode, layout_common.electric; the tach and a small power gauge in the others)
+        const ev = !C.engineFocus(o) && o.vehicle !== 'ice', evOff = (d) => C.electric(o, d);
         // with the car's own bottom strip the arcs end higher, clear of it and of the fuel and charge gauges
         // above its ranges (their low ends 6 degrees shorter, their circle 20 px higher)
         const strip = C.strip(o), cy = strip ? CY - 20 : CY, lo = strip ? 112 : 118;

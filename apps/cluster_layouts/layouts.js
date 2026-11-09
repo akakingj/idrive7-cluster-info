@@ -3,7 +3,7 @@
  * layouts.js - the layouts this app offers, by id. A layout is one file, layout_<id>.js, next to this one
  * (the build ships only top-level .js files); list it here and in app.json's "layout" setting (README.md).
  */
-const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse')];
+const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_retro'), require('./layout_pulse')];
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
@@ -113,6 +113,12 @@ LAYOUTS.forEach((L) => {
         if (mCar(o)) list = mMoves(L, o, list);
         if (stripOn(o)) {
             list = list.filter((p) => !C0.STRIP_DROP.test(p.key));
+            // the strip shows the gear and the drive mode: never a second of either (each layout's strip variant
+            // fills their places itself; with the map or the stock centre they are simply left out)
+            list = list.filter((p) => !/^(gear|sel[PRND]?|mode|gearCard|gearChip|selChip)$/.test(p.key));
+            // the strip shows the time and the outside temperature: their places get the battery's temperature
+            // (intake air on a petrol or diesel car) and the xDrive split
+            list = list.map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB }) : p));
             // the gauges above everything but the backgrounds
             // (only with the readings in the centre: with the map or the stock centre the side columns reach
             // down to the strip, and keep their own charge and fuel bars)
@@ -134,5 +140,6 @@ LAYOUTS.forEach((L) => {
         return list;
     };
 });
+/* (Freedom and Track: retired, not up to a car maker's own; a saved choice of either is Analog sport) */
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
 module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, bottomCut };

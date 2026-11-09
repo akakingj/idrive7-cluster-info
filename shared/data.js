@@ -300,7 +300,7 @@ function startData(ctx, opts) {
         const on = !opts || !opts.shown || opts.shown();
         const now = Date.now(), wantedNow = on && now - wantedT < 3000;
         const usable = (k) => (k === 'lmv' ? xcfg.front.length : k === 'boostCtl' ? (dme.boostTarget || []).length
-            : k === 'hv' ? !ice() && batteryReads() && bat.hvV.length && bat.hvI.length : k === 'hvSoc' ? !ice() && batteryReads() && bat.soc.length : (dme[k] || []).length);
+            : k === 'hv' ? !ice() && batteryReads() && bat.hvV.length && bat.hvI.length && !sharedKw() : k === 'hvSoc' ? !ice() && batteryReads() && bat.soc.length : (dme[k] || []).length);
         const ready = (k) => !((fail[k] || 0) >= 3 && Date.now() - (tried[k] || 0) < 30000);
         if (!queue.length && on) {
             queue = wantedNow ? wanted.filter((k) => DME_KEYS.indexOf(k) >= 0) : [];
@@ -326,12 +326,17 @@ function startData(ctx, opts) {
                 }
             }
         } catch (e) { const m = String(e); if (m !== lastPollErr) { lastPollErr = m; log.warn('diagnostic poll: ' + m); } }   // (once per distinct error)
-        timer = setTimeout(poll, turn.length ? 120 : 2000);
+        // the battery's current read again at once (the link's own round trip sets the pace, ~10-20 a second);
+        // a little longer with other reads in the turn, so the link isn't held without a gap
+        timer = setTimeout(poll, !turn.length ? 2000 : turn.length === 1 && turn[0] === 'hv' ? 5 : 40);
     }
     timer = setTimeout(poll, 1500);
 
     /* ---------- eDrive Live's charge and power, asked for while shown ---------- */
-    const providers = startProviders(log);
+    const providers = startProviders(log, { onChange: () => fresh_() });
+    // eDrive Live reads the battery's power already and shares each reading: this app then doesn't read it too
+    // (two apps asking the battery unit in turn halves the rate each gets)
+    function sharedKw() { return isNum(providers.readings().kw); }
     // while shown, ask eDrive Live to share; otherwise let go at once (providers.js: Cluster Info's file)
     setInterval(() => { if (opts && opts.shown && opts.shown()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
 

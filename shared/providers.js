@@ -67,8 +67,24 @@ function startProviders(log, opts) {
     }
     release();   // a leftover from before (an older version of this app, or one stopped mid-way)
     process.once('exit', release);
-    const timer = setInterval(scan, opts.scanMs || 500);
-    scan();
+    /* A provider's new file seen at once (the folder watched: each write is a rename over the file), so eDrive
+     * Live's power is on the cluster within a frame of its read; the scan every scanMs stays for a folder that
+     * can't be watched. opts.onChange(): after each such rescan (the engine draws at once). */
+    let watcher = null, pending = false;
+    const soon = () => {
+        if (pending) return;
+        pending = true;
+        setImmediate(() => { pending = false; scan(); if (opts.onChange) { try { opts.onChange(); } catch (e) { /* the listener's own */ } } });
+    };
+    function watchDir() {
+        if (watcher || opts.watch === false) return;
+        try {
+            watcher = fs.watch(dir, (ev, name) => { if (!name || (/\.json$/.test(name) && name !== 'wanted.json')) soon(); });
+            watcher.on('error', () => { try { watcher.close(); } catch (e) { /* gone */ } watcher = null; });
+        } catch (e) { watcher = null; }   // no folder yet: tried again with each scan
+    }
+    const timer = setInterval(() => { scan(); watchDir(); }, opts.scanMs || 250);
+    scan(); watchDir();
     return {
         /** { kw, soc, erange, frange, battery (°C) } (each undefined when no app shares it). */
         readings: () => ({
@@ -81,7 +97,7 @@ function startProviders(log, opts) {
         want,
         release,
         list: () => Object.keys(entries).map((id) => entries[id].app || id),
-        stop: () => { clearInterval(timer); release(); },
+        stop: () => { clearInterval(timer); if (watcher) { watcher.close(); watcher = null; } release(); },
     };
 }
 module.exports = { startProviders, DIR };

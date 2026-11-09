@@ -24,6 +24,8 @@
  *     sweep: true                         part of the start-up sweep,
  *     group: 'name'                       built only while that group is active (setGroup: a page),
  *     dyn(d, t) -> { u_name: [numbers] }  more uniforms, sent when they change (at the text rate),
+ *     frame(d, dtMs) -> { u_name: [numbers] }  uniforms worked out every frame (motion: the road's distance
+ *                                         run), sent when they change,
  *     sample(d) -> 0..1, every            a trend line's samples (kind spark), every `every` ms (2 s),
  *     time: true                          u_time from the renderer's clock (car and leds always),
  *     text: 'fixed' | (d, t) -> string, align (0 left .. 1 right), tracking (glyph heights)   texts }
@@ -37,16 +39,16 @@ const { rgb } = require('./themes');
 
 const DEFAULT_TARGET = 'panel';
 const RATE_HZ = 60;          // value updates a second (a frame of the cluster's 60 Hz), and at once on a new reading
-const TEXT_HZ = 30;          // text and colour updates a second at most (digits that keep up with the needles)
+const TEXT_HZ = 60;          // text and colour updates a second at most: every frame, sent only when they change
 const STALE_MS = 3000;
-const TAU_MS = 30;           // a needle's easing towards its reading: smooth between the car's samples, ~30 ms behind
+const TAU_MS = 10;           // a needle's easing towards its reading: most of the way there in the frame it comes
 const MIN_GAP_MS = 4;        // a reading's update at most this soon after the last
 const EPS = 0.0015;          // a value moving less than this (of its max) is not sent
 const SWEEP_MS = 700;        // up, then as long back down
 const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, flag: SH.FLAG_FS, eagles: SH.EAGLE_FS, fireworks: SH.FIREWORKS_FS, road: SH.ROAD_FS };
 const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20 };
 /* kinds that animate on the renderer's own clock (u_time): nothing is sent to move them */
-const TIMED = { road: true, car: true, leds: true, flag: true, eagles: true, fireworks: true };
+const TIMED = { car: true, leds: true, flag: true, eagles: true, fireworks: true };
 const HIST = 64;
 /* the most layers up at once while one set replaces another (the service allows 64 an app) */
 const MAX_AT_ONCE = 60;
@@ -227,15 +229,21 @@ function startCluster(opts) {
     }
 
     /** Values (needles, bands): each eased towards its reading, sent when it moved enough. */
-    let valuesAt = 0;
+    let valuesAt = 0, valuesAt0 = 0;
     function values() {
         const d = opts.data(), now = Date.now();
         // eased by time, not by update: the same ~30 ms whether a reading or the frame timer brought it
         // (at least a frame's worth an update, so updates in quick succession still settle)
         const k = valuesAt ? 1 - Math.exp(-Math.max(1000 / RATE_HZ, now - valuesAt) / TAU_MS) : 1;
         valuesAt = now;
+        const dt = Math.max(0, Math.min(250, now - (valuesAt0 || now)));
+        valuesAt0 = now;
         pieces.forEach((p) => {
             const s = p.spec;
+            if (s.frame && inGroup(p)) {
+                const u = s.frame(d, dt) || {};
+                Object.keys(u).forEach((n) => { const v = u[n], key = String(v); if ((p.frameSent || (p.frameSent = {}))[n] !== key) { p.frameSent[n] = key; cr.uniform(p.ref, n, v); } });
+            }
             if (!s.value || !inGroup(p)) return;
             const max = s.max || 1, want = Math.max(0, Math.min(max * 1.02, Number(s.value(d)) || 0));
             p.value += (want - p.value) * k;

@@ -769,9 +769,10 @@ void main() {
  * above the layer, the car seen from behind at the bottom, and from the assistant (u_dap valid) the car it
  * follows, the nearest car in each lane beside, the lane held by the steering assist (its edges lit), lane
  * departure (that edge in the warning colour) and lane change warnings (that car in it), and the cruise control's
- * gap as bars ahead of the car. The ego lane's edges are dashed and run with the speed when nothing is held (on
- * the renderer's clock: only the speed and the assistant's state are sent).
- *   u_value   the speed 0..1 (how fast the dashes run)
+ * gap as bars ahead of the car. The ego lane's edges are dashed and go by with the car when nothing is held (by
+ * the distance driven, worked out on the head unit each frame from the speed: u_run).
+ *   u_run     metres driven, mod 1200
+ *   u_value   the speed 0..1
  *   u_dap     valid, steering assist, cruise control on, its gap (bars)
  *   u_lead    present, depth (0 at the horizon, 1 at the car), lanes to the left, brake lights
  *   u_side    the left lane's car's depth (0: none), the right's, lane change warning left, right
@@ -780,7 +781,7 @@ void main() {
 const ROAD_FS = `#version 100
 ${HIGHP}${COMMON}
 uniform vec2 u_size;
-uniform highp float u_time;
+uniform highp float u_run;         /* metres driven (mod 1200): the lane dashes go by with the car */
 uniform float u_value;
 uniform vec4 u_dap;
 uniform vec4 u_lead;
@@ -830,8 +831,12 @@ void main() {
     float t = (p.y + h0) / (H + h0);                       /* 0 at the vanishing point, 1 at the bottom */
     float cx = W * 0.5, hw = t * W * 0.155, dx = p.x - cx, ax = abs(dx);
     float z = 1.0 / max(t, 0.05);
-    float run = fract(z * 1.4 + u_time * (0.25 + 2.2 * clamp(u_value, 0.0, 1.0)));
-    float dash = smoothstep(0.42, 0.46, run) * (1.0 - smoothstep(0.86, 0.9, run));
+    /* the lane line's dashes where they are on the road: 3 m painted in every 12 m, x metres ahead at depth t
+     * (t = 1/(1 + x/16)), moved by the distance driven */
+    float xm = 16.0 * (z - 1.0);
+    float run = fract((xm + u_run) / 12.0);
+    float aa = 0.012 + 0.05 * (1.0 - t);
+    float dash = smoothstep(0.0, aa, run) * (1.0 - smoothstep(0.25, 0.25 + aa, run));
     float w = 0.8 + 2.4 * t;
     float fade = smoothstep(0.04, 0.34, t);
     float valid = u_dap.x, assist = u_dap.y * valid;

@@ -167,7 +167,9 @@ module.exports = {
         const rpmBar = (x, y, w) => bar('rpmBar', x, y, w, 26, (d) => (isNum(d.rpm) ? Math.min(1, d.rpm / 1000 / r.max) : 0), fillC, { segments: Math.round(w / 26), mark: () => r.red / r.max });
         if (map) list.push(rpmBar(60, 540, 340), C.text('rpmTxt', 60, 572, 300, 24, rpmTxt, lbl, { align: 0, tracking: 0.1 }), modeT('mode', 1505, 140, 260, 22, 0.06));
         else if (stock) list.push(rpmBar(200, 138, 600), C.text('rpmTxt', 200, 170, 320, 24, rpmTxt, lbl, { align: 0, tracking: 0.1 }), modeT('mode', 1220, 170, 500));
-        else list.push(rpmBar(200, 138, 1520), C.text('rpmTxt', 200, 170, 320, 24, rpmTxt, lbl, { align: 0, tracking: 0.1 }), modeT('mode', 1220, 170, 500));
+        else list.push(rpmBar(200, 138, 1520), C.text('rpmTxt', 200, 170, 320, 24, rpmTxt, lbl, { align: 0, tracking: 0.1 }));
+        // (the drive mode: the car's own strip shows it under a layout with the strip; else on the right)
+        if (!map && !stock && !C.strip(o)) list.push(modeT('mode', 1220, 170, 500));
 
         /* left: speed and battery power */
         list.push(
@@ -185,13 +187,11 @@ module.exports = {
         const RX = 1520, RW = 350;
         const strip = C.strip(o) && !map && !stock;
         if (strip) list.push(
-            // the car's own bottom strip: no dark box, and the strip shows the ranges (its fuel and charge
-            // gauges sit above them): the gear large, the charge, and the xDrive split
-            C.text('gear', 1480, 230, 390, 170, C.gearText, gearC, { align: 0.5, chars: 3 }),
-            label('socL', RX, 424, RW, C.focus.chargeLabel(o), { align: 0.5 }),
-            C.text('soc', RX, 444, RW, 64, engine ? C.timingText : (d) => pct(d.soc), engine ? txt : evTxt, { align: 0.5, chars: 5 }),
-            label('splitL', RX, 524, RW, 'XDRIVE', { align: 0.5 }),
-            C.text('split', RX, 542, RW, 36, C.splitText, txt, { align: 0.5, chars: 12 }),
+            // the car's own bottom strip shows the gear, the drive mode and the ranges (its fuel and charge
+            // gauges sit above them): this column is the charge, large, the way the speed is on the left
+            label('socL', RX, 214, RW, C.focus.chargeLabel(o), { align: 0.5 }),
+            C.text('soc', RX - 20, 236, RW + 40, 150, engine ? C.timingText : (d) => pct(d.soc), engine ? txt : evTxt, { align: 0.5, chars: 4 }),
+            bar('socBar', RX + 20, 400, RW - 40, 12, C.focus.bar(o), barC(engine ? 'fill1' : 'ev'), { segments: 20 }),
         );
         else list.push(
             // the gear beside the dark box the KOMBI leaves (left of it) and below its eDrive readout (top right)
@@ -227,7 +227,13 @@ module.exports = {
         }
 
         /* the bottom of the side columns: time, outside, the xDrive split (clear of the warning lights) */
-        list.push(
+        // (over the car's own strip, which shows the time and the outside temperature: the xDrive split under the
+        // charge instead; the battery's temperature is a tile)
+        if (strip) list.push(
+            label('splitL', RX, 452, RW, 'XDRIVE  F : R', { align: 0.5 }),
+            C.text('split', RX, 474, RW, 52, (d) => (isNum(d.splitRear) ? Math.round(100 - d.splitRear) + ' : ' + Math.round(d.splitRear) : '--'), txt, { align: 0.5, chars: 7 }),
+        );
+        else list.push(
             C.text('clock', 60, map ? 606 : 552, 170, 44, C.clock, txt, { align: 0, chars: 5 }),
             C.text('outside', 240, map ? 606 : 552, 160, 44, (d) => C.outsideText(o, d.outside), txt, { align: 0, chars: 6 }),
         );

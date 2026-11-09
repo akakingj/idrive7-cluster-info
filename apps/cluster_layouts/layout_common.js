@@ -118,6 +118,45 @@ function stripGauges(o, opts) {
 /** The layout's own range readings (keys) left out with the strip: it shows both ranges. */
 const STRIP_DROP = /^(fuel|elec|frange|erange|range2)(Lbl)?$|^erangeL$/;
 
+/*
+ * A plug-in hybrid in an electric eDrive mode (ELECTRIC, ELECTRIC INDIVIDUAL; the car's drive mode, data.js
+ * driveMode), or, before the car has named its mode, with the engine off: the analog layouts' tachs read the
+ * battery's power instead (KW_SCALE). In HYBRID, SPORT, BATTERY CONTROL and the rest they are tachs, with a small
+ * power gauge inside. Never with Show: Engine or on a petrol or diesel car.
+ */
+const electric = (o, d) => !engineFocus(o) && !!o && o.vehicle !== 'ice' && !!d
+    && (typeof d.driveMode === 'string' && d.driveMode ? /ELECTRIC/.test(d.driveMode) : d.engineOn === false);
+const KW_SCALE = [100, 25, 5, 101];     // a tach as a power gauge: 0-100 kW, numerals every 25, no red
+/** A tach dial's dyn and value: kW in an electric mode, else the engine speed (s: rpmScale(o), red where it is). */
+const tachDyn = (o, s, red) => (d) => ({ u_scale: electric(o, d) ? KW_SCALE : [s.max, s.major, s.minor, red] });
+const tachValue = (o) => (d) => (electric(o, d) ? (isNum(d.kw) ? Math.max(0, Math.min(100, d.kw)) : 0) : isNum(d.rpm) ? d.rpm / 1000 : 0);
+/* The readings put where the time and outside temperature were, with the car's own bottom strip (which shows
+ * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the xDrive split. */
+const stripInfoA = (o) => (o.vehicle === 'ice' || engineFocus(o)
+    ? (d) => 'INTAKE ' + tempText(o, d.iat) : (d) => 'BATT ' + tempText(o, d.battTemp));
+const stripInfoB = (d) => (isNum(d.splitRear) ? 'F' + Math.round(100 - d.splitRear) + ' R' + Math.round(d.splitRear) : 'XDRIVE');
+
+/*
+ * A tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, zero at
+ * twelve o'clock; right of it the power drawn from the battery (blue, to 100 kW), left of it charging and
+ * recuperation (green, to 60 kW), one degree a kW. lbl: the label's colours.
+ */
+function powerMeter(cx, size, cy, lbl) {
+    const k = size / 640, r = Math.round(150 * k), th = Math.max(8, Math.round(12 * k)), half = r + th + Math.round(22 * k);
+    const box = { x: cx - half, y: cy - half, w: half * 2, h: half };     // the top half around the dial's centre
+    const arc = (key, a0, a1, value, colour, step) => ({
+        key, kind: 'band', x: box.x, y: box.y, w: box.w, h: box.h + th, z: 2,
+        params: { u_geo: [half, half, r, th], u_span: [a0, a1, 0, 0], u_marks: [Math.abs(a1 - a0) / step, step, Math.round(19 * k), -Math.round(24 * k)], u_red: [2] },
+        colors: (t) => ({ track: t.track, fill0: colour(t), fill1: colour(t), redc: t.red, tip: colour(t), tick: t.dim, num: t.num }),
+        value, max: 1, sweep: true,
+    });
+    return [
+        arc('kwDraw', 0, 100, (d) => Math.max(0, Math.min(1, (isNum(d.kw) ? d.kw : 0) / 100)), (t) => t.ev, 25),
+        arc('kwRegen', 0, -60, (d) => Math.max(0, Math.min(1, -(isNum(d.kw) ? d.kw : 0) / 60)), (t) => t.regen || '#3ddc84', 30),
+        text('kwLbl', cx - 40, cy - r + Math.round(46 * k), 80, Math.round(20 * k), 'kW', lbl, { tracking: 0.04 }),
+    ];
+}
+
 /* the stock warning lights and the fallback gear letter along the bottom middle */
 const TELLTALES = { x: 560, y: 652, w: 960, h: 68 };
 /** Rectangles covering r but not hole: r itself when they don't meet, else up to four around the hole (the
@@ -207,5 +246,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_SCALE, powerMeter, tachDyn, tachValue, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
 };

@@ -101,6 +101,26 @@ module.exports = {
                 up('kw', 1290, 570, 310, 48, C.focus.power(o), C.focus.powerLabel(o), txt),
                 up('soc', 1600, 570, 310, 48, C.focus.charge(o), C.focus.chargeLabel(o), eTxt));
         }
+        if (C.strip(o)) {
+            // over the car's own strip (it shows the gear, the drive mode, the ranges, the time and the outside
+            // temperature): the speed large in the middle, the battery's power and the engine speed either side of
+            // it at the same height, the engine speed's bar under all three, one row of readings along the bottom
+            const kwC = C.engineFocus(o) ? txt : (t, d) => ({ color: [C.isNum(d.kw) && d.kw < -0.3 ? t.regen : t.text, 1], glow: [t.glow, 0] });
+            const rpmNum = (d) => (d.engineOn === false ? 'OFF' : C.isNum(d.rpm) ? String(Math.round(d.rpm / 50) * 50) : '--');
+            return [bg('bg', 0, 0, 1920, 720),
+                C.text('speedDigits', 690, 150, 540, 274, (d) => C.speedText(o, d), big),
+                C.text('speedUnit', 690, 424, 540, 30, C.speedUnit(o), lbl, { tracking: 0.3 }),
+                rpmBar(o, 'rpmBar', 200, 474, 1520, 34, 64),
+            ].concat(
+                up('kw', 330, 272, 340, 96, C.focus.power(o), C.focus.powerLabel(o), kwC, 24),
+                up('rpmNum', 1250, 272, 340, 96, rpmNum, 'ENGINE RPM', txt, 24),
+                up('oil', 300, 526, 260, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
+                up('coolant', 565, 526, 260, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
+                up('soc', 830, 526, 260, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
+                C.engineFocus(o) || o.vehicle === 'ice' ? up('iat', 1095, 526, 260, 64, (d) => C.tempText(o, d.iat), 'INTAKE', txt, 24)
+                    : up('battT', 1095, 526, 260, 64, (d) => C.tempText(o, d.battTemp), 'BATTERY', eTxt, 24),
+                up('split', 1360, 526, 260, 64, (d) => (C.isNum(d.splitRear) ? Math.round(100 - d.splitRear) + ' : ' + Math.round(d.splitRear) : '--'), 'XDRIVE F : R', txt, 24));
+        }
         return [bg('bg', 0, 0, 1920, 720),
             // the time and outside temperature in the top corners, inside the glass's slant
             C.text('clock', 280, 128, 260, 54, C.clock, txt),

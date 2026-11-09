@@ -71,13 +71,14 @@ function dialSet(o, which, cx, size, cy) {
         ? small('fuelDial', cx, subY, sub, [100, 25, 12.5, 87.5], [110, -110], (d) => (C.isNum(d.fuelPct) ? 100 - d.fuelPct : 100))
         : small('econDial', cx, subY, sub, econScale(o), [-110, 110], econValue(o));
     const subLbl = which === 'speed' ? 'FUEL' : C.engineFocus(o) ? 'BOOST' : 'kW';
-    const engineOffKw = (d) => d.engineOn === false && !C.engineFocus(o);
+    const engineOffKw = (d) => C.electric(o, d);   // the tach reads kW (its unit says so)
     return [
         Object.assign({
             key: which, kind: 'dial', x: cx - size / 2, y: cy - size / 2, w: size, h: size,
             params: Object.assign({ u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round((dense ? 38 : 56) * k + 2), (dense ? 222 : 204) * k], u_needle_dim: [292 * k, 62 * k, 13 * k, 4] }, look(k, 0.75)),
             colors: dialColours, max: s.max, sweep: true,
-            value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : (d) => (C.isNum(d.rpm) ? d.rpm / 1000 : 0),
+            value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : C.tachValue(o),
+            dyn: which === 'speed' ? undefined : C.tachDyn(o, s, red),
         }),
         subPiece,
         // the dial's unit (the tach's: the battery's power while the engine is off)
@@ -101,11 +102,11 @@ module.exports = {
             // the speedometer left of the map, a small tach right of it below the dark box; the gear and speed above the box
             const top = C.MAP.y, bot = C.MAP.y + C.MAP.h;
             return C.aroundMap().map((r, i) => C.flat('bg' + i, r.x, r.y, r.w, r.h, 'bg')).concat(
-                dialSet(o, 'speed', 208, 404, 360), dialSet(o, 'rpm', 1792, 256, 500), [
+                dialSet(o, 'speed', 208, 404, 360), C.strip(o) ? dialSet(o, 'rpm', 1712, 404, 360) : dialSet(o, 'rpm', 1792, 256, 500), [
                     C.text('clock', 520, top - 76, 200, 34, C.clock, lit),
                     C.text('outside', 1200, top - 76, 200, 34, (d) => C.outsideText(o, d.outside), lit),
                     C.text('gear', 1520, 130, 230, 92, C.gearText, gearC),
-                    C.text('speedDigits', 1520, 224, 230, 32, (d) => C.speedText(o, d) + ' ' + C.speedUnit(o), lit),
+                    ...(C.strip(o) ? [] : [C.text('speedDigits', 1520, 224, 230, 32, (d) => C.speedText(o, d) + ' ' + C.speedUnit(o), lit)]),
                 ],
                 C.readingUp('fuel', 560, bot + 2, 260, 30, (d) => C.distText(o, d.frange), 'FUEL RANGE', lit, lbl),
                 C.readingUp('elec', 1100, bot + 2, 300, 30, C.focus.both(o), C.focus.rangeLabel(o), lit, lbl),
@@ -114,7 +115,7 @@ module.exports = {
         if (C.strip(o) && o.centre !== 'stock') {
             // the car's own bottom strip: the dials centred either side of the middle column, ending above the
             // strip (the speedometer keeps its fuel gauge; the ranges are the strip's)
-            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, 600, 328), dialSet(o, 'rpm', 1468, 600, 328), middle(o, 830, 260, gearC, 134, 590));
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, 600, 328), dialSet(o, 'rpm', 1468, 600, 328), middle(o, 830, 260, gearC, 134, 590, true));
         }
         const S = 520, cy = 392, L = 300;
         const stock = o.centre === 'stock', R = stock ? 1256 : 1120, SR = stock ? 296 : S;
@@ -137,8 +138,20 @@ module.exports = {
 
 /** Between the dials, from y top to bottom: the time and outside temperature, the coolant gauge, and the amber
  * LCD with the gear, the speed and the drive mode. */
-function middle(o, X, W, gearC, top, bottom) {
+function middle(o, X, W, gearC, top, bottom, stripped) {
     const mid = X + W / 2, ly = bottom - 206, gy = top + Math.round((ly - top) / 2) + 16;
+    const head = [
+        C.text('clock', X + 8, top, (W - 22) / 2, 36, C.clock, lit, { align: 0 }),
+        C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
+        small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
+        C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
+        { key: 'lcd', kind: 'panel', x: X + 10, y: ly, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
+    ];
+    // over the car's own strip (it shows the gear and the drive mode): the LCD is the digital speed, large
+    if (stripped) return head.concat([
+        C.text('speedDigits', X + 10, ly + 26, W - 20, 120, (d) => C.speedText(o, d), lit),
+        C.text('speedDigitsUnit', X + 10, ly + 156, W - 20, 24, C.speedUnit(o), lbl, { tracking: 0.12 }),
+    ]);
     return [
         C.text('clock', X + 8, top, (W - 22) / 2, 36, C.clock, lit, { align: 0 }),
         C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),

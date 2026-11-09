@@ -26,6 +26,7 @@ const { lookNow } = require('./themes');
 const { startData } = require('./data');
 const presence = require('./presence');
 const { startDap, DEMO: DAP_DEMO } = require('./dap');
+const { startMapWindow } = require('./map_window');
 const { findSignals } = require('./signal_finder');
 const logs = require('./logs');
 const attribution = require('./attribution');
@@ -70,7 +71,7 @@ mgu.run({
         const options = () => ({
             speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), torqueUnit: settings.get('torqueUnit'),
             // Cluster Centre's pages sit in the same window as the map: the layout leaves it clear for either
-            centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),
+            centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),   // ('pages': retired, Waze instead)
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
             boxClear: settings.get('boxClear') === 'on',
             cluster: settings.get('cluster') === 'm' ? 'm' : 'standard',
@@ -108,12 +109,15 @@ mgu.run({
             onFresh: D.onFresh,
         });
         let cluster = start();
+        const mapWindow = startMapWindow(log);
         let lastVehicle = null, lastModeGear = null;
         // the engine-unit readings the layout shows, read fast while it shows
         setInterval(() => {
             if (showing()) D.want((layout.needs || []).concat(require('./layout_common').focus.needs(options())));
-            // Cluster Centre steps aside while a layout shows, unless the layout's centre is set to its pages
-            if (cluster.status().shown) presence.mark('layouts', { centre: settings.get('centre') });
+            // Cluster Centre steps aside while a layout shows (its pages in the layout's centre: retired)
+            if (cluster.status().shown) presence.mark('layouts', { centre: options().centre });
+            // the Waze centre: Waze on cluster draws its map over the layout, filling the window (map_window.js)
+            mapWindow.set(cluster.status().shown && options().centre === 'map' ? require('./layout_common').MAP : null);
             // the vehicle found (Settings > Vehicle: Auto): the layout redrawn for it once known
             const v = D.vehicle().vehicle;
             if (v !== lastVehicle) { if (lastVehicle) cluster.rebuild(); lastVehicle = v; }

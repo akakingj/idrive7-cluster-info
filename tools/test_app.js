@@ -70,7 +70,9 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
         assert(Math.abs(dial(160).value - 50) < 0.5, 'speed ' + dial(160).value);
         assert(Math.abs(dial(8).value - 2.5) < 0.02, 'rpm ' + dial(8).value);
         const texts = eng()._pieces().filter((p) => p.text !== null).map((p) => p.text);
-        ['D3', '50'].forEach((t) => assert(texts.indexOf(t) >= 0, t + ' in ' + JSON.stringify(texts)));
+        // (the gear: the car's own strip shows it, so the layout over it has none)
+        ['50'].forEach((t) => assert(texts.indexOf(t) >= 0, t + ' in ' + JSON.stringify(texts)));
+        assert(texts.indexOf('D3') < 0, 'no second gear over the strip');
     });
     check('a colour change sends uniforms only', () => {
         client.reset();
@@ -85,9 +87,9 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     await sleep(200);
     check('the page draws', () => assert(pages > 0));
     check('warnings only for what this machine lacks (no catalog, no diagnostic link)', () => assert(warns.some((w) => /catalog not readable/.test(w)) && warns.every((w) => /catalog not readable|TASU/.test(w)), JSON.stringify(warns)));
-    check('outside temperature read (9 °C -> 48 °F on the layouts)', () => {
+    check('the stock strip\'s time and outside temperature left to the car: its slots show the battery and xDrive', () => {
         const texts = eng()._pieces().filter((p) => p.text !== null).map((p) => p.text);
-        assert(texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
+        assert(texts.some((x) => /^BATT /.test(x)) && texts.some((x) => /^XDRIVE$|^F\d+ R\d+$/.test(x)) && !texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
     });
     console.log(ok + ' passed');
     process.exit(0);

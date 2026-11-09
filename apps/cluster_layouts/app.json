@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.20.1",
+  "version": "0.21.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -223,16 +223,8 @@
           "Digital dash"
         ],
         [
-          "freedom",
-          "Freedom"
-        ],
-        [
           "retro",
           "Retro"
-        ],
-        [
-          "track",
-          "Track"
         ],
         [
           "pulse",
@@ -356,11 +348,7 @@
         ],
         [
           "map",
-          "Waze (Waze on cluster, or the stock map)"
-        ],
-        [
-          "pages",
-          "Cluster Centre's pages (the Cluster Centre app, Show on)"
+          "Waze (Waze on cluster drawn over the layout, else the stock map)"
         ],
         [
           "stock",
