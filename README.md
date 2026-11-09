@@ -16,7 +16,7 @@ refund.**
 | App | What it does |
 |---|---|
 | **[Cluster Info](#cluster-info)** | a small panel of live values over the Waze map in the cluster or on the HUD, and turn signal arrows on the HUD |
-| **[Cluster Layouts](apps/cluster_layouts/README.md)** | your own layout on the whole instrument cluster, drawn by the cluster itself: eight layouts, each in three colour sets and with three centres |
+| **[Cluster Layouts](apps/cluster_layouts/README.md)** | your own layout on the whole instrument cluster, drawn by the cluster itself: eight layouts, each in three colour sets and with four centres (readings, Waze, Cluster Centre's pages, stock) |
 | **[Cluster Centre](apps/cluster_centre/README.md)** | the factory cluster kept, its centre taken over by pages of live data (temperatures, fuel and boost, warm-up, turbo cool-down, xDrive, eDrive, a 0-60 timer, custom pages) |
 
 ![Cluster Layouts: Analog sport](docs/analog_sport.png)

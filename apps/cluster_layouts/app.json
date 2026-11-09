@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.15.0",
+  "version": "0.16.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -332,7 +332,11 @@
         ],
         [
           "map",
-          "Map (Waze or the stock map shows)"
+          "Waze (Waze on cluster, or the stock map)"
+        ],
+        [
+          "pages",
+          "Cluster Centre's pages (the Cluster Centre app, Show on)"
         ],
         [
           "stock",

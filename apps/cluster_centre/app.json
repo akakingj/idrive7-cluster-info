@@ -2,7 +2,7 @@
   "id": "cluster_centre",
   "title": "Cluster Centre",
   "description": "Pages of engine, gearbox, xDrive and eDrive data, warm-up, turbo cool-down, a shift light and a 0-60 timer in the centre of the factory cluster, drawn by the cluster itself",
-  "version": "0.6.3",
+  "version": "0.7.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9M",
@@ -556,9 +556,9 @@
     },
     {
       "key": "warmTarget",
-      "label": "Oil warm at (°C)",
+      "label": "Oil warm at (\u00b0C)",
       "type": "number",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "default": 90,
       "steps": [
         70,
@@ -682,9 +682,9 @@
     },
     {
       "key": "oilHigh",
-      "label": "Warn: oil above (°C)",
+      "label": "Warn: oil above (\u00b0C)",
       "type": "number",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "default": 130,
       "steps": [
         110,
@@ -698,9 +698,9 @@
     },
     {
       "key": "coolantHigh",
-      "label": "Warn: coolant above (°C)",
+      "label": "Warn: coolant above (\u00b0C)",
       "type": "number",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "default": 118,
       "steps": [
         105,
@@ -713,9 +713,9 @@
     },
     {
       "key": "iatHigh",
-      "label": "Warn: intake air above (°C)",
+      "label": "Warn: intake air above (\u00b0C)",
       "type": "number",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "default": 60,
       "steps": [
         40,
@@ -729,9 +729,9 @@
     },
     {
       "key": "gearboxHigh",
-      "label": "Warn: gearbox above (°C)",
+      "label": "Warn: gearbox above (\u00b0C)",
       "type": "number",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "default": 115,
       "steps": [
         100,
@@ -744,9 +744,9 @@
     },
     {
       "key": "battTempHigh",
-      "label": "Warn: battery above (°C)",
+      "label": "Warn: battery above (\u00b0C)",
       "type": "number",
-      "unit": "°C",
+      "unit": "\u00b0C",
       "default": 42,
       "steps": [
         35,

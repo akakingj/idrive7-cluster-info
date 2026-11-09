@@ -44,6 +44,11 @@ function rpmBar(o, key, x, y, w, h, segments) {
         colors: (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
         value: (d) => (C.isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true };
 }
+/** A reading with its label above it, both large: label lh px, a 2 px gap, then the value h px. */
+const up = (key, x, y, w, h, value, label, colors, lh) => [
+    C.text(key + 'Lbl', x, y, w, lh || 22, label, lbl, { tracking: 0.12 }),
+    C.text(key, x, y + (lh || 22) + 2, w, h, value, colors),
+];
 const socBar = (o, key, x, y, w, h) => C.bar(key, x, y, w, h, C.focus.bar(o), (t) => {
     const f = C.engineFocus(o) ? t.fill1 : t.ev;
     return { track: t.track, fill0: f, fill1: f, redc: t.red, tip: t.tip, tick: t.dim, num: t.num };
@@ -58,64 +63,64 @@ module.exports = {
     pieces(o) {
         const eTxt = C.engineFocus(o) ? txt : evTxt;
         if (o.centre === 'map') {
-            // the speed on the left of the map, the gear on the right (past the KOMBI's gear box); the engine speed along under the map
+            // the speed on the left of the window (the map, or Cluster Centre's pages), the gear on the right
+            // (past the KOMBI's gear box); the engine speed along under the window
             const bot = C.MAP.y + C.MAP.h;
             return C.aroundMap().map((b, i) => bg('bg' + i, b.x, b.y, b.w, b.h)).concat([
-                C.text('clock', 120, 176, 260, 34, C.clock, txt),
-                C.text('speedDigits', 60, 230, 340, 130, (d) => C.speedText(o, d), big),
-                C.text('speedUnit', 60, 366, 340, 22, C.speedUnit(o), lbl, { tracking: 0.25 }),
-                C.text('outside', 120, 520, 260, 34, (d) => C.outsideText(o, d.outside), txt),
-                C.text('gear', 1670, 290, 230, 130, C.gearText, gearC),
-                C.text('mode', 1670, 428, 230, 20, C.modeText, accent, { tracking: 0.3 }),
-                rpmBar(o, 'rpmBar', C.MAP.x, bot + 8, C.MAP.w, 26, 48),
+                C.text('clock', 110, 176, 290, 44, C.clock, txt),
+                C.text('speedDigits', 30, 236, 380, 160, (d) => C.speedText(o, d), big),
+                C.text('speedUnit', 30, 400, 380, 28, C.speedUnit(o), lbl, { tracking: 0.25 }),
+                C.text('outside', 110, 450, 290, 44, (d) => C.outsideText(o, d.outside), txt),
+                C.text('gear', 1666, 286, 244, 150, C.gearText, gearC),
+                C.text('mode', 1666, 440, 244, 26, C.modeText, accent, { tracking: 0.25 }),
+                rpmBar(o, 'rpmBar', C.MAP.x, bot + 10, C.MAP.w, 30, 48),
             ],
-            C.readingUp('fuel', 60, 590, 160, 28, (d) => C.distText(o, d.frange), 'FUEL', txt, lbl),
-            C.readingUp('elec', 230, 590, 170, 28, C.focus.range(o), C.focus.rangeLabel(o), eTxt, lbl),
-            C.readingUp('oil', 1520, 520, 180, 28, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), lbl),
-            C.readingUp('coolant', 1710, 520, 180, 28, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), lbl),
-            C.readingUp('kw', 1520, 590, 180, 28, C.focus.power(o), C.focus.powerLabel(o), txt, lbl),
-            C.readingUp('soc', 1710, 590, 180, 28, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, lbl));
+            up('fuel', 20, 510, 190, 40, (d) => C.distText(o, d.frange), 'FUEL', txt, 20),
+            up('elec', 215, 510, 195, 40, C.focus.range(o), C.focus.rangeLabel(o), eTxt, 20),
+            up('oil', 1510, 500, 200, 40, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 20),
+            up('coolant', 1710, 500, 200, 40, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 20),
+            up('kw', 1510, 576, 200, 40, C.focus.power(o), C.focus.powerLabel(o), txt, 20),
+            up('soc', 1710, 576, 200, 40, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 20));
         }
         if (o.centre === 'stock') {
             // the stock centre between two panels: the speed and its bar on the left, the gear and readings on the right
             return [bg('bg', 0, 0, 640, 720), bg('bgR', 1280, 0, 640, 720),
-                C.text('clock', 250, 150, 170, 34, C.clock, txt),
-                C.text('outside', 430, 150, 170, 34, (d) => C.outsideText(o, d.outside), txt),
-                C.text('speedDigits', 160, 220, 440, 170, (d) => C.speedText(o, d), big),
-                C.text('speedUnit', 160, 396, 440, 22, C.speedUnit(o), lbl, { tracking: 0.25 }),
-                rpmBar(o, 'rpmBar', 120, 450, 500, 26, 24),
-                C.text('rpmDigits', 120, 486, 500, 20, rpmTxt, lbl, { tracking: 0.12 }),
-                C.text('gear', 1680, 290, 220, 140, C.gearText, gearC),
-                C.text('mode', 1680, 436, 220, 20, C.modeText, accent, { tracking: 0.3 }),
+                C.text('clock', 230, 140, 190, 46, C.clock, txt),
+                C.text('outside', 420, 140, 190, 46, (d) => C.outsideText(o, d.outside), txt),
+                C.text('speedDigits', 130, 200, 490, 200, (d) => C.speedText(o, d), big),
+                C.text('speedUnit', 130, 404, 490, 28, C.speedUnit(o), lbl, { tracking: 0.25 }),
+                rpmBar(o, 'rpmBar', 110, 446, 520, 30, 24),
+                C.text('rpmDigits', 110, 482, 520, 26, rpmTxt, lbl, { tracking: 0.12 }),
+                C.text('gear', 1666, 270, 244, 170, C.gearText, gearC),
+                C.text('mode', 1666, 444, 244, 26, C.modeText, accent, { tracking: 0.25 }),
             ].concat(
-                C.readingUp('oil', 120, 560, 240, 34, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), lbl),
-                C.readingUp('coolant', 380, 560, 240, 34, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), lbl),
-                C.readingUp('fuel', 1300, 500, 300, 34, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, lbl),
-                C.readingUp('elec', 1610, 500, 300, 34, C.focus.range(o), C.focus.rangeLabel(o), eTxt, lbl),
-                C.readingUp('kw', 1300, 576, 300, 34, C.focus.power(o), C.focus.powerLabel(o), txt, lbl),
-                C.readingUp('soc', 1610, 576, 300, 34, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, lbl));
+                up('oil', 110, 540, 250, 48, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130)),
+                up('coolant', 380, 540, 250, 48, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118)),
+                up('fuel', 1290, 480, 310, 48, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt),
+                up('elec', 1600, 480, 310, 48, C.focus.range(o), C.focus.rangeLabel(o), eTxt),
+                up('kw', 1290, 570, 310, 48, C.focus.power(o), C.focus.powerLabel(o), txt),
+                up('soc', 1600, 570, 310, 48, C.focus.charge(o), C.focus.chargeLabel(o), eTxt));
         }
         return [bg('bg', 0, 0, 1920, 720),
             // the time and outside temperature in the top corners, inside the glass's slant
-            C.text('clock', 300, 140, 220, 40, C.clock, txt),
-            C.text('outside', 1400, 140, 220, 40, (d) => C.outsideText(o, d.outside), txt),
-            C.text('mode', 760, 140, 400, 22, C.modeText, accent, { tracking: 0.35 }),
+            C.text('clock', 280, 128, 260, 54, C.clock, txt),
+            C.text('outside', 1380, 128, 260, 54, (d) => C.outsideText(o, d.outside), txt),
+            C.text('mode', 740, 132, 440, 30, C.modeText, accent, { tracking: 0.3 }),
             // the speed, large, in the middle; the gear to its left (the KOMBI's gear box is on the right)
-            C.text('speedDigits', 720, 180, 480, 230, (d) => C.speedText(o, d), big),
-            C.text('speedUnit', 720, 414, 480, 24, C.speedUnit(o), lbl, { tracking: 0.3 }),
-            C.text('gear', 400, 230, 280, 170, C.gearText, gearC),
-            C.text('rpmDigits', 1220, 330, 180, 22, rpmTxt, lbl, { tracking: 0.1 }),
+            C.text('speedDigits', 690, 166, 540, 274, (d) => C.speedText(o, d), big),
+            C.text('speedUnit', 690, 440, 540, 30, C.speedUnit(o), lbl, { tracking: 0.3 }),
+            C.text('gear', 360, 196, 330, 230, C.gearText, gearC),
+            C.text('rpmDigits', 1226, 320, 180, 32, rpmTxt, lbl, { tracking: 0.06 }),
             // the engine speed: one long bar under it all
-            rpmBar(o, 'rpmBar', 220, 470, 1480, 30, 64),
-            C.flat('rule', 220, 532, 1480, 2, 'rule'),
+            rpmBar(o, 'rpmBar', 200, 482, 1520, 34, 64),
         ].concat(
-            // one slim row along the bottom, the charge bar under its charge
-            C.readingUp('oil', 220, 560, 230, 40, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), lbl),
-            C.readingUp('coolant', 470, 560, 230, 40, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), lbl),
-            C.readingUp('fuel', 720, 560, 230, 40, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, lbl),
-            C.readingUp('elec', 970, 560, 230, 40, C.focus.range(o), C.focus.rangeLabel(o), eTxt, lbl),
-            C.readingUp('soc', 1220, 560, 230, 40, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, lbl),
-            [socBar(o, 'socBar', 1250, 624, 170, 18)],
-            C.readingUp('kw', 1470, 560, 230, 40, C.focus.power(o), C.focus.powerLabel(o), txt, lbl));
+            // one row along the bottom, the charge bar under its charge
+            up('oil', 200, 534, 250, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
+            up('coolant', 454, 534, 250, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
+            up('fuel', 708, 534, 250, 64, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, 24),
+            up('elec', 962, 534, 250, 64, C.focus.range(o), C.focus.rangeLabel(o), eTxt, 24),
+            up('soc', 1216, 534, 250, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
+            [socBar(o, 'socBar', 1256, 634, 170, 14)],
+            up('kw', 1470, 534, 250, 64, C.focus.power(o), C.focus.powerLabel(o), txt, 24));
     },
 };

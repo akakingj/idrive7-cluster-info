@@ -22,7 +22,7 @@ const shiftAll = (keys, dy) => keys.reduce((m, k) => { m[k] = { dy }; return m; 
 const M_MOVES = {
     pulse: {
         // the speed up between the cowl and the boxes; its unit, the drive mode and the rpm in one row below them
-        info: { speedDigits: { y: 128, h: 140 }, speedUnit: { y: 436 }, mode: { x: 220, y: 436, w: 400 }, rpmDigits: { y: 436 } },
+        info: { speedDigits: { y: 128, h: 146 }, speedUnit: { y: 432, h: 28 }, mode: { x: 200, y: 434, w: 440, h: 26 }, rpmDigits: { y: 430, h: 30 }, gear: { y: 186, h: 230 } },
     },
     track: { info: {
         // the gear card below the boxes, the drive mode above them; the right column's tiles stacked below

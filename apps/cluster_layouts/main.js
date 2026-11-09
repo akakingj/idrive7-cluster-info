@@ -59,11 +59,13 @@ mgu.run({
         const car = D.car;
         const data = () => D.data();
         const options = () => ({
-            speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), centre: settings.get('centre'),
+            speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'),
+            // Cluster Centre's pages sit in the same window as the map: the layout leaves it clear for either
+            centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
             boxClear: settings.get('boxClear') === 'on',
             cluster: settings.get('cluster') === 'm' ? 'm' : 'standard',
-            bottomStrip: settings.get('bottomStrip') === 'layout' ? 'layout' : 'stock',   // the KOMBI's strip under y 660 (layouts.js)   // an M car's KOMBI: its two boxes in the middle (layouts.js)
+            bottomStrip: settings.get('bottomStrip') === 'layout' ? 'layout' : 'stock',   // the KOMBI's strip under y 660 (layouts.js)
             boxBezel: settings.get('boxBezel') === 'on',   // (off: the box sits on the plain background)
             vehicle: D.vehicle().vehicle,      // set, or found from the car (Auto)
         });
@@ -101,7 +103,8 @@ mgu.run({
         // the engine-unit readings the layout shows, read fast while it shows
         setInterval(() => {
             if (showing()) D.want((layout.needs || []).concat(require('./layout_common').focus.needs(options())));
-            if (cluster.status().shown) presence.mark('layouts');   // Cluster Centre steps aside while a layout shows
+            // Cluster Centre steps aside while a layout shows, unless the layout's centre is set to its pages
+            if (cluster.status().shown) presence.mark('layouts', { centre: settings.get('centre') });
             // the vehicle found (Settings > Vehicle: Auto): the layout redrawn for it once known
             const v = D.vehicle().vehicle;
             if (v !== lastVehicle) { if (lastVehicle) cluster.rebuild(); lastVehicle = v; }

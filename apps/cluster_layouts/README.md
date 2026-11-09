@@ -5,8 +5,10 @@
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
 itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro,
 Track and Pulse), each in comfort, sport and efficient colours (following the selector's S / M
-programme, or chosen), each with three centres: the **readings**, the **map** (Waze or the stock map shows in
-the middle), or the **stock** centre content.
+programme, or chosen), each with four centres: the **readings**, **Waze** (Waze on cluster, or the stock map, shows in
+the middle), **Cluster Centre's pages** (temperatures, boost, xDrive and the rest, drawn full size in the
+middle by the Cluster Centre app, Show on), or the **stock** centre content. Waze and Cluster Centre both need
+**Central display area: Map view** on the car.
 
 ### Analog sport
 
@@ -107,12 +109,12 @@ the drive) and the drive's peak power (or boost), and the ranges and charge righ
 
 ### Pulse
 
-Made for the car's own bottom strip: the speed large in the middle, the gear beside it, and one long segmented
+Made for the car's own bottom strip, in large type: the speed large in the middle, the gear beside it, and one long segmented
 bar under them for the engine speed, nearly the panel's width, red from the red line. A slim row along the bottom
 holds oil, coolant, the fuel and electric ranges, the charge (with its bar) and battery power (boost, timing and
 torque with Vehicle: ICE); the time, the drive mode and the outside temperature run along the top. Its colours
-follow the drive mode. With the map in the centre the speed and gear sit either side of it and the rpm bar runs
-under it.
+follow the drive mode. With Waze or Cluster Centre's pages in the centre the speed and gear sit either side of it and
+the rpm bar runs under it.
 
 ![Pulse](../../docs/pulse.png)
 
@@ -291,7 +293,7 @@ module.exports = {
 };
 ```
 
-`o` holds the options (units, red zone, rev scale, centre: `info`, `map` or `stock`); `d` the car's data
+`o` holds the options (units, red zone, rev scale, centre: `info`, `map` or `stock`; Cluster Centre's pages come as `map`); `d` the car's data
 (`speed` km/h, `rpm`, `gear`, `stage`, `mode`, `oil`, `coolant`, `outside` °C, `soc` %, `kw`, `erange` and
 `frange` km); `t` the layout's palette for the look now. Texts use the glyphs in `font.js`; add more there.
 
