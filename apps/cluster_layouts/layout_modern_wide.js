@@ -8,6 +8,7 @@
  * An original design.
  */
 const C = require('./layout_common');
+const carSprite = require('./car_sprite');
 
 /* the arcs: short enough that their ends and numerals clear the glass's slanted top corners */
 const R = 520, T = 28, CY = 380;
@@ -90,7 +91,7 @@ function newCar(o, arcs, gearC, rpmTxt) {
         // the road ahead as the driving assistant sees it (dap.js: d.dap; without it, the lanes and the car alone)
         { key: 'road', kind: 'road', x: 650, y: 346, w: 620, h: 296, value: (d) => (C.isNum(d.speed) ? Math.min(1, C.speedIn(o, d.speed) / sc.max) : 0), max: 1,
             colors: (t) => ({ line: t.tip, glow: t.glow, surface: t.road, assist: t.regen, acc: t.glow, warn: '#ff9f0a', car: '#8d9aa8', ego: '#dfe7ef' }),
-            dyn: (d) => roadState(d.dap) },
+            dyn: (d) => roadState(d.dap), textures: { u_cars: carSprite }, params: { u_anchor: [carSprite().anchor.cx, carSprite().anchor.bottom, carSprite().anchor.width, 0] } },
         // the cruise control's set speed and the steering assist, at the top of the road while they're on
         C.text('accSet', 660, 350, 200, 26, (d) => (d.dap && d.dap.acc && d.dap.acc.on && C.isNum(d.dap.acc.set) ? 'SET ' + d.dap.acc.set : ''), (t) => ({ color: [t.glow, 1], glow: [t.glow, 0.5] }), { align: 0 }),
         C.text('assistOn', 1060, 350, 200, 26, (d) => (d.dap && d.dap.assist ? 'ASSIST' : ''), (t) => ({ color: [t.regen, 1], glow: [t.regen, 0.5] }), { align: 1, tracking: 0.14 }),

@@ -64,7 +64,8 @@ for (const k in S.assets) {
   for (let i = 0; i < bin.length; i++) px[i] = bin.charCodeAt(i);
   const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t);
   gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.LUMINANCE, a.w, a.h, 0, gl.LUMINANCE, gl.UNSIGNED_BYTE, px);
+  const fmt = a.rgba ? gl.RGBA : gl.LUMINANCE;
+  gl.texImage2D(gl.TEXTURE_2D, 0, fmt, a.w, a.h, 0, fmt, gl.UNSIGNED_BYTE, px);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
   tex[k] = t;

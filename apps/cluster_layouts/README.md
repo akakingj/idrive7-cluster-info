@@ -47,7 +47,8 @@ turns into the battery's power gauge (0-100 kW) while the engine is off, and is 
 gauge inside it, as soon as the engine runs.
 
 The road shows what the car's driving assistant sees, from the same feeds as BMW's assisted driving view: your car
-from behind, the car the cruise control follows (its tail lights lit when it brakes), the nearest car in each lane
+from behind (every car is a 3D model of our own, rendered once by `tools/render_cars.py` with soft lighting and
+shipped as a small texture the cluster samples at the size each car needs), the car the cruise control follows (its tail lights lit when it brakes), the nearest car in each lane
 beside (orange with a lane change warning), the lane edges green while the steering assist holds the lane (orange
 on a lane departure warning), the cruise control's gap as bars ahead of your car, and its set speed and ASSIST over
 the road. Without the assistant (or on a car without it) the road shows the lanes and your car alone. The feeds

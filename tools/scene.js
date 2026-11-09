@@ -69,7 +69,7 @@ function makeScene(opts) {
         scene() {
             const ls = Array.from(client.layers.values());
             const assets = {};
-            ls.filter((l) => l.kind === 'asset').forEach((l) => { assets[l.ref] = { w: l.opts.w, h: l.opts.h, px: l.pixels ? l.pixels.toString('base64') : '' }; });
+            ls.filter((l) => l.kind === 'asset').forEach((l) => { assets[l.ref] = { w: l.opts.w, h: l.opts.h, rgba: l.opts.format === 'rgba8', px: l.pixels ? l.pixels.toString('base64') : '' }; });
             const order = { ambient: 0, content: 1, overlay: 2, alert: 3 };
             const quads = ls.filter((l) => l.kind === 'effect' && l.opts.visible !== false)
                 .sort((a, b) => (order[a.opts.klass] - order[b.opts.klass]) || ((a.opts.z || 0) - (b.opts.z || 0)) || (a.ref - b.ref))

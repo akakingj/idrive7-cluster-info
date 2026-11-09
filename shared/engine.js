@@ -68,6 +68,7 @@ function startCluster(opts) {
     // the target: the whole panel by default; 'map' is the centre (slot 0x100, 1088x480), taken over from the
     // stock map in Map view while a layer wants it (contend)
     const TARGET = opts.target || 'panel', contend = !!opts.contend, zShift = opts.z || 0;
+    const textures = new Map();     // sampled images by uniform name (sent once)
     let specs = [], pieces = [], fontRef = 0, fontFam = null, shown = false, built = false, sweepEnd = 0, group = opts.group || null;
     /* only the active group's pieces (a page) are built; pieces without a group always */
     const inGroup = (p) => !p.spec.group || p.spec.group === group;
@@ -147,6 +148,18 @@ function startCluster(opts) {
                 cr.uniform(ref, 'u_font_cells', fontCells());
                 cr.uniform(ref, 'u_digit_adv', [Math.round(font.digitAdvance(fam()) * 1000) / 1000]);
             }
+            // textures a piece samples (textures: { u_name: () => { w, h, px (RGBA), anchor } }): sent once, kept
+            Object.keys(s.textures || {}).forEach((u) => {
+                let tx = textures.get(u);
+                if (!tx) {
+                    const img = s.textures[u]();
+                    tx = { ref: cr.asset({ target: TARGET, format: 'rgba8', w: img.w, h: img.h, sampling: 'bilinear' }), img };
+                    cr.pixels(tx.ref, null, img.px);
+                    textures.set(u, tx);
+                }
+                cr.bind(ref, u, tx.ref);
+                cr.uniform(ref, u + '_size', [tx.img.w, tx.img.h]);
+            });
             Object.keys(s.params || {}).forEach((u) => cr.uniform(ref, u, s.params[u]));
             if (s.value) cr.uniform(ref, 'u_value', [0]);
             pieces.push(p);

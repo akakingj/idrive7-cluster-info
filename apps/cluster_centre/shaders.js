@@ -794,44 +794,34 @@ uniform vec3 u_acc;
 uniform vec3 u_warn;
 uniform vec3 u_car;
 uniform vec3 u_ego;
+uniform sampler2D u_cars;
+uniform vec2 u_cars_size;
+uniform vec4 u_anchor;             /* the car in its frame: centre, bottom, body width (fractions), 0 */
 varying vec2 v_uv;
 float lineA(float dx, float w) { return clamp(w - abs(dx) + 0.5, 0.0, 1.0); }
 float rbox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
-/* coverage of a shape d (in u units, < 0 inside) with a pixel px wide */
-float cov(float d, float px) { return clamp(0.5 - d / px, 0.0, 1.0); }
-/* a car from behind, its bottom centre at b, w wide (u: units of w, y down): a soft shadow on the road, the tyres,
- * the bumper with its plate, the body shaded with a light along its shoulder, the cabin narrowing to the roof with
- * the rear window's glass and a sheen across it, a light bar the full width with the lamps at its ends (bright
- * and glowing when braking, the third brake light too), a rim of light along the roof, a halo (followed, warned) */
+/* a car from behind, its bottom centre at b, its body w wide: the car rendered once (tools/render_cars.py) and
+ * sampled from u_cars at the level nearest its size (R the shading, G the tail lights, B the glass, A coverage
+ * with its shadow), its body in the colour asked, the glass dark with the light on it, the tail lights brighter
+ * and glowing when braking; a soft pool of colour under it (followed, warned) */
 vec4 car(vec4 acc, vec2 p, vec2 b, float w, vec3 body, float brake, vec3 halo, float haloA) {
-    vec2 u = (p - b) / w;
-    float px = 1.0 / w;
-    if (u.y < -0.62 || u.y > 0.08 || abs(u.x) > 0.75) return acc;
-    float sh = length(vec2(u.x / 0.6, (u.y - 0.004) / 0.045));
-    acc = over(acc, vec3(0.0), 0.6 * (1.0 - smoothstep(0.55, 1.15, sh)));
-    float taper = 1.0 + (-0.36 - u.y) * 1.5;
-    float dT = rbox(vec2(abs(u.x) - 0.37, u.y + 0.055), vec2(0.075, 0.055), 0.03);
-    float dB = rbox(u - vec2(0.0, -0.13), vec2(0.49, 0.07), 0.065);
-    float dM = rbox(u - vec2(0.0, -0.255), vec2(0.5, 0.095), 0.085);
-    float dC = rbox(vec2(u.x * taper, u.y + 0.43), vec2(0.355, 0.095), 0.085);
-    float dG = rbox(vec2(u.x * taper, u.y + 0.432), vec2(0.29, 0.062), 0.05);
-    float dS = min(min(dT, dB), min(dM, dC));
-    acc = over(acc, halo, haloA * exp(-max(dS, 0.0) / 0.07) * step(0.0, dS));
-    acc = over(acc, vec3(0.035), cov(dT, px));
-    acc = over(acc, body * 0.42, cov(dB, px));
-    acc = over(acc, vec3(0.78, 0.8, 0.82) * 0.55, cov(rbox(u - vec2(0.0, -0.14), vec2(0.075, 0.024), 0.008), px));
-    vec3 bc = body * (0.72 + 0.38 * smoothstep(-0.16, -0.34, u.y)) + vec3(0.22) * exp(-pow((u.y + 0.335) / 0.018, 2.0));
-    acc = over(acc, bc, cov(dM, px));
-    acc = over(acc, body * (0.8 + 0.2 * smoothstep(-0.36, -0.5, u.y)), cov(dC, px));
-    float sheen = exp(-pow((u.x * 0.8 + (u.y + 0.43) * 1.3 + 0.07) / 0.045, 2.0));
-    acc = over(acc, mix(vec3(0.02, 0.025, 0.035), vec3(0.5, 0.56, 0.62), 0.18 + 0.4 * sheen + 0.12 * smoothstep(-0.38, -0.49, u.y)), cov(dG, px));
-    acc = over(acc, vec3(1.0), 0.45 * clamp(1.0 - abs(dC + 0.008) / 0.008, 0.0, 1.0) * smoothstep(-0.44, -0.52, u.y));
-    vec3 red = vec3(1.0, 0.14, 0.1);
-    float dL = min(rbox(u - vec2(0.0, -0.318), vec2(0.46, 0.011), 0.011), rbox(vec2(abs(u.x) - 0.405, u.y + 0.3), vec2(0.075, 0.03), 0.02));
-    acc = over(acc, red * (0.6 + 0.4 * brake), cov(dL, px));
-    acc = over(acc, red, (0.18 + 0.5 * brake) * exp(-max(dL, 0.0) / (0.03 + 0.04 * brake)) * step(0.0, dL));
-    float dK = rbox(u - vec2(0.0, -0.508), vec2(0.07, 0.007), 0.007);
-    acc = over(acc, red, brake * cov(dK, px));
+    float S = w / u_anchor.z, Hs = S * 0.75;
+    vec2 tl = vec2(b.x - S * u_anchor.x, b.y - Hs * u_anchor.y);
+    vec2 uv = (p - tl) / vec2(S, Hs);
+    vec2 e = (p - vec2(b.x, b.y - Hs * 0.02)) / vec2(w * 0.62, w * 0.16);
+    acc = over(acc, halo, haloA * exp(-dot(e, e)) * 0.8);
+    if (uv.x < 0.0 || uv.y < 0.0 || uv.x > 1.0 || uv.y > 1.0) return acc;
+    float k = clamp(floor(log2(256.0 / max(S, 1.0))), 0.0, 4.0), lw = 256.0, xo = 0.0;
+    for (int i = 0; i < 4; i++) { if (float(i) < k) { xo += lw + 2.0; lw *= 0.5; } }
+    float lh = lw * 0.75;
+    vec2 tc = vec2(xo, 0.0) + clamp(uv * vec2(lw, lh), vec2(0.5), vec2(lw, lh) - 0.5);
+    vec4 s = texture2D(u_cars, tc / u_cars_size);
+    vec3 col = body * s.r * 1.35;
+    col = mix(col, vec3(0.03, 0.045, 0.06) + vec3(0.42, 0.5, 0.58) * s.r * 0.9, s.b);
+    col = mix(col, vec3(1.0, 0.13, 0.09) * (0.7 + 0.55 * brake), s.g);
+    acc = over(acc, col, s.a);
+    vec2 g = (p - vec2(b.x, tl.y + Hs * 0.53)) / vec2(w * 0.55, w * 0.12);
+    acc = over(acc, vec3(1.0, 0.15, 0.1), brake * 0.45 * exp(-dot(g, g)));
     return acc;
 }
 void main() {
@@ -863,7 +853,7 @@ void main() {
     if (u_dap.z * valid > 0.5) {
         for (int i = 0; i < 6; i++) {
             if (float(i) < u_dap.w) {
-                float tb = 0.82 - float(i) * 0.055, yb = tb * (H + h0) - h0;
+                float tb = 0.62 - float(i) * 0.045, yb = tb * (H + h0) - h0;
                 float bar = clamp(1.6 + 1.8 * tb - abs(p.y - yb) + 0.5, 0.0, 1.0) * step(ax, tb * W * 0.155 * 0.62);
                 acc = over(acc, u_acc, bar * 0.9);
             }
@@ -875,7 +865,7 @@ void main() {
     if (tR > 0.0) acc = car(acc, p, vec2(cx + 2.0 * tR * W * 0.155, tR * (H + h0) - h0), 1.08 * tR * W * 0.155, mix(u_car, u_warn, u_side.w), 0.0, u_warn, 0.6 * u_side.w);
     float tl = u_lead.y;
     if (u_lead.x * valid > 0.5) acc = car(acc, p, vec2(cx - u_lead.z * 2.0 * tl * W * 0.155, tl * (H + h0) - h0), 1.08 * tl * W * 0.155, u_car, u_lead.w, u_acc, 0.7 * u_dap.z);
-    acc = car(acc, p, vec2(cx, H - 3.0), 1.1 * W * 0.155, u_ego, 0.0, u_glow, 0.35);
+    acc = car(acc, p, vec2(cx, H - 6.0), 0.98 * W * 0.155, u_ego, 0.0, u_glow, 0.35);
     gl_FragColor = acc;
 }`;
 
