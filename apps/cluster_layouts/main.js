@@ -63,7 +63,7 @@ mgu.run({
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
             boxClear: settings.get('boxClear') === 'on',
             cluster: settings.get('cluster') === 'm' ? 'm' : 'standard',
-            bottomStrip: settings.get('bottomStrip') === 'stock' ? 'stock' : 'layout',   // the KOMBI's strip under y 660 (layouts.js)   // an M car's KOMBI: its two boxes in the middle (layouts.js)
+            bottomStrip: settings.get('bottomStrip') === 'layout' ? 'layout' : 'stock',   // the KOMBI's strip under y 660 (layouts.js)   // an M car's KOMBI: its two boxes in the middle (layouts.js)
             boxBezel: settings.get('boxBezel') === 'on',   // (off: the box sits on the plain background)
             vehicle: D.vehicle().vehicle,      // set, or found from the car (Auto)
         });
