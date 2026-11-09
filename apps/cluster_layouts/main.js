@@ -82,14 +82,9 @@ mgu.run({
             return settings.get('background') === 'tinted' ? t : Object.assign({}, t, BLACK);
         };
         const look = () => lookNow(settings.get('look'), data());
-        /* the renderer target: the panel (slot 0x203), or as an experiment the KOMBI's other free full-cluster
-         * slots: in 0x203 the HMI's own cluster screen goes down and the KOMBI shows its fallback gear box; another
-         * slot may keep it up. A change starts a fresh connection. Only the eroobeeroo/idrive-apps renderer build
-         * offers the experimental slots (its hello lists panel201 and panel202); with any other renderer, such as
-         * the Store's own, the layout falls back to the panel instead of waiting on a target that isn't there. */
-        const SLOTS = { '0x203': 'panel', '0x201': 'panel201', '0x202': 'panel202' };
-        let client = null, slotFallback = false;
-        const wantedTarget = () => (slotFallback ? 'panel' : SLOTS[settings.get('clusterSlot')] || 'panel');
+        /* the renderer target: the panel (slot 0x203), where the HMI's own cluster screen goes down and the
+         * KOMBI shows its fallback gear box */
+        let client = null;
         const start = () => startCluster({
             client: (client = new ClusterRender('cluster_layouts')),
             layout: () => layout,
@@ -97,7 +92,7 @@ mgu.run({
             theme: () => themeNow(),
             enabled: showing,
             sweep: () => settings.get('sweep') !== 'off',
-            target: wantedTarget(),
+            target: 'panel',
             onFresh: D.onFresh,
         });
         let cluster = start();
@@ -109,13 +104,6 @@ mgu.run({
             // the vehicle found (Settings > Vehicle: Auto): the layout redrawn for it once known
             const v = D.vehicle().vehicle;
             if (v !== lastVehicle) { if (lastVehicle) cluster.rebuild(); lastVehicle = v; }
-            // an experimental slot the renderer doesn't offer: back to the panel (0x203)
-            const tg = wantedTarget();
-            if (tg !== 'panel' && client && client.targets && String(client.targets).split(',').every((x) => x.split(':')[0] !== tg)) {
-                log.warn('Cluster slot ' + settings.get('clusterSlot') + ': this renderer has no ' + tg + ' target (' + client.targets + '), using 0x203');
-                slotFallback = true;
-                cluster.stop(); cluster = start();
-            }
             // drive mode and gear changes in the log (timestamped), beside the cluster's target changes: what the
             // KOMBI does to the layout on a mode change (the stock cluster back for a few seconds) shows in one log
             const dn = data(), mg = (dn.driveMode || '-') + ' / ' + (dn.gear == null ? '-' : dn.gear);
@@ -125,7 +113,6 @@ mgu.run({
             }
         }, 500);
         settings.onChange((k) => {
-            if (k === 'clusterSlot') { slotFallback = false; cluster.stop(); cluster = start(); return; }
             if (k === 'look' || k === 'background') return cluster.recolour();
             if (k === 'layout') layout = byId(settings.get('layout'));
             if (['layout', 'centre', 'speedUnit', 'tempUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'vehicle', 'tankLitres', 'batteryReads'].indexOf(k) >= 0) cluster.rebuild();

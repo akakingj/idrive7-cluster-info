@@ -1,7 +1,7 @@
 # Cluster Info
 
 A small panel of live values over the Waze map in the instrument cluster or on the HUD (with
-[Waze on cluster](https://github.com/eroobeeroo/idrive-apps)), and turn signal arrows on the HUD. For any car.
+[Waze on cluster](https://github.com/robertnisipeanu/idrive-apps)), and turn signal arrows on the HUD. For any car.
 
 - **Its own values from the car:** engine oil and coolant temperature, boost (the car's sport display signal),
   engine speed and torque, the turn signals, day / night (the HUD

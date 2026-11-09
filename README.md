@@ -24,13 +24,16 @@ refund.**
 ## Installing
 
 Add this repository as a source in the [MGU Store](https://github.com/robertnisipeanu/mgu-store) and install the
-apps you want; the head unit builds each one from source. They also need:
+apps you want; the head unit builds each one from source. What they need comes from the Store's own sources,
+which it installs with them:
 
-- **[eroobeeroo/idrive7-apps](https://github.com/eroobeeroo/idrive7-apps) as a source too.** The apps require its
-  GPU renderer (`idrive7-renderd`) and controller gate (`mgu-inputgate`), and the Store installs them from there.
-  That repository also has **eDrive Live**, which shares the battery's power and temperature with these apps.
-- **[eroobeeroo/idrive-apps](https://github.com/eroobeeroo/idrive-apps)**: Waze on cluster, the map Cluster Info
-  sits on, and the cluster renderer (`cluster-render`) that Cluster Layouts and Cluster Centre draw with.
+- the GPU renderer (`idrive7-renderd`) and controller gate (`mgu-inputgate`) from
+  [cauliflowermossgrape/idrive7-apps](https://github.com/cauliflowermossgrape/idrive7-apps);
+- the cluster renderer (`cluster-render`) that Cluster Layouts and Cluster Centre draw with, and Waze on cluster,
+  the map Cluster Info sits on, from [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps).
+
+[eroobeeroo/idrive7-apps](https://github.com/eroobeeroo/idrive7-apps) is optional: it has **eDrive Live**, which
+shares the battery's power and temperature with these apps.
 
 Cluster Info is in eroobeeroo/idrive7-apps as well. Install it from only one of the two: if both are installed,
 the Store adds the second beside the first as a separate app (`cluster_info2`).
@@ -38,7 +41,7 @@ the Store adds the second beside the first as a separate app (`cluster_info2`).
 ## Cluster Info
 
 A small panel of up to three live values over the Waze map in the instrument cluster or on the HUD, and turn
-signal arrows on the HUD. It works with [Waze on cluster](https://github.com/eroobeeroo/idrive-apps), which puts
+signal arrows on the HUD. It works with [Waze on cluster](https://github.com/robertnisipeanu/idrive-apps), which puts
 the map there. What it shows, its settings and how other apps can give it values are in
 [apps/cluster_info/README.md](apps/cluster_info/README.md).
 

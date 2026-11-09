@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.13.1",
+  "version": "0.13.2",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -297,26 +297,6 @@
         [
           "on",
           "On: a grey frame round the box"
-        ]
-      ]
-    },
-    {
-      "key": "clusterSlot",
-      "label": "Advanced: cluster slot (leave on 0x203)",
-      "type": "choice",
-      "default": "0x203",
-      "options": [
-        [
-          "0x203",
-          "0x203 (normal)"
-        ],
-        [
-          "0x201",
-          "0x201 (test only: the eroobeeroo renderer build; else 0x203)"
-        ],
-        [
-          "0x202",
-          "0x202 (test only: the eroobeeroo renderer build; else 0x203)"
         ]
       ]
     },

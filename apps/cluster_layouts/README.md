@@ -133,8 +133,8 @@ charge signal in the head unit's own catalog. A photo of those pages is what's n
 still reads `--`.
 
 **Needs Cluster renderer 0.4.2 or later**, the Store's own (it draws 64 layers an app, and every piece of a
-layout is a layer); the Store installs it with the app. The eroobeeroo/idrive-apps build isn't needed: it only
-adds the experimental 0x201 and 0x202 choices of Settings > Cluster slot, which fall back to 0x203 without it.
+layout is a layer), from [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps), one of
+the Store's own sources; the Store installs it with the app.
 
 **Logs.** The apps can't be reached from a phone over Wi-Fi: the head unit's firewall lets nothing connect
 in, and an app's traffic out only through what the uplink allows. Instead, **Logs** on Cluster Layouts' page
@@ -211,9 +211,9 @@ the KOMBI carries about 11.5 MB/s for everything, including the HMI's own conten
 
 ## Install on the car
 
-1. Have [idrive-apps](https://github.com/eroobeeroo/idrive-apps) (cluster-render, with waze-on-cluster)
-   and [idrive7-apps](https://github.com/eroobeeroo/idrive7-apps) (the GPU renderer and controller gate)
-   installed from the Store, as now.
+1. Nothing else to add first: the Store installs what the apps need from its own sources, the cluster
+   renderer from [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps) and the GPU
+   renderer and controller gate from [cauliflowermossgrape/idrive7-apps](https://github.com/cauliflowermossgrape/idrive7-apps).
 2. In the Store, add the GitHub repository `eroobeeroo/idrive7-cluster-info` as a source. The head unit builds
    the apps from source; no token is needed.
 3. Open **Cluster Layouts** and press **Show on the cluster**. Settings: layout, colours (Auto follows S / M),

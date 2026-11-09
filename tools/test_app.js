@@ -89,15 +89,6 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
         const texts = eng()._pieces().filter((p) => p.text !== null).map((p) => p.text);
         assert(texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
     });
-    // Settings > Cluster slot 0x201 with a renderer that has no panel201 (the Store's own): back to the panel
-    ctx.settings.set('clusterSlot', '0x201');
-    client.targets = 'map:1088x480,panel:1920x720,hud:800x480';
-    await sleep(1200);
-    check('an experimental slot the renderer lacks: the layout falls back to 0x203', () => {
-        assert(warns.some((w) => /no panel201 target .* using 0x203/.test(w)), JSON.stringify(warns));
-        const targets = Array.from(client.layers.values()).filter((l) => l.kind !== 'asset').map((l) => l.opts.target);
-        assert(targets.length && targets.every((t) => t === 'panel'), JSON.stringify(targets));
-    });
     console.log(ok + ' passed');
     process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });
