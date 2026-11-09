@@ -490,6 +490,10 @@
         [
           "eet",
           "Eastern Europe"
+        ],
+        [
+          "utc+9",
+          "Korea / Japan (UTC+9)"
         ]
       ]
     },
