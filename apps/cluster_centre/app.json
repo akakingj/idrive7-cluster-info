@@ -556,9 +556,9 @@
     },
     {
       "key": "warmTarget",
-      "label": "Oil warm at (\u00b0C)",
+      "label": "Oil warm at (°C)",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 90,
       "steps": [
         70,
@@ -682,9 +682,9 @@
     },
     {
       "key": "oilHigh",
-      "label": "Warn: oil above (\u00b0C)",
+      "label": "Warn: oil above (°C)",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 130,
       "steps": [
         110,
@@ -698,9 +698,9 @@
     },
     {
       "key": "coolantHigh",
-      "label": "Warn: coolant above (\u00b0C)",
+      "label": "Warn: coolant above (°C)",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 118,
       "steps": [
         105,
@@ -713,9 +713,9 @@
     },
     {
       "key": "iatHigh",
-      "label": "Warn: intake air above (\u00b0C)",
+      "label": "Warn: intake air above (°C)",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 60,
       "steps": [
         40,
@@ -729,9 +729,9 @@
     },
     {
       "key": "gearboxHigh",
-      "label": "Warn: gearbox above (\u00b0C)",
+      "label": "Warn: gearbox above (°C)",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 115,
       "steps": [
         100,
@@ -744,9 +744,9 @@
     },
     {
       "key": "battTempHigh",
-      "label": "Warn: battery above (\u00b0C)",
+      "label": "Warn: battery above (°C)",
       "type": "number",
-      "unit": "\u00b0C",
+      "unit": "°C",
       "default": 42,
       "steps": [
         35,
