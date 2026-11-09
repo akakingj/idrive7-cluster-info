@@ -174,7 +174,7 @@ module.exports = {
             C.text('speedDigits', 50, 196, 360, 170, (d) => C.speedText(o, d), big, { chars: 4 }),
             C.text('speedUnit', 60, 368, 340, 24, C.speedUnit(o), lbl, { tracking: 0.2 }),
             label('kwL', 70, 424, 320, C.focus.powerLabel(o, true)),
-            C.text('kw', 66, 446, 340, 72, engine ? C.torqueText : (d) => (isNum(d.kw) ? (d.kw > 0.05 ? '+' : '') + (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : Math.round(d.kw)) + ' kW' : '--'),
+            C.text('kw', 66, 446, 340, 72, engine ? C.torqueText(o) : (d) => (isNum(d.kw) ? (d.kw > 0.05 ? '+' : '') + (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : Math.round(d.kw)) + ' kW' : '--'),
                 engine ? txt : (t, d) => ({ color: [kw(d) < -0.3 ? t.regen : t.text, 1], glow: [kw(d) < -0.3 ? t.regen : t.ev, 0.3] }), { align: 0, chars: 9 }),
             // one bar for both ways: drawing (to 100 kW) in blue, charging and regenerating (to 60 kW) in green
             engine ? bar('power', 70, 526, 320, 12, C.focus.torqueFrac, barC('fill1'))

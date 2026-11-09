@@ -118,7 +118,7 @@
         ],
         [
           "torque",
-          "Engine torque (Nm)"
+          "Engine torque"
         ]
       ]
     },
@@ -162,7 +162,7 @@
         ],
         [
           "torque",
-          "Engine torque (Nm)"
+          "Engine torque"
         ]
       ]
     },
@@ -206,7 +206,7 @@
         ],
         [
           "torque",
-          "Engine torque (Nm)"
+          "Engine torque"
         ]
       ]
     },
@@ -307,6 +307,22 @@
         [
           "c",
           "Celsius"
+        ]
+      ]
+    },
+    {
+      "key": "torqueUnit",
+      "label": "Torque unit",
+      "type": "choice",
+      "default": "nm",
+      "options": [
+        [
+          "nm",
+          "Nm"
+        ],
+        [
+          "kgm",
+          "kgm"
         ]
       ]
     },
