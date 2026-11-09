@@ -182,7 +182,8 @@ car is taken to have the same cluster. What differs between cars is a setting, o
   them by `tools/clearance.js`).
 
 **Clock:** the unit runs its apps on UTC, so both apps take the time zone from Settings > Time zone (US
-Eastern by default; US and EU daylight saving built in) and Settings > Clock (12- or 24-hour).
+Eastern by default; US and EU daylight saving built in; Korea / Japan as a fixed UTC+9) and Settings > Clock
+(12- or 24-hour).
 
 ## How it gets onto the cluster
 
