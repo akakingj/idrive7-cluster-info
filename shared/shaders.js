@@ -765,38 +765,97 @@ void main() {
 }`;
 
 /**
- * A road ahead in perspective: two lanes' edges converging to a point above the layer, the lane line between
- * them dashed and running towards the viewer with the speed (on the renderer's clock: only the speed is sent),
- * a soft glow along the edges, the surface faintly lit, fading out at the horizon.
+ * The road ahead in perspective, drawn as the car's driving assistant sees it: three lanes converging to a point
+ * above the layer, the car seen from behind at the bottom, and from the assistant (u_dap valid) the car it
+ * follows, the nearest car in each lane beside, the lane held by the steering assist (its edges lit), lane
+ * departure (that edge in the warning colour) and lane change warnings (that car in it), and the cruise control's
+ * gap as bars ahead of the car. The ego lane's edges are dashed and run with the speed when nothing is held (on
+ * the renderer's clock: only the speed and the assistant's state are sent).
  *   u_value   the speed 0..1 (how fast the dashes run)
+ *   u_dap     valid, steering assist, cruise control on, its gap (bars)
+ *   u_lead    present, depth (0 at the horizon, 1 at the car), lanes to the left, brake lights
+ *   u_side    the left lane's car's depth (0: none), the right's, lane change warning left, right
+ *   u_ldw     lane departure warning left, right
  */
 const ROAD_FS = `#version 100
 ${HIGHP}${COMMON}
 uniform vec2 u_size;
 uniform highp float u_time;
 uniform float u_value;
+uniform vec4 u_dap;
+uniform vec4 u_lead;
+uniform vec4 u_side;
+uniform vec2 u_ldw;
 uniform vec3 u_line;
 uniform vec3 u_glow;
 uniform vec3 u_surface;
+uniform vec3 u_assist;
+uniform vec3 u_acc;
+uniform vec3 u_warn;
+uniform vec3 u_car;
+uniform vec3 u_ego;
 varying vec2 v_uv;
 float lineA(float dx, float w) { return clamp(w - abs(dx) + 0.5, 0.0, 1.0); }
+float rbox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
+/* a car from behind, its bottom centre at b, w wide: body, rear window, lamps (bright when braking), a halo */
+vec4 car(vec4 acc, vec2 p, vec2 b, float w, vec3 body, float brake, vec3 halo, float haloA) {
+    float h = w * 0.62;
+    vec2 q = p - (b - vec2(0.0, h * 0.5));
+    float d = rbox(q, vec2(w * 0.5, h * 0.5), w * 0.16);
+    acc = over(acc, halo, haloA * exp(-max(d, 0.0) / (w * 0.10)) * step(0.0, d));
+    acc = over(acc, vec3(0.0), 0.45 * clamp(1.0 - abs(q.y - h * 0.5) / (h * 0.12), 0.0, 1.0) * step(abs(q.x), w * 0.56));
+    acc = over(acc, body, clamp(0.5 - d, 0.0, 1.0));
+    acc = over(acc, mix(body, vec3(1.0), 0.25), clamp(0.5 - d, 0.0, 1.0) * smoothstep(0.0, -h * 0.5, q.y) * 0.35);
+    float dw = rbox(q - vec2(0.0, -h * 0.2), vec2(w * 0.34, h * 0.15), w * 0.07);
+    acc = over(acc, body * 0.35, clamp(0.5 - dw, 0.0, 1.0) * 0.9);
+    float dl = rbox(vec2(abs(q.x) - w * 0.37, q.y + h * 0.06), vec2(w * 0.1, h * 0.06), h * 0.04);
+    vec3 lamp = vec3(1.0, 0.16, 0.12);
+    acc = over(acc, lamp * (0.55 + 0.45 * brake), clamp(0.5 - dl, 0.0, 1.0));
+    acc = over(acc, lamp, brake * 0.55 * exp(-max(dl, 0.0) / (w * 0.07)));
+    return acc;
+}
 void main() {
     vec2 p = v_uv * u_size;
-    float h0 = u_size.y * 0.22;
-    float t = (p.y + h0) / (u_size.y + h0);               /* 0 at the vanishing point, 1 at the bottom */
-    float cx = u_size.x * 0.5, hw = t * u_size.x * 0.47, dx = p.x - cx, ax = abs(dx);
+    float H = u_size.y, W = u_size.x, h0 = H * 0.22;
+    float t = (p.y + h0) / (H + h0);                       /* 0 at the vanishing point, 1 at the bottom */
+    float cx = W * 0.5, hw = t * W * 0.155, dx = p.x - cx, ax = abs(dx);
     float z = 1.0 / max(t, 0.05);
     float run = fract(z * 1.4 + u_time * (0.25 + 2.2 * clamp(u_value, 0.0, 1.0)));
     float dash = smoothstep(0.42, 0.46, run) * (1.0 - smoothstep(0.86, 0.9, run));
-    float w = 0.8 + 2.6 * t;
-    float edge = lineA(ax - hw, w);
-    float mid = lineA(dx, w * 0.8) * dash;
-    float glow = exp(-abs(ax - hw) / (4.0 + 16.0 * t)) * 0.45 + exp(-ax / (3.0 + 10.0 * t)) * 0.18 * dash;
-    float fade = smoothstep(0.04, 0.34, t) * (1.0 - smoothstep(0.94, 1.0, t));
-    float onRoad = 1.0 - smoothstep(hw - 1.5, hw + 1.5, ax);
-    vec4 acc = vec4(u_surface, onRoad * (0.10 + 0.30 * t) * fade);
-    acc = over(acc, u_glow, clamp(glow, 0.0, 1.0) * fade);
-    acc = over(acc, u_line, max(edge, mid * 0.85) * fade);
+    float w = 0.8 + 2.4 * t;
+    float fade = smoothstep(0.04, 0.34, t);
+    float valid = u_dap.x, assist = u_dap.y * valid;
+    /* the surface: three lanes, the held one tinted */
+    float onRoad = 1.0 - smoothstep(3.0 * hw - 1.5, 3.0 * hw + 1.5, ax);
+    vec4 acc = vec4(u_surface, onRoad * (0.08 + 0.26 * t) * fade);
+    acc = over(acc, u_assist, assist * (1.0 - smoothstep(hw - 1.0, hw + 1.0, ax)) * 0.16 * fade);
+    /* the outer edges, solid and dim; the ego lane's: held (lit), warning, or dashed and running */
+    float outer = lineA(ax - 3.0 * hw, w * 0.8);
+    acc = over(acc, u_line, outer * 0.45 * fade);
+    float left = dx < 0.0 ? 1.0 : 0.0;
+    float warn = valid * mix(u_ldw.y, u_ldw.x, left);
+    float egoE = lineA(ax - hw, w);
+    vec3 ec = warn > 0.5 ? u_warn : assist > 0.5 ? u_assist : u_line;
+    float ea = (warn > 0.5 || assist > 0.5) ? egoE : egoE * dash;
+    acc = over(acc, ec, exp(-abs(ax - hw) / (3.0 + 12.0 * t)) * (0.25 + 0.35 * max(warn, assist)) * fade);
+    acc = over(acc, ec, ea * fade);
+    /* the cruise control's gap: bars ahead of the car */
+    if (u_dap.z * valid > 0.5) {
+        for (int i = 0; i < 6; i++) {
+            if (float(i) < u_dap.w) {
+                float tb = 0.82 - float(i) * 0.055, yb = tb * (H + h0) - h0;
+                float bar = clamp(1.6 + 1.8 * tb - abs(p.y - yb) + 0.5, 0.0, 1.0) * step(ax, tb * W * 0.155 * 0.62);
+                acc = over(acc, u_acc, bar * 0.9);
+            }
+        }
+    }
+    /* the cars beside, then the one followed, then ours */
+    float tL = u_side.x * valid, tR = u_side.y * valid;
+    if (tL > 0.0) acc = car(acc, p, vec2(cx - 2.0 * tL * W * 0.155, tL * (H + h0) - h0), 1.08 * tL * W * 0.155, mix(u_car, u_warn, u_side.z), 0.0, u_warn, 0.6 * u_side.z);
+    if (tR > 0.0) acc = car(acc, p, vec2(cx + 2.0 * tR * W * 0.155, tR * (H + h0) - h0), 1.08 * tR * W * 0.155, mix(u_car, u_warn, u_side.w), 0.0, u_warn, 0.6 * u_side.w);
+    float tl = u_lead.y;
+    if (u_lead.x * valid > 0.5) acc = car(acc, p, vec2(cx - u_lead.z * 2.0 * tl * W * 0.155, tl * (H + h0) - h0), 1.08 * tl * W * 0.155, u_car, u_lead.w, u_acc, 0.7 * u_dap.z);
+    acc = car(acc, p, vec2(cx, H - 3.0), 1.1 * W * 0.155, u_ego, 0.0, u_glow, 0.35);
     gl_FragColor = acc;
 }`;
 

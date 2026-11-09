@@ -56,11 +56,24 @@ const hbar = (key, x, y, w, h, value, colours, fromRight, segments) => ({ key, k
     params: { u_geo: [Math.max(6, h / 2), h / 2, 0, Math.max(4, h * 0.6)], u_span: [fromRight ? -1 : 0, 0, segments || 0, 0.25], u_marks: [0, 0, 0, 0], u_red: [2] },
     colors: colours, value, max: 1, sweep: true });
 const kwOf = (d) => (C.isNum(d.kw) ? d.kw : 0);
+const KW_MAX = 100;
+/* the driving assistant's state as the road shader's uniforms: a distance d metres ahead at depth 1/(1 + d/16) */
+const depth = (x) => (typeof x === 'number' && x > 0 ? 1 / (1 + x / 16) : 0);
+function roadState(D) {
+    if (!D) return { u_dap: [0, 0, 0, 0], u_lead: [0, 0, 0, 0], u_side: [0, 0, 0, 0], u_ldw: [0, 0] };
+    const r2 = (v) => Math.round(v * 100) / 100, L = D.lead;
+    return {
+        u_dap: [1, D.assist ? 1 : 0, D.acc && D.acc.on ? 1 : 0, D.acc && D.acc.on && D.acc.gap ? D.acc.gap : 0],
+        u_lead: L ? [1, r2(depth(L.x)), r2(typeof L.y === 'number' ? L.y / 3.6 : 0), L.brake ? 1 : 0] : [0, 0, 0, 0],
+        u_side: [D.left ? r2(depth(D.left.x)) : 0, D.right ? r2(depth(D.right.x)) : 0, D.lcw && D.lcw.left ? 1 : 0, D.lcw && D.lcw.right ? 1 : 0],
+        u_ldw: [D.ldw && D.ldw.left ? 1 : 0, D.ldw && D.ldw.right ? 1 : 0],
+    };
+}   // the tach as a power gauge, and the small gauge inside it: kW of battery draw
 
 function newCar(o, arcs, gearC, rpmTxt) {
     const engine = C.engineFocus(o), sc = C.speedScale(o);
-    const hair = arcs.map((a) => Object.assign({}, a, {
-        key: a.key + 'Hair', z: -1,
+    const hair = arcs.filter((a) => a.key !== 'pwrArc').map((a) => Object.assign({}, a, {
+        key: a.key + 'Hair', z: -1, dyn: undefined,
         params: Object.assign({}, a.params, { u_geo: [a.params.u_geo[0], a.params.u_geo[1], a.params.u_geo[2] + 30, 3], u_span: [a.params.u_span[0], a.params.u_span[1], 0, 0], u_marks: [0, 0, 0, 0], u_red: [2] }),
         colors: (t) => ({ track: t.rule, fill0: t.fill1, fill1: t.tip, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
     }));
@@ -74,8 +87,13 @@ function newCar(o, arcs, gearC, rpmTxt) {
     };
     return [
         { key: 'bgTex', kind: 'bg', x: 0, y: 0, w: 1920, h: 720, params: { u_look: [1, 0.55, 0.75, 24], u_feather: [0] }, colors: (t) => ({ top: t.bgTop, bottom: t.bgBottom, accent: t.glow }) },
+        // the road ahead as the driving assistant sees it (dap.js: d.dap; without it, the lanes and the car alone)
         { key: 'road', kind: 'road', x: 650, y: 346, w: 620, h: 296, value: (d) => (C.isNum(d.speed) ? Math.min(1, C.speedIn(o, d.speed) / sc.max) : 0), max: 1,
-            colors: (t) => ({ line: t.tip, glow: t.glow, surface: t.road }) },
+            colors: (t) => ({ line: t.tip, glow: t.glow, surface: t.road, assist: t.regen, acc: t.glow, warn: '#ff9f0a', car: '#8d9aa8', ego: '#dfe7ef' }),
+            dyn: (d) => roadState(d.dap) },
+        // the cruise control's set speed and the steering assist, at the top of the road while they're on
+        C.text('accSet', 660, 350, 200, 26, (d) => (d.dap && d.dap.acc && d.dap.acc.on && C.isNum(d.dap.acc.set) ? 'SET ' + d.dap.acc.set : ''), (t) => ({ color: [t.glow, 1], glow: [t.glow, 0.5] }), { align: 0 }),
+        C.text('assistOn', 1060, 350, 200, 26, (d) => (d.dap && d.dap.assist ? 'ASSIST' : ''), (t) => ({ color: [t.regen, 1], glow: [t.regen, 0.5] }), { align: 1, tracking: 0.14 }),
     ].concat(hair, arcs, [
         // the top: the time and the outside temperature, inside the glass's slanted corners
         C.text('clock', 330, 136, 240, 42, C.clock, txt, { align: 0 }),
@@ -124,6 +142,8 @@ module.exports = {
 
     pieces(o) {
         const s = C.speedScale(o), r = C.rpmScale(o);
+        // a plug-in hybrid (Show: eDrive): the tach turns into the battery's power gauge while the engine is off
+        const ev = !C.engineFocus(o) && o.vehicle !== 'ice', evOff = (d) => ev && d.engineOn === false;
         // with the car's own bottom strip the arcs end higher, clear of it and of the fuel and charge gauges
         // above its ranges (their low ends 6 degrees shorter, their circle 20 px higher)
         const strip = C.strip(o), cy = strip ? CY - 20 : CY, lo = strip ? 112 : 118;
@@ -135,14 +155,26 @@ module.exports = {
                 colors: bandColours, value: (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) / s.max : 0), max: 1, sweep: true,
             },
             {
-                // engine speed: up the right
+                // engine speed up the right; on a plug-in hybrid with the engine off, the battery's power instead
+                // (0-100 kW, its numerals and colour changed by dyn), the engine speed back as soon as it runs
                 key: 'rpmArc', kind: 'band', x: R_LAYER.x, y: R_LAYER.y, w: R_LAYER.w, h: R_LAYER.h,
                 params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R, T], u_span: [lo, 62, 44, 0.3], u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max] },
-                colors: bandColours, value: (d) => (C.isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true,
+                colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.road, fill1: t.ev, tip: t.tip }) : bandColours(t)),
+                value: (d) => (evOff(d) ? Math.max(0, Math.min(1, kwOf(d) / KW_MAX)) : C.isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true,
+                dyn: (d) => (evOff(d) ? { u_marks: [4, KW_MAX / 4, 22, 44], u_red: [2] } : { u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max] }),
             },
         ];
+        // inside the tach, a small power gauge: the battery's draw while the engine runs; with the engine off
+        // (the tach then reads the draw) the recuperation, in green
+        if (ev && strip) arcs.push({   // (full screen it would reach into the KOMBI's gear box)
+            key: 'pwrArc', kind: 'band', x: R_LAYER.x, y: R_LAYER.y, w: R_LAYER.w, h: R_LAYER.h,
+            params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R - 52, 10], u_span: [lo, 62, 30, 0.3], u_marks: [0, 0, 0, 0], u_red: [2] },
+            colors: (t, d) => (evOff(d) ? { track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.tick, num: t.num }
+                : { track: t.track, fill0: t.road, fill1: t.ev, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
+            value: (d) => (evOff(d) ? Math.max(0, Math.min(1, -kwOf(d) / 60)) : Math.max(0, Math.min(1, kwOf(d) / KW_MAX))), max: 1, sweep: true,
+        });
         const gearC = (t, d) => ({ color: [C.gearText(d) === 'R' ? '#ff3b30' : t.text, 1], glow: [t.glow, 0.45] });
-        const rpmTxt = (d) => (C.isNum(d.rpm) ? Math.round(d.rpm / 50) * 50 + ' RPM' : '-- RPM');
+        const rpmTxt = (d) => (evOff(d) ? 'ENGINE OFF' : C.isNum(d.rpm) ? Math.round(d.rpm / 50) * 50 + ' RPM' : '-- RPM');
         const hotC = (k, lim) => (t, d) => ({ color: [C.isNum(d[k]) && d[k] >= lim ? '#ff3b30' : t.text, 1], glow: [t.glow, 0] });
         if (o.centre === 'map') {
             // the arcs bulge out to x ~200 / ~1720; the speed and gear sit between them and the map

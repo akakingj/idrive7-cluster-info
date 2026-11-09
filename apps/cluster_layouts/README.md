@@ -42,7 +42,17 @@ toward you with the speed, animated by the cluster itself), the selector and dri
 the speed, the gear and engine speed on one right of it, a glass card on the left with the battery's power, a
 centre-zero bar (regenerating left, drawing right) and its trend, and one on the right with oil, coolant, the
 charge and the xDrive split, each with its icon, over a softly lit, finely dotted background. Its colours follow
-the drive mode. Full screen or with the map, it keeps its earlier layout.
+the drive mode. On a plug-in hybrid the right arc
+turns into the battery's power gauge (0-100 kW) while the engine is off, and is the tach again, with a small power
+gauge inside it, as soon as the engine runs.
+
+The road shows what the car's driving assistant sees, from the same feeds as BMW's assisted driving view: your car
+from behind, the car the cruise control follows (its tail lights lit when it brakes), the nearest car in each lane
+beside (orange with a lane change warning), the lane edges green while the steering assist holds the lane (orange
+on a lane departure warning), the cruise control's gap as bars ahead of your car, and its set speed and ASSIST over
+the road. Without the assistant (or on a car without it) the road shows the lanes and your car alone. The feeds
+haven't been read on a car yet: each source's first values go to the log ('dap raw ...'), and how far a unit of an
+object's position is lives in config.dap.posScale, to be set from a drive's log. Full screen or with the map, it keeps its earlier layout.
 
 ![Modern wide](../../docs/modern_wide.png)
 

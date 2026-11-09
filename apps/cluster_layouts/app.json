@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.18.1",
+  "version": "0.19.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -67,6 +67,30 @@
     "de.bmw.chassis.SteeringAngle": {
       "_optional": "the steering angle (the Steering page)",
       "ActualSteeringAngleDriver": "s"
+    },
+    "de.bmw.dass.AssistedDrivingViewFunctionInput": {
+      "_broadcasts": [
+        "assistedDrivingViewFunctionInputIbVip"
+      ],
+      "_optional": "Modern wide's road: the cruise control's state, set speed and gap"
+    },
+    "de.bmw.dass.pad.communication.AssistedDrivingViewLateralFunctionInput": {
+      "_broadcasts": [
+        "lateralFunctionInputAssistedDrivingView"
+      ],
+      "_optional": "Modern wide's road: the steering assist holding the lane"
+    },
+    "de.bmw.dass.driverassistanceapplications.AssistedDrivingViewLateralCollisionAvoidance": {
+      "_broadcasts": [
+        "assistedDrivingViewLcaInput"
+      ],
+      "_optional": "Modern wide's road: lane departure and lane change warnings"
+    },
+    "de.bmw.dass.pad.communication.ObjectListSuAAR": {
+      "_broadcasts": [
+        "suAARObjectList"
+      ],
+      "_optional": "Modern wide's road: the cars ahead and beside"
     }
   },
   "screens": [
@@ -1041,6 +1065,10 @@
           "max": 100
         }
       ]
+    },
+    "dap": {
+      "posScale": 0.01,
+      "note": "Modern wide's road (dap.js): metres a unit of an object's x and y in ObjectListSuAAR (not yet seen on a car: check 'dap raw objects' in the log against a car followed at a known distance)"
     }
   },
   "requires": {

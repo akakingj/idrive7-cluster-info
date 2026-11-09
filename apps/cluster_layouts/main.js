@@ -25,6 +25,7 @@ const { byId } = require('./layouts');
 const { lookNow } = require('./themes');
 const { startData } = require('./data');
 const presence = require('./presence');
+const { startDap, DEMO: DAP_DEMO } = require('./dap');
 const { findSignals } = require('./signal_finder');
 const logs = require('./logs');
 const attribution = require('./attribution');
@@ -57,7 +58,15 @@ mgu.run({
         // what a layout needs (layout.needs), eDrive Live's charge and power while shown
         const D = startData(ctx, { shown: showing });
         const car = D.car;
-        const data = () => D.data();
+        // the driving assistant (dap.js), for Modern wide's road: subscribed once that layout is first shown
+        let dap = null;
+        const dapWanted = () => showing() && settings.get('layout') === 'modern_wide';
+        const data = () => {
+            const d = D.data();
+            if (!dap && dapWanted() && !d.demo) dap = startDap(ctx, log);
+            d.dap = d.demo ? DAP_DEMO : dap ? dap.state() : null;
+            return d;
+        };
         const options = () => ({
             speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), torqueUnit: settings.get('torqueUnit'),
             // Cluster Centre's pages sit in the same window as the map: the layout leaves it clear for either
@@ -158,6 +167,7 @@ mgu.run({
                 ['cluster renderer status', squeeze(cluster.rendererStatus() || '(no answer yet)', full)],
                 ['data now', JSON.stringify(snap)],
                 ['raw signals', JSON.stringify(D.status().raw || {})],
+                ['driving assistant (Modern wide)', dap ? JSON.stringify(dap.status()) + '\nnow ' + JSON.stringify(dap.state()) : 'not started (Modern wide not shown yet)'],
                 ['vehicle', (() => { const v = D.vehicle(); return v.vehicle + ' (' + v.how + ': ' + v.why + ')'; })()],
                 ['data status', JSON.stringify(Object.assign({}, D.status(), { raw: undefined }))],
                 // the car's own names for these (its service catalog): what to declare for the electric range
