@@ -764,4 +764,40 @@ void main() {
     gl_FragColor = vec4(a > 0.0 ? min(col / max(a, 0.001), vec3(1.0)) : vec3(0.0), a);
 }`;
 
-module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS };
+/**
+ * A road ahead in perspective: two lanes' edges converging to a point above the layer, the lane line between
+ * them dashed and running towards the viewer with the speed (on the renderer's clock: only the speed is sent),
+ * a soft glow along the edges, the surface faintly lit, fading out at the horizon.
+ *   u_value   the speed 0..1 (how fast the dashes run)
+ */
+const ROAD_FS = `#version 100
+${HIGHP}${COMMON}
+uniform vec2 u_size;
+uniform highp float u_time;
+uniform float u_value;
+uniform vec3 u_line;
+uniform vec3 u_glow;
+uniform vec3 u_surface;
+varying vec2 v_uv;
+float lineA(float dx, float w) { return clamp(w - abs(dx) + 0.5, 0.0, 1.0); }
+void main() {
+    vec2 p = v_uv * u_size;
+    float h0 = u_size.y * 0.22;
+    float t = (p.y + h0) / (u_size.y + h0);               /* 0 at the vanishing point, 1 at the bottom */
+    float cx = u_size.x * 0.5, hw = t * u_size.x * 0.47, dx = p.x - cx, ax = abs(dx);
+    float z = 1.0 / max(t, 0.05);
+    float run = fract(z * 1.4 + u_time * (0.25 + 2.2 * clamp(u_value, 0.0, 1.0)));
+    float dash = smoothstep(0.42, 0.46, run) * (1.0 - smoothstep(0.86, 0.9, run));
+    float w = 0.8 + 2.6 * t;
+    float edge = lineA(ax - hw, w);
+    float mid = lineA(dx, w * 0.8) * dash;
+    float glow = exp(-abs(ax - hw) / (4.0 + 16.0 * t)) * 0.45 + exp(-ax / (3.0 + 10.0 * t)) * 0.18 * dash;
+    float fade = smoothstep(0.04, 0.34, t) * (1.0 - smoothstep(0.94, 1.0, t));
+    float onRoad = 1.0 - smoothstep(hw - 1.5, hw + 1.5, ax);
+    vec4 acc = vec4(u_surface, onRoad * (0.10 + 0.30 * t) * fade);
+    acc = over(acc, u_glow, clamp(glow, 0.0, 1.0) * fade);
+    acc = over(acc, u_line, max(edge, mid * 0.85) * fade);
+    gl_FragColor = acc;
+}`;
+
+module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS, ROAD_FS };

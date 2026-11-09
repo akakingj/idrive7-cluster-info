@@ -20,16 +20,19 @@ const PALETTES = {
         bgTop: '#0b1018', bgBottom: '#020305', track: '#121a24', fill0: '#1d5f9e', fill1: '#5cc8ff', tip: '#a8e4ff',
         red: '#ff3b30', tick: '#3b4c5e', num: '#9fb3c8', text: '#f2f7ff', glow: '#3fa6ff', dim: '#a6b0ba', rule: '#1c2a3a', ev: '#4ab4ff',
         mode: 'COMFORT',
+        cardTop: '#111b28', cardBottom: '#070b11', cardEdge: '#2a4058', regen: '#3ddc84', road: '#1d5f9e',
     },
     sport: {
         bgTop: '#140909', bgBottom: '#040202', track: '#241414', fill0: '#8a1a14', fill1: '#ff4a30', tip: '#ffb0a0',
         red: '#ffffff', tick: '#5e3b3b', num: '#d8a8a0', text: '#ffffff', glow: '#ff3b2f', dim: '#bca8a4', rule: '#3a1c1c', ev: '#4ab4ff',
         mode: 'SPORT',
+        cardTop: '#1f1010', cardBottom: '#0a0505', cardEdge: '#5a2a26', regen: '#3ddc84', road: '#8a1a14',
     },
     efficient: {
         bgTop: '#06120f', bgBottom: '#010403', track: '#0f201c', fill0: '#127a5e', fill1: '#3cf0b8', tip: '#b0ffe6',
         red: '#ff3b30', tick: '#2f5048', num: '#9cc8bc', text: '#effffb', glow: '#22d3a0', dim: '#9eb6b0', rule: '#163a32', ev: '#22d3a0',
         mode: 'EFFICIENT',
+        cardTop: '#0c1d19', cardBottom: '#040b09', cardEdge: '#1f4a40', regen: '#5ef2c4', road: '#127a5e',
     },
 };
 const bandColours = (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.tick, num: t.num });
@@ -38,6 +41,80 @@ const txt = (t) => ({ color: [t.text, 1], glow: [t.glow, 0.15] });
 const evTxt = (t) => ({ color: [t.ev, 1], glow: [t.ev, 0.3] });
 const lbl = (t) => ({ color: [t.dim, 1], glow: [t.glow, 0] });
 const bg = (key, x, y, w, h) => ({ key, kind: 'panel', x, y, w, h, params: { u_box: [0, 0, 0, 1] }, colors: (t) => ({ top: t.bgTop, bottom: t.bgBottom, border: t.bgBottom }) });
+
+/* ---- the car's own bottom strip, readings in the centre: a new car's cluster ----
+ * A textured background with a glow behind the top; the two arcs with a hairline outside each; the speed large
+ * in the middle with the road ahead under it (its lane line running with the speed, on the cluster's clock);
+ * the drive selector and mode on a chip left of the speed, the gear and engine speed on one right of it; a glass
+ * card left with the battery's power, a centre-zero bar (regenerating left, drawing right) and its trend, and one
+ * right with oil, coolant, the charge and the xDrive split, each with its icon. */
+const ICON = { thermo: 0, oil: 1, turbo: 5, battery: 6, car: 10 };
+const card = (key, x, y, w, h) => ({ key, kind: 'panel', x, y, w, h, params: { u_box: [22, 1.5, 0.7, 0.92] }, colors: (t) => ({ top: t.cardTop, bottom: t.cardBottom, border: t.cardEdge }) });
+const icon = (key, x, y, size, id, colour) => ({ key, kind: 'icon', x, y, w: size, h: size, params: { u_icon: [id], u_line: [0] }, colors: (t, d) => ({ color: [typeof colour === 'function' ? colour(t, d) : t[colour], 1] }) });
+/** A straight bar (the band shader's bar mode), from the left or from the right. */
+const hbar = (key, x, y, w, h, value, colours, fromRight, segments) => ({ key, kind: 'band', x, y, w, h,
+    params: { u_geo: [Math.max(6, h / 2), h / 2, 0, Math.max(4, h * 0.6)], u_span: [fromRight ? -1 : 0, 0, segments || 0, 0.25], u_marks: [0, 0, 0, 0], u_red: [2] },
+    colors: colours, value, max: 1, sweep: true });
+const kwOf = (d) => (C.isNum(d.kw) ? d.kw : 0);
+
+function newCar(o, arcs, gearC, rpmTxt) {
+    const engine = C.engineFocus(o), sc = C.speedScale(o);
+    const hair = arcs.map((a) => Object.assign({}, a, {
+        key: a.key + 'Hair', z: -1,
+        params: Object.assign({}, a.params, { u_geo: [a.params.u_geo[0], a.params.u_geo[1], a.params.u_geo[2] + 30, 3], u_span: [a.params.u_span[0], a.params.u_span[1], 0, 0], u_marks: [0, 0, 0, 0], u_red: [2] }),
+        colors: (t) => ({ track: t.rule, fill0: t.fill1, fill1: t.tip, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
+    }));
+    const lit = (t) => ({ color: [t.glow, 1], glow: [t.glow, 0.6] });
+    const L = { x: 330, y: 340, w: 300, h: 262 }, R = { x: 1290, y: 340, w: 300, h: 262 };
+    const cell = (i, id, ic, value, label, colour) => {
+        const cx = R.x + 12 + (i % 2) * 144, cy = R.y + 14 + Math.floor(i / 2) * 124;
+        return [icon(id + 'Ic', cx + 6, cy + 6, 30, ic, 'glow'),
+            C.text(id, cx, cy + 40, 132, 46, value, colour || txt, { align: 0 }),
+            C.text(id + 'Lbl', cx + 2, cy + 90, 132, 16, label, lbl, { align: 0, tracking: 0.14 })];
+    };
+    return [
+        { key: 'bgTex', kind: 'bg', x: 0, y: 0, w: 1920, h: 720, params: { u_look: [1, 0.55, 0.75, 24], u_feather: [0] }, colors: (t) => ({ top: t.bgTop, bottom: t.bgBottom, accent: t.glow }) },
+        { key: 'road', kind: 'road', x: 650, y: 346, w: 620, h: 296, value: (d) => (C.isNum(d.speed) ? Math.min(1, C.speedIn(o, d.speed) / sc.max) : 0), max: 1,
+            colors: (t) => ({ line: t.tip, glow: t.glow, surface: t.road }) },
+    ].concat(hair, arcs, [
+        // the top: the time and the outside temperature, inside the glass's slanted corners
+        C.text('clock', 330, 136, 240, 42, C.clock, txt, { align: 0 }),
+        C.text('outside', 1350, 136, 240, 42, (d) => C.outsideText(o, d.outside), txt, { align: 1 }),
+        // the speed, large, in the middle
+        C.text('speedDigits', 700, 140, 520, 176, (d) => C.speedText(o, d), big),
+        C.text('speedUnit', 700, 314, 520, 24, C.speedUnit(o), lbl, { tracking: 0.3 }),
+        // left chip: the selector and the drive mode; right chip: the gear and the engine speed
+        card('selChip', 520, 172, 170, 116),
+    ], 'PRND'.split('').map((ch, i) => C.text('sel' + ch, 534 + i * 36, 186, 34, 34, ch,
+        (t, d) => (C.selectorLit(d) === ch ? { color: [ch === 'R' ? t.red : t.glow, 1], glow: [t.glow, 0.9] } : { color: [t.dim, 1], glow: [t.glow, 0] }))), [
+        C.text('mode', 526, 236, 158, 24, C.modeText, lit, { tracking: 0.18 }),
+        card('gearChip', 1230, 172, 170, 116),
+        C.text('gear', 1230, 176, 170, 86, C.gearText, gearC),
+        C.text('rpmDigits', 1230, 260, 170, 20, rpmTxt, lbl, { tracking: 0.08 }),
+        // left card: the battery's power (or the engine's torque), a centre-zero bar and its trend
+        card('powerCard', L.x, L.y, L.w, L.h),
+        C.text('kwLbl', L.x + 20, L.y + 16, L.w - 40, 18, C.focus.powerLabel(o, true), lbl, { align: 0, tracking: 0.14 }),
+        C.text('kwNow', L.x + 18, L.y + 40, L.w - 36, 58, C.focus.power(o),
+            engine ? txt : (t, d) => ({ color: [kwOf(d) < -0.3 ? t.regen : t.text, 1], glow: [kwOf(d) < -0.3 ? t.regen : t.glow, 0.3] }), { align: 0 }),
+    ], engine ? [hbar('pwrBar', L.x + 20, L.y + 112, L.w - 40, 14, C.focus.torqueFrac, (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 24)] : [
+        // regenerating fills left from the middle (to 60 kW), drawing fills right (to 100 kW)
+        hbar('regenBar', L.x + 20, L.y + 112, (L.w - 44) / 2, 14, (d) => Math.max(0, Math.min(1, -kwOf(d) / 60)), (t) => ({ track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.dim, num: t.num }), true, 10),
+        hbar('drawBar', L.x + 24 + (L.w - 44) / 2, L.y + 112, (L.w - 44) / 2, 14, (d) => Math.max(0, Math.min(1, kwOf(d) / 100)), (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 10),
+        C.flat('pwrZero', L.x + L.w / 2 - 1, L.y + 106, 2, 26, 'tip'),
+    ], [
+        { key: 'pwrTrend', kind: 'spark', x: L.x + 16, y: L.y + 146, w: L.w - 32, h: 96, every: 2000,
+            sample: engine ? (d) => (C.isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : -1) : (d) => (C.isNum(d.kw) ? Math.max(0, Math.min(1, 0.375 + d.kw / 160)) : -1),
+            colors: (t) => ({ line: t.fill1, fill: t.fill0 }) },
+        // right card: oil, coolant, the charge (or boost) and the xDrive split
+        card('infoCard', R.x, R.y, R.w, R.h),
+        C.flat('infoRuleV', R.x + R.w / 2, R.y + 18, 1, R.h - 36, 'cardEdge'),
+        C.flat('infoRuleH', R.x + 18, R.y + R.h / 2, R.w - 36, 1, 'cardEdge'),
+    ],
+    cell(0, 'oil', ICON.oil, (d) => C.tempText(o, d.oil), 'OIL'),
+    cell(1, 'coolant', ICON.thermo, (d) => C.tempText(o, d.coolant), 'COOLANT'),
+    cell(2, 'soc', engine ? ICON.turbo : ICON.battery, C.focus.charge(o), C.focus.chargeLabel(o), engine ? txt : evTxt),
+    cell(3, 'split', ICON.car, (d) => (C.isNum(d.splitRear) ? Math.round(100 - d.splitRear) + '/' + Math.round(d.splitRear) : '--'), 'XDRIVE F/R'));
+}
 
 module.exports = {
     id: 'modern_wide',
@@ -92,6 +169,7 @@ module.exports = {
             C.text('gear', 1150, 270, 260, 140, C.gearText, gearC),
             C.text('rpmDigits', 1150, 420, 260, 22, rpmTxt, lbl, { tracking: 0.12 }),
         ]);
+        if (strip && (o.centre || 'info') === 'info') return newCar(o, arcs, gearC, rpmTxt);
         if (o.centre === 'stock') {
             list[0] = bg('bg', 0, 0, 760, 720);
             list.splice(1, 0, bg('bgR', 1160, 0, 760, 720));

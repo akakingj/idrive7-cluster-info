@@ -36,8 +36,13 @@ coolant arcs.
 
 ### Modern wide
 
-No round dials: segmented arcs frame the cluster, the speed and the gear stand large inside them, and the
-centre holds the time, outside temperature, drive mode, ranges, charge, power and temperatures.
+No round dials: segmented arcs frame the cluster, a hairline outside each. With the car's own bottom strip (the
+default) it is laid out like a new car's: the speed large in the middle over the road ahead (its lane line runs
+toward you with the speed, animated by the cluster itself), the selector and drive mode on a glass chip left of
+the speed, the gear and engine speed on one right of it, a glass card on the left with the battery's power, a
+centre-zero bar (regenerating left, drawing right) and its trend, and one on the right with oil, coolant, the
+charge and the xDrive split, each with its icon, over a softly lit, finely dotted background. Its colours follow
+the drive mode. Full screen or with the map, it keeps its earlier layout.
 
 ![Modern wide](../../docs/modern_wide.png)
 
