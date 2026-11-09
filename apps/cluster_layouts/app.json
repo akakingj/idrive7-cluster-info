@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.13.0",
+  "version": "0.13.1",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -312,11 +312,11 @@
         ],
         [
           "0x201",
-          "0x201 (test only: needs cluster renderer 0.3.108)"
+          "0x201 (test only: the eroobeeroo renderer build; else 0x203)"
         ],
         [
           "0x202",
-          "0x202 (test only: needs cluster renderer 0.3.108)"
+          "0x202 (test only: the eroobeeroo renderer build; else 0x203)"
         ]
       ]
     },
@@ -1022,7 +1022,7 @@
   "requires": {
     "idrive7-renderd": "2.1.7",
     "mgu-inputgate": "1.0.0",
-    "cluster-render": "0.3.10"
+    "cluster-render": "0.4.2"
   },
   "shared": true
 }

@@ -83,17 +83,21 @@ mgu.run({
         };
         const look = () => lookNow(settings.get('look'), data());
         /* the renderer target: the panel (slot 0x203), or as an experiment the KOMBI's other free full-cluster
-         * slots (cluster-render 0.3.108+): in 0x203 the HMI's own cluster screen goes down and the KOMBI shows its
-         * fallback gear box; another slot may keep it up. A change starts a fresh connection. */
+         * slots: in 0x203 the HMI's own cluster screen goes down and the KOMBI shows its fallback gear box; another
+         * slot may keep it up. A change starts a fresh connection. Only the eroobeeroo/idrive-apps renderer build
+         * offers the experimental slots (its hello lists panel201 and panel202); with any other renderer, such as
+         * the Store's own, the layout falls back to the panel instead of waiting on a target that isn't there. */
         const SLOTS = { '0x203': 'panel', '0x201': 'panel201', '0x202': 'panel202' };
+        let client = null, slotFallback = false;
+        const wantedTarget = () => (slotFallback ? 'panel' : SLOTS[settings.get('clusterSlot')] || 'panel');
         const start = () => startCluster({
-            client: new ClusterRender('cluster_layouts'),
+            client: (client = new ClusterRender('cluster_layouts')),
             layout: () => layout,
             options, log, live, data,
             theme: () => themeNow(),
             enabled: showing,
             sweep: () => settings.get('sweep') !== 'off',
-            target: SLOTS[settings.get('clusterSlot')] || 'panel',
+            target: wantedTarget(),
             onFresh: D.onFresh,
         });
         let cluster = start();
@@ -105,6 +109,13 @@ mgu.run({
             // the vehicle found (Settings > Vehicle: Auto): the layout redrawn for it once known
             const v = D.vehicle().vehicle;
             if (v !== lastVehicle) { if (lastVehicle) cluster.rebuild(); lastVehicle = v; }
+            // an experimental slot the renderer doesn't offer: back to the panel (0x203)
+            const tg = wantedTarget();
+            if (tg !== 'panel' && client && client.targets && String(client.targets).split(',').every((x) => x.split(':')[0] !== tg)) {
+                log.warn('Cluster slot ' + settings.get('clusterSlot') + ': this renderer has no ' + tg + ' target (' + client.targets + '), using 0x203');
+                slotFallback = true;
+                cluster.stop(); cluster = start();
+            }
             // drive mode and gear changes in the log (timestamped), beside the cluster's target changes: what the
             // KOMBI does to the layout on a mode change (the stock cluster back for a few seconds) shows in one log
             const dn = data(), mg = (dn.driveMode || '-') + ' / ' + (dn.gear == null ? '-' : dn.gear);
@@ -114,7 +125,7 @@ mgu.run({
             }
         }, 500);
         settings.onChange((k) => {
-            if (k === 'clusterSlot') { cluster.stop(); cluster = start(); return; }
+            if (k === 'clusterSlot') { slotFallback = false; cluster.stop(); cluster = start(); return; }
             if (k === 'look' || k === 'background') return cluster.recolour();
             if (k === 'layout') layout = byId(settings.get('layout'));
             if (['layout', 'centre', 'speedUnit', 'tempUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'vehicle', 'tankLitres', 'batteryReads'].indexOf(k) >= 0) cluster.rebuild();
@@ -153,7 +164,7 @@ mgu.run({
             return logs.bundle('Cluster Layouts ' + ((ctx.spec && ctx.spec.version) || ''), [
                 ['settings', JSON.stringify({ layout: settings.get('layout'), centre: o.centre, look: settings.get('look'), background: settings.get('background'), show: settings.get('show') })],
                 ['engine', JSON.stringify(cluster.status())],
-                ['cluster renderer status', squeeze(cluster.rendererStatus() || '(no answer yet: Cluster renderer 0.3.107 or later answers)', full)],
+                ['cluster renderer status', squeeze(cluster.rendererStatus() || '(no answer yet)', full)],
                 ['data now', JSON.stringify(snap)],
                 ['raw signals', JSON.stringify(D.status().raw || {})],
                 ['vehicle', (() => { const v = D.vehicle(); return v.vehicle + ' (' + v.how + ': ' + v.why + ')'; })()],
@@ -215,7 +226,7 @@ mgu.run({
             if (page === 2) {
                 cv.text('What the cluster shows besides this app (the renderer\'s report; photograph it with a layout up)', 48, 70, 24, t.text, { font: 'bold', literal: true });
                 const txt = cluster.rendererStatus();
-                const lines = txt ? txt.split('\n').filter((l) => /^slot 0x|^target (panel|map|hud)|^dcsm/.test(l)) : ['nothing yet: the Cluster renderer answers from 0.3.107 on'];
+                const lines = txt ? txt.split('\n').filter((l) => /^slot 0x|^target (panel|map|hud)|^dcsm/.test(l)) : ['nothing yet'];
                 lines.slice(0, 15).forEach((l, i) => cv.text(l.slice(0, 140), 48, 116 + i * 26, 16, t.text, { font: 'label', literal: true }));
                 return ui.image('MAIN_GFX', cv);
             }

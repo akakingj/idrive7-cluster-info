@@ -128,12 +128,13 @@ the drive) and the drive's peak power (or boost), and the ranges and charge righ
 (`tools/known_signals.json`; a field the car's catalog doesn't have makes the install fail). Where the field
 names inside a value differ by car, the app shows what the car sends: press **Signals** on its page for (1)
 the raw drive-mode, range, engine, steering and yaw values, (2) what the cluster has up besides this app
-(every display slot the KOMBI reports, from Cluster renderer 0.3.107), then (3...) every range, fuel and
+(every display slot the KOMBI reports), then (3...) every range, fuel and
 charge signal in the head unit's own catalog. A photo of those pages is what's needed to wire anything that
 still reads `--`.
 
-**Needs Cluster renderer 0.3.104 or later** (the eroobeeroo/idrive-apps build): it draws 64 layers an app,
-where the original draws 8, and every piece of a layout is a layer.
+**Needs Cluster renderer 0.4.2 or later**, the Store's own (it draws 64 layers an app, and every piece of a
+layout is a layer); the Store installs it with the app. The eroobeeroo/idrive-apps build isn't needed: it only
+adds the experimental 0x201 and 0x202 choices of Settings > Cluster slot, which fall back to 0x203 without it.
 
 **Logs.** The apps can't be reached from a phone over Wi-Fi: the head unit's firewall lets nothing connect
 in, and an app's traffic out only through what the uplink allows. Instead, **Logs** on Cluster Layouts' page

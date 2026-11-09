@@ -86,14 +86,14 @@ function startCluster(opts) {
     });
     // a refused layer's later uniforms come back as "no such layer": the layer's own reason is the one to show
     const refusedRefs = new Set();
-    const why = (reason) => (/too many layers/.test(reason) ? 'too many layers: ' + refusedRefs.size + ' of ' + pieces.length + ' pieces not drawn (needs Cluster renderer 0.3.104)' : reason);
+    const why = (reason) => (/too many layers/.test(reason) ? 'too many layers: ' + refusedRefs.size + ' of ' + pieces.length + ' pieces not drawn (needs Cluster renderer 0.4.2 or later)' : reason);
     cr.on('layer', (ref, st, reason) => { if (st === 'error') { refusedRefs.add(ref); state.refused = why(reason); warnOnce('layer refused: ' + reason); } });
     cr.on('refused', (op, ref, reason) => {
         if (/no such layer/.test(reason || '')) return;
         if (op === 'layer' || op === 'effect') refusedRefs.add(ref);
         state.refused = why(op + ': ' + reason); warnOnce(op + ' refused: ' + reason);
     });
-    // the renderer's status text (its targets and every slot the KOMBI reports, cluster-render 0.3.107+), asked
+    // the renderer's status text (its targets and every slot the KOMBI reports, from the renderer), asked
     // for every few seconds while shown, for the app's page
     let statusText = '', statusAt = 0;
     cr.on('status', (text) => { statusText = String(text || ''); });
