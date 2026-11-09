@@ -3,8 +3,8 @@
 *Part of [iDrive 7 cluster apps](../../README.md), with Cluster Info and [Cluster Centre](../cluster_centre/README.md).*
 
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
-itself**. Seven original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro and
-Track), each in comfort, sport and efficient colours (following the selector's S / M
+itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro,
+Track and Pulse), each in comfort, sport and efficient colours (following the selector's S / M
 programme, or chosen), each with three centres: the **readings**, the **map** (Waze or the stock map shows in
 the middle), or the **stock** centre content.
 
@@ -105,6 +105,21 @@ the drive) and the drive's peak power (or boost), and the ranges and charge righ
 |---|
 | ![](../../docs/track_sport.png) |
 
+### Pulse
+
+Made for the car's own bottom strip: the speed large in the middle, the gear beside it, and one long segmented
+bar under them for the engine speed, nearly the panel's width, red from the red line. A slim row along the bottom
+holds oil, coolant, the fuel and electric ranges, the charge (with its bar) and battery power (boost, timing and
+torque with Vehicle: ICE); the time, the drive mode and the outside temperature run along the top. Its colours
+follow the drive mode. With the map in the centre the speed and gear sit either side of it and the rpm bar runs
+under it.
+
+![Pulse](../../docs/pulse.png)
+
+| Sport | Map in the centre |
+|---|---|
+| ![](../../docs/pulse_sport.png) | ![](../../docs/pulse_map.png) |
+
 *(Drawn by `tools/preview.js` from the same shaders the cluster runs; the map is a stand-in for the real one.)*
 
 ## Readings and where they come from
@@ -161,7 +176,8 @@ card and right tiles below them, Modern wide moves its centre readings and gear 
 speed to the left and the gear to the right, and the panel between the dials narrows. The rev counters of
 Analog sport, Digital round and Retro are too big to move out of the middle, so the boxes still sit on their
 faces. The boxes' places were measured from one photo of a car (`layout_common.M_BOXES`, to within about 10 px):
-a straight-on photo would tighten them.
+a straight-on photo would tighten them. With Bottom strip
+set to the car's own (the default) the KOMBI leaves no boxes, so every layout keeps its own places on an M car too.
 
 **Bottom strip** (Settings > Bottom strip > The car's own, the default): the layout ends at y 660, so the KOMBI's own strip
 along the bottom (gear, temperatures, fuel, warnings) shows below it, and the black boxes some cars' KOMBIs leave

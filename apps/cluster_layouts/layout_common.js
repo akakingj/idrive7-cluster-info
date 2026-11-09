@@ -86,8 +86,9 @@ const EDRIVE_HOLE = { x: 1770, y: 170, w: 150, h: 95 };
  */
 const M_BOXES = [{ x: 793, y: 289, w: 246, h: 92 }, { x: 1223, y: 328, w: 171, h: 78 }];
 const M_HOLES = [{ x: 778, y: 274, w: 276, h: 122 }, { x: 1208, y: 313, w: 207, h: 113 }];
-/** True for an M car (Settings > Cluster). */
-const mCar = (o) => !!o && o.cluster === 'm';
+/** True for an M car (Settings > Cluster) whose boxes show: with the car's own bottom strip (Settings > Bottom
+ * strip, the default) the layout ends at y 660 and the KOMBI leaves no boxes, so the layouts keep their own places. */
+const mCar = (o) => !!o && o.cluster === 'm' && o.bottomStrip !== 'stock';
 /** The KOMBI's dark boxes a layout keeps its readings out of, for this car: the gear box, and an M car's two. */
 const holes = (o) => [GEARBOX_HOLE, EDRIVE_HOLE].concat(mCar(o) ? M_HOLES : []);
 /* the stock warning lights and the fallback gear letter along the bottom middle */

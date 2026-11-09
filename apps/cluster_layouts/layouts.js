@@ -3,7 +3,7 @@
  * layouts.js - the layouts this app offers, by id. A layout is one file, layout_<id>.js, next to this one
  * (the build ships only top-level .js files); list it here and in app.json's "layout" setting (README.md).
  */
-const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track')];
+const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse')];
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
@@ -20,6 +20,10 @@ const { boxBezel, MAP, mCar } = require('./layout_common');
 const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl'];
 const shiftAll = (keys, dy) => keys.reduce((m, k) => { m[k] = { dy }; return m; }, {});
 const M_MOVES = {
+    pulse: {
+        // the speed up between the cowl and the boxes; its unit, the drive mode and the rpm in one row below them
+        info: { speedDigits: { y: 128, h: 140 }, speedUnit: { y: 436 }, mode: { x: 220, y: 436, w: 400 }, rpmDigits: { y: 436 } },
+    },
     track: { info: {
         // the gear card below the boxes, the drive mode above them; the right column's tiles stacked below
         gearCard: { y: 432, h: 208 }, gear: { y: 438, h: 140 }, rpm: { y: 580, h: 34 }, rpmLbl: { y: 618, h: 16 }, mode: { y: 226, h: 26 },
