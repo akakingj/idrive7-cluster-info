@@ -113,7 +113,13 @@ module.exports = {
             C.text('rpmDigits', 1226, 320, 180, 32, rpmTxt, lbl, { tracking: 0.06 }),
             // the engine speed: one long bar under it all
             rpmBar(o, 'rpmBar', 200, 482, 1520, 34, 64),
-        ].concat(
+        ].concat(C.strip(o) ? [].concat(
+            // the car's own bottom strip shows the ranges, and the fuel and charge gauges sit above them in the
+            // corners: four readings between them
+            up('oil', 340, 534, 300, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
+            up('coolant', 650, 534, 300, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
+            up('soc', 960, 534, 300, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
+            up('kw', 1270, 534, 300, 64, C.focus.power(o), C.focus.powerLabel(o), txt, 24)) : [].concat(
             // one row along the bottom, the charge bar under its charge
             up('oil', 200, 534, 250, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
             up('coolant', 454, 534, 250, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
@@ -121,6 +127,6 @@ module.exports = {
             up('elec', 962, 534, 250, 64, C.focus.range(o), C.focus.rangeLabel(o), eTxt, 24),
             up('soc', 1216, 534, 250, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
             [socBar(o, 'socBar', 1256, 634, 170, 14)],
-            up('kw', 1470, 534, 250, 64, C.focus.power(o), C.focus.powerLabel(o), txt, 24));
+            up('kw', 1470, 534, 250, 64, C.focus.power(o), C.focus.powerLabel(o), txt, 24)));
     },
 };

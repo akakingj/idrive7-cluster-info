@@ -21,8 +21,9 @@ function clashes(p, o) {
         }
         const inB = (b) => pts.some(([x, y]) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h);
         if (inB(C.NOTCH)) out.push('under the cowl');
-        if (inB(C.GEARBOX_HOLE)) out.push('in the gear box');
-        if (inB(C.EDRIVE_HOLE)) out.push('under the eDrive box');
+        if (!C.strip(o) && inB(C.GEARBOX_HOLE)) out.push('in the gear box');
+        if (!C.strip(o) && inB(C.EDRIVE_HOLE)) out.push('under the eDrive box');
+        if (C.strip(o) && pts.some(([, y]) => y > C.STRIP_Y)) out.push('over the strip');
         if (C.mCar(o) && C.M_HOLES.some(inB)) out.push('in an M box');
         if (inB(C.TELLTALES)) out.push('over the warning lights');
         if (pts.some(([x, y]) => C.inCorner(x, y))) out.push('in a corner');
@@ -34,8 +35,11 @@ function clashes(p, o) {
         ? (() => { const nx = Math.max(b.x, Math.min(cx, b.x + b.w)), ny = Math.max(b.y, Math.min(cy, b.y + b.h)); return (nx - cx) ** 2 + (ny - cy) ** 2 < (r - 6) ** 2; })()
         : p.x < b.x + b.w && p.x + p.w > b.x && p.y < b.y + b.h && p.y + p.h > b.y);
     if (hit(C.NOTCH)) out.push('under the cowl');
-    if (hit(C.GEARBOX_HOLE)) out.push('in the gear box');
-    if (hit(C.EDRIVE_HOLE)) out.push('under the eDrive box');
+    // with the car's own bottom strip the KOMBI shows neither box (layout_common.STRIP_Y)
+    if (!C.strip(o) && hit(C.GEARBOX_HOLE)) out.push('in the gear box');
+    if (!C.strip(o) && hit(C.EDRIVE_HOLE)) out.push('under the eDrive box');
+    if (C.strip(o) && !round && p.y + p.h > C.STRIP_Y) out.push('over the strip');
+    if (C.strip(o) && round && cy + r - 6 > C.STRIP_Y + 4) out.push('over the strip');
     if (C.mCar(o) && C.M_HOLES.some(hit)) out.push('in an M box');
     if (hit(C.TELLTALES)) out.push('over the warning lights');
     const pts = round ? [[cx - r * 0.7, cy - r * 0.7], [cx + r * 0.7, cy - r * 0.7], [cx, cy - r]] : [[p.x, p.y], [p.x + p.w, p.y]];
@@ -47,11 +51,11 @@ module.exports = { clashes };
 if (require.main === module) {
     const { LAYOUTS } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
     let n = 0;
-    LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ice'].forEach((vehicle) => ['standard', 'm'].forEach((cluster) => {
-        const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle, cluster };
+    LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ice'].forEach((vehicle) => [['standard', 'stock'], ['standard', 'layout'], ['m', 'layout']].forEach(([cluster, bottomStrip]) => {
+        const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle, cluster, bottomStrip };
         L.pieces(o).forEach((p) => {
             const c = clashes(p, o);
-            if (c.length) { n++; console.log(L.id + ' ' + centre + ' ' + vehicle + ' ' + cluster + ': ' + p.key + ' (' + p.kind + ' ' + [p.x, p.y, p.w, p.h].map(Math.round).join(',') + ') ' + c.join(', ')); }
+            if (c.length) { n++; console.log(L.id + ' ' + centre + ' ' + vehicle + ' ' + cluster + (bottomStrip === 'stock' ? ' strip' : '') + ': ' + p.key + ' (' + p.kind + ' ' + [p.x, p.y, p.w, p.h].map(Math.round).join(',') + ') ' + c.join(', ')); }
         });
     }))));
     console.log(n ? n + ' clashes' : 'all clear');

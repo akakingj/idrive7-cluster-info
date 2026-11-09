@@ -181,11 +181,16 @@ faces. The boxes' places were measured from one photo of a car (`layout_common.M
 a straight-on photo would tighten them. With Bottom strip
 set to the car's own (the default) the KOMBI leaves no boxes, so every layout keeps its own places on an M car too.
 
-**Bottom strip** (Settings > Bottom strip > The car's own, the default): the layout ends at y 660, so the KOMBI's own strip
-along the bottom (gear, temperatures, fuel, warnings) shows below it, and the black boxes some cars' KOMBIs leave
-over a full-screen layout go away. Found and tested on cars by thatgrayg22. Backgrounds stop at the line, small
-readings that crossed it move up above it, and the dials' arcs (open at the bottom) stay. `tools/preview.js --strip`
-shows it.
+**Bottom strip** (Settings > Bottom strip > The car's own, the default): the layout ends at y 646, so the KOMBI's own
+strip along the bottom shows below it (the fuel range, the time, the street, the drive mode and gear, the outside
+temperature and the electric range, and the warning lights; 660 just touched the top of its drive mode), and the
+black boxes some cars' KOMBIs leave over a full-screen layout go away. Found and tested on cars by thatgrayg22.
+With nothing of the KOMBI's to keep clear of, each layout takes its centred form there: the round dials of Analog
+sport, Digital round and Retro stand either side of the middle again as first drawn, sized to end above the
+strip; the side columns of Track, Digital dash and Freedom balance either side of the middle; Modern wide's arcs
+end higher. The layouts' own fuel and electric range numbers are left out (the strip shows both), and with the
+readings in the centre a fuel gauge sits above the strip's fuel range (bottom left) and a charge gauge above its
+electric range (bottom right), bars with no numbers. `tools/preview.js --strip` shows it.
 
 ## Vehicles
 

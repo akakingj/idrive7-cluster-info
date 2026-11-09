@@ -47,17 +47,20 @@ module.exports = {
 
     pieces(o) {
         const s = C.speedScale(o), r = C.rpmScale(o);
+        // with the car's own bottom strip the arcs end higher, clear of it and of the fuel and charge gauges
+        // above its ranges (their low ends 6 degrees shorter, their circle 20 px higher)
+        const strip = C.strip(o), cy = strip ? CY - 20 : CY, lo = strip ? 112 : 118;
         const arcs = [
             {
                 // road speed: up the left, the circle's centre to the right of the layer
                 key: 'speedArc', kind: 'band', x: L_LAYER.x, y: L_LAYER.y, w: L_LAYER.w, h: L_LAYER.h,
-                params: { u_geo: [LCX - L_LAYER.x, CY - L_LAYER.y, R, T], u_span: [-118, -62, 44, 0.3], u_marks: [s.max / s.major, s.major, 22, 44], u_red: [2] },
+                params: { u_geo: [LCX - L_LAYER.x, cy - L_LAYER.y, R, T], u_span: [-lo, -62, 44, 0.3], u_marks: [s.max / s.major, s.major, 22, 44], u_red: [2] },
                 colors: bandColours, value: (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) / s.max : 0), max: 1, sweep: true,
             },
             {
                 // engine speed: up the right
                 key: 'rpmArc', kind: 'band', x: R_LAYER.x, y: R_LAYER.y, w: R_LAYER.w, h: R_LAYER.h,
-                params: { u_geo: [RCX - R_LAYER.x, CY - R_LAYER.y, R, T], u_span: [118, 62, 44, 0.3], u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max] },
+                params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R, T], u_span: [lo, 62, 44, 0.3], u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max] },
                 colors: bandColours, value: (d) => (C.isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true,
             },
         ];

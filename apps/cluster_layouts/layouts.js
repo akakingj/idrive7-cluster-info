@@ -7,7 +7,8 @@ const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_rou
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
-const { boxBezel, MAP, mCar } = require('./layout_common');
+const C0 = require('./layout_common');
+const { boxBezel, MAP, mCar } = C0;
 
 /*
  * Settings > Cluster: M car. An M car's KOMBI leaves two more dark boxes in the middle of the panel
@@ -79,14 +80,15 @@ function mMoves(L, o, list) {
 }
 
 /*
- * Settings > Layout: Stock bottom strip. The layout stops at CUT_Y (660, found on cars by thatgrayg22): the
- * background ends there, so the KOMBI's own bottom strip (gear, temperatures, fuel, warnings) shows under it, and
- * the dark boxes some cars' KOMBIs leave over a full-screen layout don't appear. Backgrounds are cut short; a
- * small piece that crosses the line moves up above it; one wholly below it is left out. Bigger pieces (the dials'
- * arcs, which are open at the bottom) stay as they are.
+ * Settings > Bottom strip > The car's own (the default; layout_common.STRIP_Y, found on cars by thatgrayg22): the
+ * layout ends above the KOMBI's own strip (gear, drive mode, ranges, time, street, outside temperature, warnings),
+ * and the KOMBI leaves none of its boxes. Each layout takes its centred places there itself (C.strip(o)); here
+ * its range numbers are left out (the strip shows both), the fuel and charge gauges go above the strip's ranges,
+ * and anything still reaching below the line is cut short (backgrounds), moved up (a small piece) or left out
+ * (wholly below). Bigger pieces (a dial's arc open at the bottom) stay.
  */
-const CUT_Y = 660;
-const stripOn = (o) => !!o && o.bottomStrip === 'stock';
+const CUT_Y = C0.STRIP_Y;
+const stripOn = (o) => C0.strip(o);
 function bottomCut(list) {
     const out = [];
     list.forEach((p) => {
@@ -104,7 +106,15 @@ LAYOUTS.forEach((L) => {
     L.pieces = (o) => {
         let list = (own(o) || []).slice();
         if (mCar(o)) list = mMoves(L, o, list);
-        if (stripOn(o)) list = bottomCut(list);
+        if (stripOn(o)) {
+            list = list.filter((p) => !C0.STRIP_DROP.test(p.key));
+            // the gauges above everything but the backgrounds
+            // (only with the readings in the centre: with the map or the stock centre the side columns reach
+            // down to the strip, and keep their own charge and fuel bars)
+            if (!L.ownStripGauges && (o.centre || 'info') === 'info') list = list.concat(C0.stripGauges(o, { fuel: L.stripFuel !== false }));
+            list = bottomCut(list);
+            return list;   // (no frame for the gear box: the KOMBI shows none over the strip)
+        }
         if (!o || o.boxBezel !== true) return list;
         let i = 0;
         while (i < list.length && /^bg/.test(list[i].key)) i++;

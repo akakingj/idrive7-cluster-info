@@ -109,14 +109,22 @@ module.exports = {
                 C.text('gear', 150, 190, 300, 160, C.gearText, gearC),
                 C.text('clock', 150, 364, 140, 36, C.clock, txt, { align: 0 }),
                 C.text('outside', 300, 364, 150, 36, (d) => C.outsideText(o, d.outside), txt, { align: 1 }),
-                plaque('plaque', 110, 486, 1280, 150),
+                C.strip(o) ? plaque('plaque', 380, 480, 1160, 140) : plaque('plaque', 110, 486, 1280, 150),
             ],
+            // the car's own bottom strip shows the ranges (its fuel and charge gauges sit above them in the
+            // corners): the plaque centred under the tach with the temperatures and the charge, the power
+            // and xDrive higher on the right, across from the gear
+            C.strip(o) ? [].concat(
+                C.reading('oil', 420, 500, 340, 50, (d) => C.tempText(o, d.oil), 'OIL', txt, lbl),
+                C.reading('coolant', 790, 500, 340, 50, (d) => C.tempText(o, d.coolant), 'COOLANT', txt, lbl),
+                C.reading('soc', 1160, 500, 340, 50, C.focus.charge(o), C.focus.chargeLabel(o), txt, lbl),
+                rightColumn(290)) : [].concat(
             C.reading('oil', 140, 508, 220, 50, (d) => C.tempText(o, d.oil), 'OIL', txt, lbl),
             C.reading('coolant', 390, 508, 220, 50, (d) => C.tempText(o, d.coolant), 'COOLANT', txt, lbl),
             C.reading('fuel', 640, 508, 230, 50, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, lbl),
             C.reading('elec', 890, 508, 240, 50, C.focus.range(o), C.focus.rangeLabel(o), txt, lbl),
             C.reading('soc', 1150, 508, 220, 50, C.focus.charge(o), C.focus.chargeLabel(o), txt, lbl),
-            rightColumn(472),
+            rightColumn(472)),
         );
     },
 };

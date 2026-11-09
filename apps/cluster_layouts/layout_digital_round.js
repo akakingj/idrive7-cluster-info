@@ -63,6 +63,10 @@ function dialSet(o, which, cx, size, cy) {
         [C.bar('soc', cx - w / 2, y + Math.round(h * 1.75) + 6, w, Math.round(14 * k + 4), C.focus.bar(o), C.engineFocus(o) ? (t) => Object.assign(barColours(t), { fill0: t.accent, fill1: t.accent }) : barColours, 16)]);
 }
 
+const gear = (x, y, w, h) => C.text('gear', x, y, w, h, C.gearText, (t, d) => ({ color: [C.gearText(d) === 'R' ? t.red : t.text, 1], glow: [t.glow, 0.5] }));
+const selector = (x0, y, size, gap) => 'PRND'.split('').map((ch, i) => C.text('sel' + ch, x0 + i * gap, y, size, size, ch,
+    (t, d) => (C.selectorLit(d) === ch ? { color: [ch === 'R' ? t.red : t.accent, 1], glow: [t.glow, 0.9] } : { color: [t.dim, 1], glow: [t.glow, 0] })));
+
 module.exports = {
     id: 'digital_round',
     title: 'Digital round',
@@ -74,9 +78,6 @@ module.exports = {
      * left of the KOMBI's dark box, the temperatures right of it.
      */
     pieces(o) {
-        const gear = (x, y, w, h) => C.text('gear', x, y, w, h, C.gearText, (t, d) => ({ color: [C.gearText(d) === 'R' ? t.red : t.text, 1], glow: [t.glow, 0.5] }));
-        const selector = (x0, y, size, gap) => 'PRND'.split('').map((ch, i) => C.text('sel' + ch, x0 + i * gap, y, size, size, ch,
-            (t, d) => (C.selectorLit(d) === ch ? { color: [ch === 'R' ? t.red : t.accent, 1], glow: [t.glow, 0.9] } : { color: [t.dim, 1], glow: [t.glow, 0] })));
         if (o.centre === 'map') {
             // the speedometer left of the map, a small tach right of the map and the box, the gear and speed in
             // the free corner above the box, the temperatures under the map above the warning lights
@@ -90,6 +91,15 @@ module.exports = {
                 C.readingUp('coolantR', 1120, bot + 2, 200, 30, (d) => C.tempText(o, d.coolant), 'COOLANT', txt, lbl),
             );
         }
+        if (C.strip(o) && o.centre !== 'stock') {
+            // the car's own bottom strip: the dials centred either side of the card as first drawn, ending above
+            // the strip; the ranges are the strip's, so each dial holds a temperature where its range was
+            const SS = 600, scy = 328, kk = SS / 640;
+            const keep = (list) => list.filter((p) => !/^(fuel|elec|soc)(Lbl)?$/.test(p.key));
+            const ty = scy + Math.round(120 * kk);
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(keep(dialSet(o, 'speed', 452, SS, scy)), keep(dialSet(o, 'rpm', 1468, SS, scy)),
+                tempArc('coolant', 452 - 100, ty, 'coolant', 118, o), tempArc('oil', 1468 - 100, ty, 'oil', 130, o), card(o, 830, 134, 260, 470));
+        }
         const S = 520, cy = 392, L = 300;
         const stock = o.centre === 'stock', R = stock ? 1256 : 1120, SR = stock ? 296 : S;
         const list = [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', L, S, cy), dialSet(o, 'rpm', R, SR, cy));
@@ -101,17 +111,22 @@ module.exports = {
         list.push(...tempArc('oil', 1690, 292, 'oil', 130, o), ...tempArc('coolant', 1690, 476, 'coolant', 118, o));
         if (stock) return list;
         // the card between the dials (below the camera's cowl, above the warning lights)
-        const X = 574, Y = 140, W = 278, H = 470;
-        return list.concat([
-            { key: 'card', kind: 'panel', x: X, y: Y, w: W, h: H, params: { u_box: [30, 2, 1, 1] }, colors: (t) => ({ top: t.cardTop, bottom: t.cardBottom, border: t.cardEdge }) },
-            C.text('clock', X + 20, Y + 18, 118, 30, C.clock, txt, { align: 0 }),
-            C.text('outside', X + 140, Y + 18, 118, 30, (d) => C.outsideText(o, d.outside), txt, { align: 1 }),
-        ], selector(X + 44, Y + 66, 34, 52), [
-            gear(X, Y + 112, W, 130),
-            C.text('speedDigits', X, Y + 262, W, 76, (d) => C.speedText(o, d), txt),
-            C.text('speedDigitsUnit', X, Y + 344, W, 22, C.speedUnit(o), lbl, { tracking: 0.12 }),
-            C.flat('rule', X + 30, Y + 384, W - 60, 2, 'cardEdge'),
-            C.text('kwNow', X, Y + 400, W, 40, C.focus.power(o), C.engineFocus(o) ? txt : evTxt),
-        ]);
+        return list.concat(card(o, 574, 140, 278, 470));
     },
 };
+
+/** The card between the dials: the time and outside temperature, the selector, the gear, the digital speed and
+ * the battery's power. */
+function card(o, X, Y, W, H) {
+    return [
+        { key: 'card', kind: 'panel', x: X, y: Y, w: W, h: H, params: { u_box: [30, 2, 1, 1] }, colors: (t) => ({ top: t.cardTop, bottom: t.cardBottom, border: t.cardEdge }) },
+        C.text('clock', X + 20, Y + 18, (W - 42) / 2, 30, C.clock, txt, { align: 0 }),
+        C.text('outside', X + W / 2 + 1, Y + 18, (W - 42) / 2, 30, (d) => C.outsideText(o, d.outside), txt, { align: 1 }),
+    ].concat(selector(X + 44 * W / 278, Y + 66, 34 * W / 278, 52 * W / 278), [
+        gear(X, Y + 112, W, 130),
+        C.text('speedDigits', X, Y + 262, W, 76, (d) => C.speedText(o, d), txt),
+        C.text('speedDigitsUnit', X, Y + 344, W, 22, C.speedUnit(o), lbl, { tracking: 0.12 }),
+        C.flat('rule', X + 30, Y + 384, W - 60, 2, 'cardEdge'),
+        C.text('kwNow', X, Y + 400, W, 40, C.focus.power(o), C.engineFocus(o) ? txt : evTxt),
+    ]);
+}

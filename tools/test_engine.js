@@ -134,6 +134,23 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['standard',
     assert(!bad.length, bad.join('; '));
 }))));
 
+/* the car's own bottom strip, the readings in the centre: no range numbers (the strip shows both), the fuel
+ * gauge bottom left (Retro: its own, in the speedometer) and the charge bottom right on a plug-in hybrid,
+ * the dial layouts' dials centred (their centres either side of x 960, the same distance off it) */
+LAYOUTS.forEach((L) => ['phev', 'ice'].forEach((vehicle) => check(L.id + ' (' + vehicle + ', stock bottom strip): the strip\'s ranges, gauges above them, centred', () => {
+    const o = { speedUnit: 'mph', tempUnit: 'f', centre: 'info', redline: 7000, rpmMax: 8000, vehicle, cluster: 'standard', bottomStrip: 'stock' };
+    const ps = L.pieces(o), keys = ps.map((p) => p.key);
+    assert(!keys.some((k) => /^(fuel|elec|frange|erange)(Lbl|L)?$/.test(k)), 'range numbers: ' + keys.filter((k) => /fuel|elec|range/.test(k)).join(' '));
+    assert.strictEqual(keys.indexOf('stripFuel') >= 0, L.id !== 'retro', 'fuel gauge');
+    assert.strictEqual(keys.indexOf('stripSoc') >= 0, vehicle !== 'ice', 'charge gauge');
+    assert(ps.length <= 60, ps.length + ' pieces');
+    const dials = ps.filter((p) => (p.key === 'speed' || p.key === 'rpm') && p.kind === 'dial');
+    if (dials.length === 2) {
+        const c = dials.map((p) => p.x + p.w / 2);
+        assert(Math.abs((c[0] + c[1]) / 2 - 960) < 2 && dials.every((p) => p.y + p.h <= CUT_Y), 'dials centred and above the strip: ' + c.join(' '));
+    }
+})));
+
 /* 60 frames a second, a reading drawn within 5 ms: an update (every needle, bar and text of the layout) takes
  * well under 5 ms here; the unit's CPU is slower, so the budget asserted is 1.5 ms (worst 4 ms) on this machine */
 LAYOUTS.forEach((L) => check(L.id + ': an update takes well under 5 ms (60 a second, drawn at once on a reading)', () => {

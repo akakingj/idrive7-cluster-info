@@ -112,6 +112,13 @@ module.exports = {
                 C.readingUp('elec', 1100, bot + 2, 300, 30, C.focus.both(o), C.focus.rangeLabel(o), C.engineFocus(o) ? glowText : elecTxt, lbl),
             );
         }
+        if (C.strip(o) && o.centre !== 'stock') {
+            // the car's own bottom strip (layout_common.STRIP_Y): no boxes to keep clear of, so the dials stand
+            // centred either side of the display as first drawn, sized to end above the strip; the ranges are
+            // the strip's, the fuel and charge gauges above them (layouts.js)
+            const SS = 600, scy = 328, X = 830, W = 260, Y = 134, H = 470;
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, SS, scy), dialSet(o, 'rpm', 1468, SS, scy), centreDisplay(o, X, Y, W, H, gearC, elecTxt));
+        }
         // the speedometer left; with the stock centre the tach between it and the dark box, else full size left
         // of the box with the slim display between the dials; the ranges right of the box
         const S = 520, cy = 392, L = 300;
@@ -129,18 +136,24 @@ module.exports = {
             C.bar('soc', RX + 8, 562, RW - 16, 16, C.focus.bar(o), (t) => ({ track: t.track, fill0: C.engineFocus(o) ? t.accent : t.ev, fill1: C.engineFocus(o) ? t.accent : t.ev, redc: t.red, tip: t.glow, tick: t.dim, num: t.num }), 16));
         if (stock) return list;
         // the slim display between the dials (below the camera's cowl, above the warning lights)
-        const X = 574, W = 278, Y = 140, H = 470;
-        return list.concat([
-            { key: 'lcd', kind: 'panel', x: X, y: Y, w: W, h: H, params: { u_box: [20, 2, 0.5, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
-            C.text('clock', X + 16, Y + 18, 120, 30, C.clock, glowText, { align: 0 }),
-            C.text('outside', X + 142, Y + 18, 120, 30, (d) => C.outsideText(o, d.outside), glowText, { align: 1 }),
-            C.flat('rule1', X + 24, Y + 62, W - 48, 2, 'lcdEdge'),
-            C.text('gear', X, Y + 82, W, 130, C.gearText, gearC),
-            C.text('speedDigits', X, Y + 236, W, 72, (d) => C.speedText(o, d), glowText),
-            C.text('speedDigitsUnit', X, Y + 314, W, 22, C.speedUnit(o), lbl, { tracking: 0.12 }),
-            C.flat('rule2', X + 24, Y + 356, W - 48, 2, 'lcdEdge'),
-            C.text('kwNow', X, Y + 376, W, 40, C.focus.power(o), (t, d) => (C.engineFocus(o) ? glowText(t) : C.isNum(d.kw) && d.kw < -0.3 ? { color: ['#3ddc84', 1], glow: ['#3ddc84', 0.3] } : elecTxt(t))),
-            C.text('kwNowLbl', X, Y + 422, W, 18, C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
-        ]);
+        return list.concat(centreDisplay(o, 574, 140, 278, 470, gearC, elecTxt));
     },
 };
+
+/** The slim display between the dials: the time and outside temperature, the gear, the digital speed, the
+ * battery's power. */
+function centreDisplay(o, X, Y, W, H, gearC, elecTxt) {
+    const sy = H / 470;   // its rows spread to its height
+    return [
+        { key: 'lcd', kind: 'panel', x: X, y: Y, w: W, h: H, params: { u_box: [20, 2, 0.5, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
+        C.text('clock', X + 16, Y + 18, (W - 38) / 2, 30, C.clock, glowText, { align: 0 }),
+        C.text('outside', X + W / 2 + 3, Y + 18, (W - 38) / 2, 30, (d) => C.outsideText(o, d.outside), glowText, { align: 1 }),
+        C.flat('rule1', X + 24, Y + Math.round(62 * sy), W - 48, 2, 'lcdEdge'),
+        C.text('gear', X, Y + Math.round(82 * sy), W, 130, C.gearText, gearC),
+        C.text('speedDigits', X, Y + Math.round(236 * sy), W, 72, (d) => C.speedText(o, d), glowText),
+        C.text('speedDigitsUnit', X, Y + Math.round(314 * sy), W, 22, C.speedUnit(o), lbl, { tracking: 0.12 }),
+        C.flat('rule2', X + 24, Y + Math.round(356 * sy), W - 48, 2, 'lcdEdge'),
+        C.text('kwNow', X, Y + Math.round(376 * sy), W, 40, C.focus.power(o), (t, d) => (C.engineFocus(o) ? glowText(t) : C.isNum(d.kw) && d.kw < -0.3 ? { color: ['#3ddc84', 1], glow: ['#3ddc84', 0.3] } : elecTxt(t))),
+        C.text('kwNowLbl', X, Y + Math.round(422 * sy), W, 18, C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
+    ];
+}

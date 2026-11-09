@@ -152,6 +152,32 @@ module.exports = {
 
         // full screen
         const X0 = 580, X1 = 1340, GX = 760, GW = 400;
+        // the car's own bottom strip (it shows the ranges): the speed on the left, the 0-60 timer and the peak on
+        // the right, either side of the middle, all above the strip and its fuel and charge gauges
+        const strip = C.strip(o);
+        if (strip) {
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg'), shiftLights(o, X0, 136, X1 - X0, 40, 15), rpmBar(o, X0, 188, X1 - X0, 26)].concat(
+                [
+                    { key: 'gearCard', kind: 'panel', x: GX, y: 262, w: GW, h: 290, params: { u_box: [14, 2, 0.4, 1] }, colors: (t) => ({ top: t.tileTop, bottom: t.tileBottom, border: t.accent }) },
+                    C.text('gear', GX, 272, GW, 200, C.gearText, gearC),
+                    C.text('rpm', GX, 478, GW, 40, rpmText, acc),
+                    C.text('rpmLbl', GX, 522, GW, 18, 'RPM', lbl, { tracking: 0.2 }),
+                    C.text('mode', X0, 576, X1 - X0, 26, C.modeText, acc, { tracking: 0.25 }),
+                    C.text('speedDigits', 60, 216, 460, 190, (d) => C.speedText(o, d), white),
+                    C.text('speedUnit', 60, 410, 460, 28, C.speedUnit(o), lbl, { tracking: 0.12 }),
+                    C.text('clock', 90, 486, 200, 36, C.clock, white, { align: 0 }),
+                    C.text('outside', 290, 486, 200, 36, (d) => C.outsideText(o, d.outside), lbl, { align: 1 }),
+                ],
+                tile('zero', 1400, 262, 220, 200, zeroLabel(o), zeroText(o), acc, 96),
+                [C.text('zeroBest', 1414, 418, 192, 24, bestText(o), lbl, { align: 0, tracking: 0.06 })],
+                tile('peak', 1640, 262, 220, 200, engine ? 'PEAK BOOST' : 'PEAK POWER', peakText(o), white, 96),
+                [C.text('peakLbl2', 1654, 418, 192, 24, 'THIS DRIVE', lbl, { align: 0, tracking: 0.06 })],
+                tile('oil', X0, 262, 164, 135, 'OIL', (d) => C.tempText(o, d.oil)),
+                tile('coolant', X0, 417, 164, 135, 'COOLANT', (d) => C.tempText(o, d.coolant)),
+                tile('boost', 1176, 262, 164, 135, boostLbl, boostNum(o)),
+                tile('power', 1176, 417, 164, 135, powerLbl, powerNum(o), powerC(o)),
+            );
+        }
         return [C.flat('bg', 0, 0, 1920, 720, 'bg'), shiftLights(o, X0, 136, X1 - X0, 40, 15), rpmBar(o, X0, 188, X1 - X0, 26)].concat(
             [
                 { key: 'gearCard', kind: 'panel', x: GX, y: 262, w: GW, h: 290, params: { u_box: [14, 2, 0.4, 1] }, colors: (t) => ({ top: t.tileTop, bottom: t.tileBottom, border: t.accent }) },

@@ -183,7 +183,17 @@ module.exports = {
 
         /* right: the gear above the dark box, charge and ranges below it */
         const RX = 1520, RW = 350;
-        list.push(
+        const strip = C.strip(o) && !map && !stock;
+        if (strip) list.push(
+            // the car's own bottom strip: no dark box, and the strip shows the ranges (its fuel and charge
+            // gauges sit above them): the gear large, the charge, and the xDrive split
+            C.text('gear', 1480, 230, 390, 170, C.gearText, gearC, { align: 0.5, chars: 3 }),
+            label('socL', RX, 424, RW, C.focus.chargeLabel(o), { align: 0.5 }),
+            C.text('soc', RX, 444, RW, 64, engine ? C.timingText : (d) => pct(d.soc), engine ? txt : evTxt, { align: 0.5, chars: 5 }),
+            label('splitL', RX, 524, RW, 'XDRIVE', { align: 0.5 }),
+            C.text('split', RX, 542, RW, 36, C.splitText, txt, { align: 0.5, chars: 12 }),
+        );
+        else list.push(
             // the gear beside the dark box the KOMBI leaves (left of it) and below its eDrive readout (top right)
             C.text('gear', 1670, 286, 200, 130, C.gearText, gearC, { align: 1, chars: 3 }),   // right edge on the column below
             // the charge and electric range, or (Show: Engine) the ignition timing and the boost with its bar
@@ -200,7 +210,7 @@ module.exports = {
 
         /* the middle: six tiles; with the map, a strip under it; with the stock centre, two columns beside it */
         if (!map && !stock) {
-            const X = 430, Y = 200, Wd = 960, Ht = 440, gap = 16, cw = (Wd - 2 * gap) / 3, ch = (Ht - gap) / 2;
+            const X = strip ? 480 : 430, Y = 200, Wd = 960, Ht = 440, gap = 16, cw = (Wd - 2 * gap) / 3, ch = (Ht - gap) / 2;
             // an M car: the KOMBI's two boxes sit in the lower part of the top row's middle and right tiles
             // (layout_common.M_HOLES, from y 274), so those two are slim, one line above the boxes, and the boxes
             // sit on the plain background under them
@@ -220,6 +230,8 @@ module.exports = {
         list.push(
             C.text('clock', 60, map ? 606 : 552, 170, 44, C.clock, txt, { align: 0, chars: 5 }),
             C.text('outside', 240, map ? 606 : 552, 160, 44, (d) => C.outsideText(o, d.outside), txt, { align: 0, chars: 6 }),
+        );
+        if (!strip) list.push(
             label('splitL', RX, 634, 100, 'XDRIVE'),
             C.text('split', RX + 100, 628, RW - 100, 32, C.splitText, txt, { align: 1, chars: 12 }),
         );

@@ -90,7 +90,34 @@ const M_HOLES = [{ x: 778, y: 274, w: 276, h: 122 }, { x: 1208, y: 313, w: 207, 
  * strip, the default) the layout ends at y 660 and the KOMBI leaves no boxes, so the layouts keep their own places. */
 const mCar = (o) => !!o && o.cluster === 'm' && o.bottomStrip !== 'stock';
 /** The KOMBI's dark boxes a layout keeps its readings out of, for this car: the gear box, and an M car's two. */
-const holes = (o) => [GEARBOX_HOLE, EDRIVE_HOLE].concat(mCar(o) ? M_HOLES : []);
+const holes = (o) => (strip(o) ? [] : [GEARBOX_HOLE, EDRIVE_HOLE].concat(mCar(o) ? M_HOLES : []));
+/*
+ * Settings > Bottom strip > The car's own (the default): the layout ends at STRIP_Y, the KOMBI's own strip shows
+ * below it (its fuel range bottom left, the time, the street, the drive mode and gear, the outside temperature and
+ * the electric range bottom right), and the KOMBI's gear bracket and eDrive box don't show: the layouts take their
+ * centred places, the ranges' numbers are left to the strip, and the fuel and charge gauges sit above the strip's
+ * ranges (stripGauges). 646: 660 just touched the top of the strip's drive mode (photo of the car).
+ */
+const STRIP_Y = 646;
+const strip = (o) => !!o && o.bottomStrip === 'stock';
+/** The fuel gauge above the strip's fuel range (bottom left) and the charge above its electric range (bottom
+ * right): bars with a word, no numbers (the strip shows the ranges). The charge only on a plug-in hybrid. */
+function stripGauges(o, opts) {
+    const lab = (t) => ({ color: [t.dim || '#9aa4ae', 1], glow: [t.glow || '#000000', 0] });
+    const fuelC = (t) => ({ track: t.track || '#1a1a1a', fill0: t.text || t.tick || '#e8e8e8', fill1: t.text || t.tick || '#e8e8e8', redc: t.red || '#ff3b30', tip: t.text || '#ffffff', tick: t.dim || '#888888', num: t.num || '#888888' });
+    const evC = (t) => ({ track: t.track || '#1a1a1a', fill0: t.ev || '#4ab4ff', fill1: t.ev || '#4ab4ff', redc: t.red || '#ff3b30', tip: t.ev || '#4ab4ff', tick: t.dim || '#888888', num: t.num || '#888888' });
+    const out = opts && opts.fuel === false ? [] : [
+        text('stripFuelLbl', 96, 598, 120, 16, 'FUEL', lab, { align: 0, tracking: 0.18 }),
+        bar('stripFuel', 90, 618, 250, 16, (d) => (isNum(d.fuelPct) ? d.fuelPct / 100 : 0), fuelC, 16),
+    ];
+    if (o.vehicle !== 'ice') out.push(
+        text('stripSocLbl', 1710, 598, 120, 16, 'CHARGE', lab, { align: 1, tracking: 0.18 }),
+        bar('stripSoc', 1580, 618, 250, 16, (d) => (isNum(d.soc) ? d.soc / 100 : 0), evC, 16));
+    return out;
+}
+/** The layout's own range readings (keys) left out with the strip: it shows both ranges. */
+const STRIP_DROP = /^(fuel|elec|frange|erange|range2)(Lbl)?$|^erangeL$/;
+
 /* the stock warning lights and the fallback gear letter along the bottom middle */
 const TELLTALES = { x: 560, y: 652, w: 960, h: 68 };
 /** Rectangles covering r but not hole: r itself when they don't meet, else up to four around the hole (the
@@ -176,5 +203,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, timingText, boostFrac,
 };

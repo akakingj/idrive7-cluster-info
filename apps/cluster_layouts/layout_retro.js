@@ -91,6 +91,7 @@ module.exports = {
     title: 'Retro',
     palette: (lookId) => PALETTES[lookId] || PALETTES.comfort,
     gearText: C.gearText,
+    stripFuel: false,   // (its speedometer has a fuel gauge)
 
     pieces(o) {
         const gearC = (t, d) => ({ color: [C.gearText(d) === 'R' ? t.red : t.text, 1], glow: [t.glow, 0.55] });
@@ -108,6 +109,11 @@ module.exports = {
                 C.readingUp('elec', 1100, bot + 2, 300, 30, C.focus.both(o), C.focus.rangeLabel(o), lit, lbl),
             );
         }
+        if (C.strip(o) && o.centre !== 'stock') {
+            // the car's own bottom strip: the dials centred either side of the middle column, ending above the
+            // strip (the speedometer keeps its fuel gauge; the ranges are the strip's)
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, 600, 328), dialSet(o, 'rpm', 1468, 600, 328), middle(o, 830, 260, gearC, 134, 590));
+        }
         const S = 520, cy = 392, L = 300;
         const stock = o.centre === 'stock', R = stock ? 1256 : 1120, SR = stock ? 296 : S;
         const list = [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', L, S, cy), dialSet(o, 'rpm', R, SR, cy));
@@ -123,18 +129,24 @@ module.exports = {
             C.bar('soc', RX + 8, 562, RW - 16, 16, C.focus.bar(o), (t) => ({ track: t.track, fill0: t.accent, fill1: t.accent, redc: t.red, tip: t.glow, tick: t.dim, num: t.num }), 10));
         if (stock) return list;
         // between the dials: the time and outside temperature, the coolant gauge, and the amber LCD
-        const X = 574, W = 278, mid = X + W / 2;
-        return list.concat([
-            C.text('clock', X + 8, 144, 128, 36, C.clock, lit, { align: 0 }),
-            C.text('outside', X + 142, 144, 128, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
-            // coolant: cold left, hot right, red from 120 °C (a 40-140 °C scale)
-            small('coolantDial', mid, 290, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
-            C.text('coolantLbl', mid - 60, 316, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
-            { key: 'lcd', kind: 'panel', x: X + 10, y: 400, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
-            C.text('gear', X + 10, 412, W - 20, 100, C.gearText, gearC),
-            C.text('speedDigits', X + 10, 518, W / 2 + 26, 46, (d) => C.speedText(o, d), lit, { align: 1 }),
-            C.text('speedDigitsUnit', mid + 44, 538, 80, 22, C.speedUnit(o), lbl, { align: 0, tracking: 0.08 }),
-            C.text('mode', X + 10, 568, W - 20, 26, C.modeText, lbl, { tracking: 0.16 }),
-        ]);
+        return list.concat(middle(o, 574, 278, gearC, 144, 606));
     },
 };
+
+/** Between the dials, from y top to bottom: the time and outside temperature, the coolant gauge, and the amber
+ * LCD with the gear, the speed and the drive mode. */
+function middle(o, X, W, gearC, top, bottom) {
+    const mid = X + W / 2, ly = bottom - 206, gy = top + Math.round((ly - top) / 2) + 16;
+    return [
+        C.text('clock', X + 8, top, (W - 22) / 2, 36, C.clock, lit, { align: 0 }),
+        C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
+        // coolant: cold left, hot right, red from 120 °C (a 40-140 °C scale)
+        small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
+        C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
+        { key: 'lcd', kind: 'panel', x: X + 10, y: ly, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
+        C.text('gear', X + 10, ly + 12, W - 20, 100, C.gearText, gearC),
+        C.text('speedDigits', X + 10, ly + 118, W / 2 + 26, 46, (d) => C.speedText(o, d), lit, { align: 1 }),
+        C.text('speedDigitsUnit', mid + 44, ly + 138, 80, 22, C.speedUnit(o), lbl, { align: 0, tracking: 0.08 }),
+        C.text('mode', X + 10, ly + 168, W - 20, 26, C.modeText, lbl, { tracking: 0.16 }),
+    ];
+}
