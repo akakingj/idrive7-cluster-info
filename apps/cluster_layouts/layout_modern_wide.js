@@ -196,7 +196,7 @@ module.exports = {
         const hotC = (k, lim) => (t, d) => ({ color: [C.isNum(d[k]) && d[k] >= lim ? '#ff3b30' : t.text, 1], glow: [t.glow, 0] });
         if (o.centre === 'map') {
             // the arcs bulge out to x ~200 / ~1720; the speed and gear sit between them and the map
-            const top = C.MAP.y, bot = C.MAP.y + C.MAP.h;
+            const bot = C.MAP.y + C.MAP.h;
             return C.aroundMap().map((b, i) => bg('bg' + i, b.x, b.y, b.w, b.h)).concat(arcs, [
                 // (the gear above the dark box the KOMBI leaves right of centre, its rpm and mode below it)
                 C.text('speedDigits', 228, 160, 186, 110, (d) => C.speedText(o, d), big),

@@ -85,6 +85,13 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
         assert.strictEqual(dial.params.u_scale[0], 260);
     });
     await sleep(200);
+    ctx.settings.set('centre', 'map');
+    await sleep(700);
+    const mw = path.join(process.env.CLUSTER_INFO_DIR, 'map_window.txt');
+    check('Waze centre: the map window for Waze on cluster, the map area on the panel', () => assert.strictEqual(fs.readFileSync(mw, 'utf8'), 'panel 416 120 1088 480\n'));
+    ctx.settings.set('centre', 'info');
+    await sleep(700);
+    check('the readings centre: no map window', () => assert(!fs.existsSync(mw)));
     check('the page draws', () => assert(pages > 0));
     check('warnings only for what this machine lacks (no catalog, no diagnostic link)', () => assert(warns.some((w) => /catalog not readable/.test(w)) && warns.every((w) => /catalog not readable|TASU/.test(w)), JSON.stringify(warns)));
     check('the stock strip\'s time and outside temperature left to the car: its slots show the battery and xDrive', () => {

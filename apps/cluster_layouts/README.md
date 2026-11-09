@@ -190,7 +190,8 @@ sport, Digital round and Retro stand either side of the middle again as first dr
 strip; Digital dash's side columns balance either side of the middle; Modern wide's arcs
 end higher. The layouts' own fuel and electric range numbers are left out (the strip shows both), and with the
 readings in the centre a fuel gauge sits above the strip's fuel range (bottom left) and a charge gauge above its
-electric range (bottom right), bars with no numbers. `tools/preview.js --strip` shows it.
+electric range (bottom right), bars with no numbers. With the stock centre the layout takes the same form as with Waze, its window left clear for the car's own centre
+content. `tools/preview.js --strip` shows it.
 
 ## Vehicles
 

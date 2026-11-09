@@ -58,4 +58,20 @@ check('subscriptions: the four events, declared in app.json; the state dropped 3
     s.at -= 4000;
     assert.strictEqual(dap.state(), null, 'stale');
 });
+check('the road moves with the car: the dashes by the distance driven, the cars glide between updates', () => {
+    require('./scene');   // (the kit's runtime for the layouts)
+    const L = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts.js')).byId('modern_wide');
+    const road = L.pieces({ centre: 'info', bottomStrip: 'stock', vehicle: 'phev', speedUnit: 'mph' }).find((p) => p.key === 'road');
+    assert(road && typeof road.frame === 'function', 'a frame hook');
+    const f = road.frame, D0 = Object.assign({}, D.DEMO);
+    let u = f({ speed: 0, dap: D0 }, 16);
+    assert.strictEqual(u.u_run[0], 0, 'standing still: the dashes stand still');
+    for (let i = 0; i < 60; i++) u = f({ speed: 100, dap: D0 }, 1000 / 60);          // a second at 100 km/h
+    assert(Math.abs(u.u_run[0] - 27.78) < 0.05, '27.8 m in a second at 100 km/h: ' + u.u_run[0]);
+    const near = u.u_lead[1];
+    u = f({ speed: 100, dap: Object.assign({}, D0, { lead: { x: 10, y: 0, brake: false } }) }, 16);   // the lead car jumps from 38 m to 10 m
+    assert(u.u_lead[1] > near && u.u_lead[1] < 1 / (1 + 10 / 16), 'part of the way in one frame: ' + near + ' -> ' + u.u_lead[1]);
+    for (let i = 0; i < 60; i++) u = f({ speed: 100, dap: null }, 16);
+    assert.deepStrictEqual([u.u_lead[0], u.u_side[0], u.u_side[1]], [0, 0, 0], 'gone with the assistant');
+});
 console.log(ok + ' passed');

@@ -70,8 +70,7 @@ mgu.run({
         };
         const options = () => ({
             speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), torqueUnit: settings.get('torqueUnit'),
-            // Cluster Centre's pages sit in the same window as the map: the layout leaves it clear for either
-            centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),   // ('pages': retired, Waze instead)
+            centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),   // (a saved 'pages', retired: Waze)
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
             boxClear: settings.get('boxClear') === 'on',
             cluster: settings.get('cluster') === 'm' ? 'm' : 'standard',
@@ -97,9 +96,8 @@ mgu.run({
         const look = () => lookNow(settings.get('look'), data());
         /* the renderer target: the panel (slot 0x203), where the HMI's own cluster screen goes down and the
          * KOMBI shows its fallback gear box */
-        let client = null;
         const start = () => startCluster({
-            client: (client = new ClusterRender('cluster_layouts')),
+            client: new ClusterRender('cluster_layouts'),
             layout: () => layout,
             options, log, live, data,
             theme: () => themeNow(),
@@ -114,7 +112,7 @@ mgu.run({
         // the engine-unit readings the layout shows, read fast while it shows
         setInterval(() => {
             if (showing()) D.want((layout.needs || []).concat(require('./layout_common').focus.needs(options())));
-            // Cluster Centre steps aside while a layout shows (its pages in the layout's centre: retired)
+            // Cluster Centre steps aside while a layout shows
             if (cluster.status().shown) presence.mark('layouts', { centre: options().centre });
             // the Waze centre: Waze on cluster draws its map over the layout, filling the window (map_window.js)
             mapWindow.set(cluster.status().shown && options().centre === 'map' ? require('./layout_common').MAP : null);

@@ -29,8 +29,6 @@ const PALETTES = {
 const dialColours = (t) => ({ face0: t.face0, face1: t.face1, bezel: t.bezel, bezel2: t.bezel2, tick: t.tick, minor: t.minor, num: t.num, red: t.red, needle: t.needle, hub: t.hub, accent: t.accent, glow: t.glow });
 const glowText = (t) => ({ color: [t.text, 1], glow: [t.glow, 0.6] });
 const lbl = (t) => ({ color: [t.dim, 1], glow: [t.glow, 0.4] });
-const socBar = (key, x, y, w, h) => C.bar(key, x, y, w, h, (d) => (C.isNum(d.soc) ? d.soc / 100 : 0),
-    (t) => ({ track: t.track, fill0: t.ev, fill1: t.ev, redc: t.red, tip: t.ev, tick: t.dim, num: t.num }), 20);
 
 /*
  * The tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, zero at

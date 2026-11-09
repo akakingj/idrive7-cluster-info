@@ -63,7 +63,7 @@ module.exports = {
     pieces(o) {
         const eTxt = C.engineFocus(o) ? txt : evTxt;
         if (o.centre === 'map') {
-            // the speed on the left of the window (the map, or Cluster Centre's pages), the gear on the right
+            // the speed on the left of the map's window, the gear on the right
             // (past the KOMBI's gear box); the engine speed along under the window
             const bot = C.MAP.y + C.MAP.h;
             return C.aroundMap().map((b, i) => bg('bg' + i, b.x, b.y, b.w, b.h)).concat([

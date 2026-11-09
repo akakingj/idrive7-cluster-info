@@ -175,7 +175,7 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
         ctx.settings.set('page_edrive', 'off');
         assert(eng()._groups().indexOf('edrive') < 0);
     });
-    // a Cluster Layouts layout showing: the pages step aside, unless its centre is set to them
+    // a Cluster Layouts layout showing: the pages step aside, whatever its centre holds (an old layout's 'pages' too)
     const layoutsSays = (centre) => fs.writeFileSync(path.join(process.env.CLUSTER_PRESENCE_DIR, 'layouts.json'), JSON.stringify({ at: Date.now(), centre }));
     const visible = () => effects().length > 0 && effects().every((l) => l.opts.visible);
     layoutsSays('map');
@@ -183,14 +183,7 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
     check('app: a layout with Waze in its centre: the pages step aside', () => assert(!visible()));
     layoutsSays('pages');
     await new Promise((r) => setTimeout(r, 1500));
-    layoutsSays('pages');
-    await new Promise((r) => setTimeout(r, 1200));
-    check('app: a layout with Cluster Centre\'s pages in its centre: shown there, at full size', () => {
-        assert(visible(), 'shown');
-        const bg = eng()._pieces().find((p) => p.key === 'bg');
-        assert(eng()._pieces().filter((p) => p.key !== 'bg').some((p) => p.x + p.w > 900), 'full width: ' + JSON.stringify(eng()._pieces().slice(0, 4).map((p) => [p.key, p.x, p.w])));
-        assert(!bg || bg.w >= 1000);
-    });
+    check('app: a layout from before, its centre set to these pages (retired): the pages step aside too', () => assert(!visible()));
     fs.unlinkSync(path.join(process.env.CLUSTER_PRESENCE_DIR, 'layouts.json'));
     check('app: the screen shows the page preview', () => assert(pages > 0 && lastImage && lastImage.w === 1600));
     check('app: warnings only for what this machine lacks (no diagnostic link, no catalog)', () => assert(warns.every((w) => /TASU|catalog/.test(w)), JSON.stringify(warns)));

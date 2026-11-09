@@ -148,7 +148,7 @@ module.exports = {
     needs: ['iat', 'boostActual', 'gearbox', 'splitRear'],   // (and C.focus.needs with Show: Engine)
 
     pieces(o) {
-        const r = C.rpmScale(o), s = C.speedScale(o);
+        const r = C.rpmScale(o);
         const centre = o.centre || 'info', map = centre === 'map', stock = centre === 'stock';
         const engine = C.engineFocus(o);   // Show: Engine (the eDrive readings traded for the engine's)
         const gearC = (t, d) => ({ color: [C.gearText(d) === 'R' ? '#ff453a' : t.text, 1], glow: [t.glow, 0.2] });

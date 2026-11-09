@@ -291,7 +291,8 @@ function startData(ctx, opts) {
     }
     let slowAt = 0, hvVolt = null, hvVoltT = 0, queue = [];
     /*
-     * One turn: the battery's current first (its power is the most watched reading: ~4 times a second), then
+     * One turn: the battery's current first (its power is the most watched reading: as often as the battery unit
+     * answers, 10-20 times a second, unless eDrive Live shares it), then
      * one other reading, round-robin: what the layout wants, every DME reading every 10 s, the charge every 10 s.
      * Only while shown: each read puts "Diagnostic mode active" on the cluster.
      */
@@ -309,10 +310,12 @@ function startData(ctx, opts) {
             queue = queue.filter(usable);
         }
         const turn = on ? ['hv'].filter(usable).concat(queue.length ? [queue.shift()] : []) : [];
+        let asked = 0;
         try {
             if (link.available) {
                 for (const k of turn) {
                     if (!ready(k)) continue;
+                    asked++;
                     tried[k] = Date.now();
                     const v = await readOne(k);
                     fail[k] = v === null ? (fail[k] || 0) + 1 : 0;
@@ -328,7 +331,8 @@ function startData(ctx, opts) {
         } catch (e) { const m = String(e); if (m !== lastPollErr) { lastPollErr = m; log.warn('diagnostic poll: ' + m); } }   // (once per distinct error)
         // the battery's current read again at once (the link's own round trip sets the pace, ~10-20 a second);
         // a little longer with other reads in the turn, so the link isn't held without a gap
-        timer = setTimeout(poll, !turn.length ? 2000 : turn.length === 1 && turn[0] === 'hv' ? 5 : 40);
+        // (nothing asked, the link down or every reading resting after failures: no spinning, a look again soon)
+        timer = setTimeout(poll, !turn.length ? 2000 : !asked ? 250 : turn.length === 1 && turn[0] === 'hv' ? 5 : 40);
     }
     timer = setTimeout(poll, 1500);
 

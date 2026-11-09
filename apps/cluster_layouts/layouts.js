@@ -25,24 +25,12 @@ const M_MOVES = {
         // the speed up between the cowl and the boxes; its unit, the drive mode and the rpm in one row below them
         info: { speedDigits: { y: 128, h: 146 }, speedUnit: { y: 432, h: 28 }, mode: { x: 200, y: 434, w: 440, h: 26 }, rpmDigits: { y: 430, h: 30 }, gear: { y: 186, h: 230 } },
     },
-    track: { info: {
-        // the gear card below the boxes, the drive mode above them; the right column's tiles stacked below
-        gearCard: { y: 432, h: 208 }, gear: { y: 438, h: 140 }, rpm: { y: 580, h: 34 }, rpmLbl: { y: 618, h: 16 }, mode: { y: 226, h: 26 },
-        boostCard: { y: 432, h: 100 }, boostLbl: { y: 442 }, boost: { y: 466, h: 55 },
-        powerCard: { y: 542, h: 100 }, powerLbl: { y: 552 }, power: { y: 576, h: 55 },
-    } },
     modern_wide: {
         // the centre column's readings under the boxes (the charge bar left out: no room), the gear below the right box
         info: { fuel: { y: 432 }, fuelLbl: { y: 482 }, elec: { y: 432 }, elecLbl: { y: 482 }, soc: { y: 508 }, socLbl: { y: 549 }, kw: { y: 508 }, kwLbl: { y: 549 },
             oil: { y: 578, h: 36 }, oilLbl: { y: 619, h: 18 }, coolant: { y: 578, h: 36 }, coolantLbl: { y: 619, h: 18 },
             gear: { y: 432, h: 120 }, rpmDigits: { y: 556 }, '-soc': 'band' },
         stock: { gear: { y: 432, h: 120 }, rpmDigits: { y: 556 } },
-    },
-    freedom: {
-        // the speed to the left (where the gear was), the gear to the right under the banner
-        info: { speedDigits: { x: 150, y: 186, w: 300, h: 150 }, speedUnit: { x: 150, y: 338, w: 300, h: 22 }, clock: { y: 376 }, outside: { y: 376 },
-            gear: { x: 1680, y: 268, w: 220, h: 140 } },
-        stock: { gear: { x: 1680, y: 268, w: 220, h: 140 } },
     },
     digital_dash: {
         // with the stock centre: the left column a little narrower, the right column's last two below the box
@@ -99,7 +87,7 @@ function bottomCut(list) {
     list.forEach((p) => {
         if (p.y >= CUT_Y) return;
         if (p.y + p.h <= CUT_Y) return out.push(p);
-        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || p.kind === 'bg' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
+        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'bg' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
         if (p.h <= 80) return out.push(Object.assign({}, p, { y: CUT_Y - p.h }));
         out.push(p);
     });
@@ -109,7 +97,10 @@ function bottomCut(list) {
 LAYOUTS.forEach((L) => {
     const own = L.pieces;
     L.pieces = (o) => {
-        let list = (own(o) || []).slice();
+        // over the car's own strip there is no dark box to work round: the stock centre content shows in the
+        // map's window, so the layout takes the same form as with the map (its window left clear for it)
+        const oo = stripOn(o) && o.centre === 'stock' ? Object.assign({}, o, { centre: 'map' }) : o;
+        let list = (own(oo) || []).slice();
         if (mCar(o)) list = mMoves(L, o, list);
         if (stripOn(o)) {
             list = list.filter((p) => !C0.STRIP_DROP.test(p.key));
@@ -118,7 +109,11 @@ LAYOUTS.forEach((L) => {
             list = list.filter((p) => !/^(gear|sel[PRND]?|mode|gearCard|gearChip|selChip)$/.test(p.key));
             // the strip shows the time and the outside temperature: their places get the battery's temperature
             // (intake air on a petrol or diesel car) and the xDrive split
-            list = list.map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB }) : p));
+            // (each only where the layout doesn't show it already)
+            const has = (re) => list.some((p) => re.test(p.key));
+            const hasSplit = has(/^split$/), hasBatt = o.vehicle !== 'ice' && !C0.engineFocus(o) && has(/^(battT|c_battV|batt)$/);
+            list = list.filter((p) => !((p.key === 'outside' && hasSplit) || (p.key === 'clock' && hasBatt)))
+                .map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB }) : p));
             // the gauges above everything but the backgrounds
             // (only with the readings in the centre: with the map or the stock centre the side columns reach
             // down to the strip, and keep their own charge and fuel bars)
@@ -140,6 +135,6 @@ LAYOUTS.forEach((L) => {
         return list;
     };
 });
-/* (Freedom and Track: retired, not up to a car maker's own; a saved choice of either is Analog sport) */
+/* (a saved choice of a retired layout, Freedom or Track: Analog sport) */
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
 module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, bottomCut };

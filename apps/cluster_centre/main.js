@@ -94,12 +94,10 @@ mgu.run({
         /* ---------- options for the pages ---------- */
         // (a petrol or diesel car, Settings > Vehicle: ICE, has no eDrive page)
         const enabled = () => PAGE_IDS.filter((id) => settings.get('page_' + id) === 'on' && !(id === 'edrive' && data.vehicle().vehicle === 'ice'));
-        // inside a Cluster Layouts layout set to show these pages: the layout covers the stock readouts round
-        // the centre, so the page takes the whole window
-        const inLayout = () => presence.active('layouts') && presence.info('layouts').centre === 'pages';
-        const blockedByLayout = () => presence.active('layouts') && !inLayout();
+        // a Cluster Layouts layout covers the whole panel: the pages wait while one shows
+        const blockedByLayout = () => presence.active('layouts');
         const options = () => ({
-            look: settings.get('look'), fit: inLayout() ? 'full' : settings.get('fit'), pages: enabled(), style: settings.get('style'), accent: settings.get('accent'), size: settings.get('size'),
+            look: settings.get('look'), fit: settings.get('fit'), pages: enabled(), style: settings.get('style'), accent: settings.get('accent'), size: settings.get('size'),
             units: { temp: settings.get('tempUnit'), press: settings.get('pressUnit'), speed: settings.get('speedUnit'), torque: settings.get('torqueUnit') },
             warn: { oilHigh: num('oilHigh'), coolantHigh: num('coolantHigh'), iatHigh: num('iatHigh'), gearboxHigh: num('gearboxHigh'), battTempHigh: num('battTempHigh'), lpfpLow: num('lpfpLow') },
             shift: { on: settings.get('shift') !== 'off', from: num('shiftFrom', 4000), at: num('shiftAt', 6200) },
@@ -117,7 +115,7 @@ mgu.run({
             font: () => (settings.get('look') === 'modern' ? 'bold' : 'light'),
             live: () => data.car.data().demo || data.car.subs.some((s) => s.available) || data.car.lastCar > 0,
             // not while Cluster Layouts covers the whole panel (the pages would be hidden under it and take the
-            // renderer's layers the layout needs), unless its centre is set to these pages
+            // renderer's layers the layout needs)
             enabled: () => showing() && !!page && !blockedByLayout(),
             sweep: () => false,
             group: page,
@@ -130,10 +128,7 @@ mgu.run({
         }
         function next() { const list = enabled(); if (!list.length) { page = null; return; } goTo(list[(list.indexOf(page) + 1) % list.length]); }
         if (page) goTo(page);
-        let wasInLayout = inLayout();
         setInterval(() => {
-            // into a layout's centre or out of it: the page built again at its size there
-            if (inLayout() !== wasInLayout) { wasInLayout = inLayout(); log.info('in a layout\'s centre: ' + wasInLayout); rebuild(); }
             const r = num('rotate', 0);
             if (r > 0 && Date.now() - pageAt >= r * 1000) next();
             const pg = PAGES[page];

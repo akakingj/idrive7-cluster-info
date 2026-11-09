@@ -45,10 +45,10 @@ const TAU_MS = 10;           // a needle's easing towards its reading: most of t
 const MIN_GAP_MS = 4;        // a reading's update at most this soon after the last
 const EPS = 0.0015;          // a value moving less than this (of its max) is not sent
 const SWEEP_MS = 700;        // up, then as long back down
-const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, flag: SH.FLAG_FS, eagles: SH.EAGLE_FS, fireworks: SH.FIREWORKS_FS, road: SH.ROAD_FS };
-const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20 };
+const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, road: SH.ROAD_FS };
+const Z = { bg: -200, road: -40, flat: -100, panel: -50, spark: -20, band: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20 };
 /* kinds that animate on the renderer's own clock (u_time): nothing is sent to move them */
-const TIMED = { car: true, leds: true, flag: true, eagles: true, fireworks: true };
+const TIMED = { car: true, leds: true };
 const HIST = 64;
 /* the most layers up at once while one set replaces another (the service allows 64 an app) */
 const MAX_AT_ONCE = 60;
@@ -175,8 +175,8 @@ function startCluster(opts) {
     }
 
     /** Colours and texts: sent only when they changed (force: all). */
-    function update(force) {
-        const t = opts.theme(), d = opts.data();
+    function update(force, d0) {
+        const t = opts.theme(), d = d0 || opts.data();
         pieces.forEach((p) => {
             const s = p.spec;
             if (!inGroup(p)) return;
@@ -212,9 +212,9 @@ function startCluster(opts) {
     }
 
     /** Trend lines: a sample every s.every ms (2 s) on every page, so a page shows its recent past. */
-    function samples() {
+    function samples(d0) {
         const now = Date.now();
-        let d = null;
+        let d = d0 || null;
         specs.forEach((s) => {
             if (!s.sample) return;
             let H = hist.get(s.key);
@@ -230,9 +230,9 @@ function startCluster(opts) {
 
     /** Values (needles, bands): each eased towards its reading, sent when it moved enough. */
     let valuesAt = 0, valuesAt0 = 0;
-    function values() {
-        const d = opts.data(), now = Date.now();
-        // eased by time, not by update: the same ~30 ms whether a reading or the frame timer brought it
+    function values(d0) {
+        const d = d0 || opts.data(), now = Date.now();
+        // eased by time, not by update: the same TAU_MS whether a reading or the frame timer brought it
         // (at least a frame's worth an update, so updates in quick succession still settle)
         const k = valuesAt ? 1 - Math.exp(-Math.max(1000 / RATE_HZ, now - valuesAt) / TAU_MS) : 1;
         valuesAt = now;
@@ -297,9 +297,12 @@ function startCluster(opts) {
         if (Date.now() - statusAt > 3000) { statusAt = Date.now(); try { cr.status(); } catch (e) { /* not connected yet */ } }
         if (!want) { const now = Date.now(); if (now - lastText >= 1000 / TEXT_HZ) { lastText = now; samples(); } return; }
         if (sweepEnd && Date.now() >= sweepEnd) endSweep();
-        values();
+        // the car's data once a tick, for the needles, the texts and the colours alike
+        const d = opts.data();
+        values(d);
         const now = Date.now();
-        if (now - lastText >= 1000 / TEXT_HZ) { lastText = now; samples(); update(false); }
+        // (a little under a frame: the timer's own jitter would otherwise skip every other frame)
+        if (now - lastText >= 1000 / TEXT_HZ - 4) { lastText = now; samples(d); update(false, d); }
     }
 
     /** The pieces made again (the options changed); the glyph atlas stays. */
