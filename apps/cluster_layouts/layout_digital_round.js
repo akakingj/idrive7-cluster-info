@@ -50,9 +50,11 @@ function tempArc(key, x, y, which, redC, o) {
 function dialSet(o, which, cx, size, cy) {
     cy = cy === undefined ? CY : cy;
     const k = size / 640, s = which === 'speed' ? C.speedScale(o) : C.rpmScale(o);
+    // km/h: 14 numerals, most of three figures (mph: 9); at mph's size 100-160 ran together, so smaller and further out
+    const dense = which === 'speed' && o.speedUnit === 'kmh';
     const parts = [{
         key: which, kind: 'dial', x: cx - size / 2, y: cy - size / 2, w: size, h: size,
-        params: { u_scale: [s.max, s.major, s.minor, which === 'speed' ? s.max + 1 : s.red], u_arc: [-128, 128, Math.round(40 * k + 2), 196 * k], u_needle_dim: [276 * k, 30 * k, 12 * k, 4], u_look: [0.35, 0.25, 1, 62 * k], u_look2: [7, k, 0.45, 0.6] },
+        params: { u_scale: [s.max, s.major, s.minor, which === 'speed' ? s.max + 1 : s.red], u_arc: [-128, 128, Math.round((dense ? 29 : 40) * k + 2), (dense ? 206 : 196) * k], u_needle_dim: [276 * k, 30 * k, 12 * k, 4], u_look: [0.35, 0.25, 1, 62 * k], u_look2: [7, k, 0.45, 0.6] },
         colors: dialColours, max: s.max, sweep: true,
         value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : (d) => (C.isNum(d.rpm) ? d.rpm / 1000 : 0),
     }, C.text(which + 'Unit', cx - 120, cy + Math.round(86 * k), 240, Math.round(20 * k), which === 'speed' ? C.speedUnit(o) : 'X1000 RPM', lbl, { tracking: 0.14 })];

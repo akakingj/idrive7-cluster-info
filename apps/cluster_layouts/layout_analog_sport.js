@@ -61,13 +61,15 @@ function dialSet(o, which, cx, size, cy) {
     cy = cy === undefined ? CY : cy;
     const k = size / 640, s = which === 'speed' ? C.speedScale(o) : C.rpmScale(o);
     const red = which === 'speed' ? s.max + 1 : s.red;
+    // km/h: 14 numerals, most of three figures (mph: 9); at mph's size 100-160 ran together, so smaller and further out
+    const dense = which === 'speed' && o.speedUnit === 'kmh';
     const sub = Math.round(176 * k), subDy = Math.round(168 * k), ks = sub / 640;
     const temp = which === 'speed' ? 'coolant' : 'oil', tempRed = which === 'speed' ? 120 : 130;
     const extra = which === 'rpm' && !C.engineFocus(o) ? powerMeter(cx, size, cy) : [];   // (Show: Engine: no power meter)
     return extra.concat([
         {
             key: which, kind: 'dial', x: cx - size / 2, y: cy - size / 2, w: size, h: size,
-            params: { u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round(44 * k + 2), 220 * k], u_needle_dim: [283 * k, 50 * k, 17 * k, 5], u_look: [0.9, 0.85, 0, 0], u_look2: [Math.round(16 * k), k, 0.85, 1] },
+            params: { u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round((dense ? 32 : 44) * k + 2), (dense ? 230 : 220) * k], u_needle_dim: [283 * k, 50 * k, 17 * k, 5], u_look: [0.9, 0.85, 0, 0], u_look2: [Math.round(16 * k), k, 0.85, 1] },
             colors: dialColours, max: s.max, sweep: true,
             value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : (d) => (C.isNum(d.rpm) ? d.rpm / 1000 : 0),
         },

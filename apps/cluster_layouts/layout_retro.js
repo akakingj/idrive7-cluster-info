@@ -63,6 +63,8 @@ const econScale = (o) => (C.engineFocus(o) ? [100, 25, 12.5, 101] : [160, 20, 10
 function dialSet(o, which, cx, size, cy) {
     const k = size / 640, s = which === 'speed' ? C.speedScale(o) : C.rpmScale(o);
     const red = which === 'speed' ? s.max + 1 : s.red;
+    // km/h: 14 numerals, most of three figures (mph: 9); at mph's size 100-160 ran together, so smaller and further out
+    const dense = which === 'speed' && o.speedUnit === 'kmh';
     const sub = Math.round(176 * k), subY = cy + Math.round(170 * k);
     const subPiece = which === 'speed'
         // fuel: full at the right, empty at the left, the reserve (the last eighth) red; read as 100 - level
@@ -73,7 +75,7 @@ function dialSet(o, which, cx, size, cy) {
     return [
         Object.assign({
             key: which, kind: 'dial', x: cx - size / 2, y: cy - size / 2, w: size, h: size,
-            params: Object.assign({ u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round(56 * k + 2), 204 * k], u_needle_dim: [292 * k, 62 * k, 13 * k, 4] }, look(k, 0.75)),
+            params: Object.assign({ u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round((dense ? 38 : 56) * k + 2), (dense ? 222 : 204) * k], u_needle_dim: [292 * k, 62 * k, 13 * k, 4] }, look(k, 0.75)),
             colors: dialColours, max: s.max, sweep: true,
             value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : (d) => (C.isNum(d.rpm) ? d.rpm / 1000 : 0),
         }),
