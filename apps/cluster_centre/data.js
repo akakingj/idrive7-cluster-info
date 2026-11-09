@@ -178,11 +178,15 @@ function startData(ctx, opts) {
     };
     watch('de.bmw.infotainment.drivingexcitement.FES', {
         statusFESVehicleDynamicSwitchHMI: fes('statusFESVehicleDynamicSwitchHMI'),
-        // the sport display's boost (tenths of a bar over atmosphere; 254 and up: none): boost without diagnostics
+        // the sport display's boost over atmosphere, boost without diagnostics: hundredths of a bar
+        // (config.scaling.boost, factor 0.01: tenths read ten times too high against the engine unit and
+        // M Vitals, issue #7); 254 and up: none. Each raw value goes to the log once a minute.
         statusSwitchDriveDynamicSport2: (v) => {
             fes('statusSwitchDriveDynamicSport2')(v);
             const b = v && typeof v === 'object' ? v.displayBoostPressure : undefined;
-            if (isNum(b) && b >= 0 && b < 254) put('boostCar', b / 10);
+            const bs = S.boost || {}, factor = isNum(bs.factor) ? bs.factor : 0.01, invalid = isNum(bs.invalid) ? bs.invalid : 254;
+            if (isNum(b) && Date.now() - (x.at.boostRawLog || 0) > 60000) { x.at.boostRawLog = Date.now(); log.info('raw FES boost ' + b + ' (max ' + (v && v.displayMaximumValueBoostPressure) + ')'); }
+            if (isNum(b) && b >= 0 && b < Math.min(254, invalid)) put('boostCar', b * factor + (bs.offset || 0));
         },
     }, 'driving mode');
     watch('de.bmw.infrastructure.EnvironmentalInformation', { ExteriorTemperature: (v) => put('outside', sc('ambient', v && v.temperatureExterior)) }, 'outside temperature');
