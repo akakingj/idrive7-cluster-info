@@ -121,6 +121,19 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ic
     assert(!bad.length, bad.join('; '));
 }))));
 
+/* Settings > Layout: Bottom strip: the car's own: no background below y 660, nothing small crossing it, and
+ * the same readings clear of the KOMBI's boxes as without it */
+const { CUT_Y } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
+LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['standard', 'm'].forEach((cluster) => check(L.id + ' (' + centre + ', ' + cluster + ', stock bottom strip): the layout ends at y ' + CUT_Y, () => {
+    const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle: 'phev', cluster, bottomStrip: 'stock' };
+    const ps = L.pieces(o);
+    const low = ps.filter((p) => p.y + p.h > CUT_Y && (/^bg/.test(p.key) || p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || p.h <= 80));
+    assert(!low.length, low.map((p) => p.key + ' ' + p.y + '+' + p.h).join(', '));
+    assert(ps.some((p) => /^bg/.test(p.key)), 'a background still');
+    const bad = ps.map((p) => [p.key, clashes(p, o).filter((c) => !(c === 'in an M box' && M_ON_DIAL.indexOf(p.key) >= 0))]).filter(([, c]) => c.length).map(([k, c]) => k + ' ' + c.join(', '));
+    assert(!bad.length, bad.join('; '));
+}))));
+
 /* 60 frames a second, a reading drawn within 5 ms: an update (every needle, bar and text of the layout) takes
  * well under 5 ms here; the unit's CPU is slower, so the budget asserted is 1.5 ms (worst 4 ms) on this machine */
 LAYOUTS.forEach((L) => check(L.id + ': an update takes well under 5 ms (60 a second, drawn at once on a reading)', () => {

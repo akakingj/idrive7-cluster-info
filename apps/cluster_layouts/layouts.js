@@ -74,11 +74,33 @@ function mMoves(L, o, list) {
     return out;
 }
 
+/*
+ * Settings > Layout: Stock bottom strip. The layout stops at CUT_Y (660, found on cars by thatgrayg22): the
+ * background ends there, so the KOMBI's own bottom strip (gear, temperatures, fuel, warnings) shows under it, and
+ * the dark boxes some cars' KOMBIs leave over a full-screen layout don't appear. Backgrounds are cut short; a
+ * small piece that crosses the line moves up above it; one wholly below it is left out. Bigger pieces (the dials'
+ * arcs, which are open at the bottom) stay as they are.
+ */
+const CUT_Y = 660;
+const stripOn = (o) => !!o && o.bottomStrip === 'stock';
+function bottomCut(list) {
+    const out = [];
+    list.forEach((p) => {
+        if (p.y >= CUT_Y) return;
+        if (p.y + p.h <= CUT_Y) return out.push(p);
+        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
+        if (p.h <= 80) return out.push(Object.assign({}, p, { y: CUT_Y - p.h }));
+        out.push(p);
+    });
+    return out;
+}
+
 LAYOUTS.forEach((L) => {
     const own = L.pieces;
     L.pieces = (o) => {
         let list = (own(o) || []).slice();
         if (mCar(o)) list = mMoves(L, o, list);
+        if (stripOn(o)) list = bottomCut(list);
         if (!o || o.boxBezel !== true) return list;
         let i = 0;
         while (i < list.length && /^bg/.test(list[i].key)) i++;
@@ -90,4 +112,4 @@ LAYOUTS.forEach((L) => {
     };
 });
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
-module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL };
+module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, bottomCut };

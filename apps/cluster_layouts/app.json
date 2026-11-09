@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.13.2",
+  "version": "0.14.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -265,6 +265,22 @@
         [
           "m",
           "M car: two more boxes in the middle, readings moved round them"
+        ]
+      ]
+    },
+    {
+      "key": "bottomStrip",
+      "label": "Bottom strip",
+      "type": "choice",
+      "default": "layout",
+      "options": [
+        [
+          "layout",
+          "The layout's (full screen)"
+        ],
+        [
+          "stock",
+          "The car's own (layout ends at Y 660: no black boxes)"
         ]
       ]
     },
