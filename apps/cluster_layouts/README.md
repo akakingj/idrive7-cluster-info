@@ -163,6 +163,12 @@ Analog sport, Digital round and Retro are too big to move out of the middle, so 
 faces. The boxes' places were measured from one photo of a car (`layout_common.M_BOXES`, to within about 10 px):
 a straight-on photo would tighten them.
 
+**Bottom strip** (Settings > Bottom strip > The car's own): the layout ends at y 660, so the KOMBI's own strip
+along the bottom (gear, temperatures, fuel, warnings) shows below it, and the black boxes some cars' KOMBIs leave
+over a full-screen layout go away. Found and tested on cars by thatgrayg22. Backgrounds stop at the line, small
+readings that crossed it move up above it, and the dials' arcs (open at the bottom) stay. `tools/preview.js --strip`
+shows it.
+
 ## Vehicles
 
 Made and measured on a G05 X5 xDrive45e (iDrive 7 MGU, the 12.3" Live Cockpit Professional cluster); every
