@@ -88,13 +88,18 @@ function mMoves(L, o, list) {
  * (wholly below). Bigger pieces (a dial's arc open at the bottom) stay.
  */
 const CUT_Y = C0.STRIP_Y;
+/* Below the layout, to BG_Y, a black band over the stock dials' edges and the separator the KOMBI draws above its
+ * strip (seen at 646 on the car), except over the strip's drive mode and gear (x BG_NOTCH), whose tops 660 clipped. */
+const BG_Y = 662, BG_NOTCH = [1236, 1446];
 const stripOn = (o) => C0.strip(o);
+const blackBand = () => [[0, BG_NOTCH[0]], [BG_NOTCH[1], 1920]].map(([x0, x1], i) =>
+    ({ key: 'bgBand' + i, kind: 'flat', x: x0, y: CUT_Y, w: x1 - x0, h: BG_Y - CUT_Y, colors: () => ({ color: ['#000000', 1] }) }));
 function bottomCut(list) {
     const out = [];
     list.forEach((p) => {
         if (p.y >= CUT_Y) return;
         if (p.y + p.h <= CUT_Y) return out.push(p);
-        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
+        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || p.kind === 'bg' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
         if (p.h <= 80) return out.push(Object.assign({}, p, { y: CUT_Y - p.h }));
         out.push(p);
     });
@@ -113,6 +118,10 @@ LAYOUTS.forEach((L) => {
             // down to the strip, and keep their own charge and fuel bars)
             if (!L.ownStripGauges && (o.centre || 'info') === 'info') list = list.concat(C0.stripGauges(o, { fuel: L.stripFuel !== false }));
             list = bottomCut(list);
+            // the band goes in with the backgrounds (under everything)
+            let i = 0;
+            while (i < list.length && /^bg/.test(list[i].key)) i++;
+            list.splice(i, 0, ...blackBand());
             return list;   // (no frame for the gear box: the KOMBI shows none over the strip)
         }
         if (!o || o.boxBezel !== true) return list;
@@ -126,4 +135,4 @@ LAYOUTS.forEach((L) => {
     };
 });
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
-module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, bottomCut };
+module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, bottomCut };

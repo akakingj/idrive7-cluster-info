@@ -121,14 +121,17 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ic
     assert(!bad.length, bad.join('; '));
 }))));
 
-/* Settings > Layout: Bottom strip: the car's own: no background below y 660, nothing small crossing it, and
+/* Settings > Layout: Bottom strip: the car's own: no background below CUT_Y but the black band, nothing small crossing it, and
  * the same readings clear of the KOMBI's boxes as without it */
-const { CUT_Y } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
+const { CUT_Y, BG_Y, BG_NOTCH } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
 LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['standard', 'm'].forEach((cluster) => check(L.id + ' (' + centre + ', ' + cluster + ', stock bottom strip): the layout ends at y ' + CUT_Y, () => {
     const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle: 'phev', cluster, bottomStrip: 'stock' };
     const ps = L.pieces(o);
-    const low = ps.filter((p) => p.y + p.h > CUT_Y && (/^bg/.test(p.key) || p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || p.h <= 80));
+    const low = ps.filter((p) => p.y + p.h > CUT_Y && !/^bgBand/.test(p.key) && (/^bg/.test(p.key) || p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || p.h <= 80));
     assert(!low.length, low.map((p) => p.key + ' ' + p.y + '+' + p.h).join(', '));
+    // the black band below, to BG_Y, over the stock dials' edges, but not over the strip's drive mode and gear
+    const band = ps.filter((p) => /^bgBand/.test(p.key));
+    assert(band.length === 2 && band.every((p) => p.y === CUT_Y && p.y + p.h === BG_Y && (p.x + p.w <= BG_NOTCH[0] || p.x >= BG_NOTCH[1])), JSON.stringify(band.map((p) => [p.x, p.w])));
     assert(ps.some((p) => /^bg/.test(p.key)), 'a background still');
     const bad = ps.map((p) => [p.key, clashes(p, o).filter((c) => !(c === 'in an M box' && M_ON_DIAL.indexOf(p.key) >= 0))]).filter(([, c]) => c.length).map(([k, c]) => k + ' ' + c.join(', '));
     assert(!bad.length, bad.join('; '));
