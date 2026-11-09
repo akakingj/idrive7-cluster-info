@@ -797,21 +797,41 @@ uniform vec3 u_ego;
 varying vec2 v_uv;
 float lineA(float dx, float w) { return clamp(w - abs(dx) + 0.5, 0.0, 1.0); }
 float rbox(vec2 p, vec2 b, float r) { vec2 q = abs(p) - b + r; return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - r; }
-/* a car from behind, its bottom centre at b, w wide: body, rear window, lamps (bright when braking), a halo */
+/* coverage of a shape d (in u units, < 0 inside) with a pixel px wide */
+float cov(float d, float px) { return clamp(0.5 - d / px, 0.0, 1.0); }
+/* a car from behind, its bottom centre at b, w wide (u: units of w, y down): a soft shadow on the road, the tyres,
+ * the bumper with its plate, the body shaded with a light along its shoulder, the cabin narrowing to the roof with
+ * the rear window's glass and a sheen across it, a light bar the full width with the lamps at its ends (bright
+ * and glowing when braking, the third brake light too), a rim of light along the roof, a halo (followed, warned) */
 vec4 car(vec4 acc, vec2 p, vec2 b, float w, vec3 body, float brake, vec3 halo, float haloA) {
-    float h = w * 0.62;
-    vec2 q = p - (b - vec2(0.0, h * 0.5));
-    float d = rbox(q, vec2(w * 0.5, h * 0.5), w * 0.16);
-    acc = over(acc, halo, haloA * exp(-max(d, 0.0) / (w * 0.10)) * step(0.0, d));
-    acc = over(acc, vec3(0.0), 0.45 * clamp(1.0 - abs(q.y - h * 0.5) / (h * 0.12), 0.0, 1.0) * step(abs(q.x), w * 0.56));
-    acc = over(acc, body, clamp(0.5 - d, 0.0, 1.0));
-    acc = over(acc, mix(body, vec3(1.0), 0.25), clamp(0.5 - d, 0.0, 1.0) * smoothstep(0.0, -h * 0.5, q.y) * 0.35);
-    float dw = rbox(q - vec2(0.0, -h * 0.2), vec2(w * 0.34, h * 0.15), w * 0.07);
-    acc = over(acc, body * 0.35, clamp(0.5 - dw, 0.0, 1.0) * 0.9);
-    float dl = rbox(vec2(abs(q.x) - w * 0.37, q.y + h * 0.06), vec2(w * 0.1, h * 0.06), h * 0.04);
-    vec3 lamp = vec3(1.0, 0.16, 0.12);
-    acc = over(acc, lamp * (0.55 + 0.45 * brake), clamp(0.5 - dl, 0.0, 1.0));
-    acc = over(acc, lamp, brake * 0.55 * exp(-max(dl, 0.0) / (w * 0.07)));
+    vec2 u = (p - b) / w;
+    float px = 1.0 / w;
+    if (u.y < -0.62 || u.y > 0.08 || abs(u.x) > 0.75) return acc;
+    float sh = length(vec2(u.x / 0.6, (u.y - 0.004) / 0.045));
+    acc = over(acc, vec3(0.0), 0.6 * (1.0 - smoothstep(0.55, 1.15, sh)));
+    float taper = 1.0 + (-0.36 - u.y) * 1.5;
+    float dT = rbox(vec2(abs(u.x) - 0.37, u.y + 0.055), vec2(0.075, 0.055), 0.03);
+    float dB = rbox(u - vec2(0.0, -0.13), vec2(0.49, 0.07), 0.065);
+    float dM = rbox(u - vec2(0.0, -0.255), vec2(0.5, 0.095), 0.085);
+    float dC = rbox(vec2(u.x * taper, u.y + 0.43), vec2(0.355, 0.095), 0.085);
+    float dG = rbox(vec2(u.x * taper, u.y + 0.432), vec2(0.29, 0.062), 0.05);
+    float dS = min(min(dT, dB), min(dM, dC));
+    acc = over(acc, halo, haloA * exp(-max(dS, 0.0) / 0.07) * step(0.0, dS));
+    acc = over(acc, vec3(0.035), cov(dT, px));
+    acc = over(acc, body * 0.42, cov(dB, px));
+    acc = over(acc, vec3(0.78, 0.8, 0.82) * 0.55, cov(rbox(u - vec2(0.0, -0.14), vec2(0.075, 0.024), 0.008), px));
+    vec3 bc = body * (0.72 + 0.38 * smoothstep(-0.16, -0.34, u.y)) + vec3(0.22) * exp(-pow((u.y + 0.335) / 0.018, 2.0));
+    acc = over(acc, bc, cov(dM, px));
+    acc = over(acc, body * (0.8 + 0.2 * smoothstep(-0.36, -0.5, u.y)), cov(dC, px));
+    float sheen = exp(-pow((u.x * 0.8 + (u.y + 0.43) * 1.3 + 0.07) / 0.045, 2.0));
+    acc = over(acc, mix(vec3(0.02, 0.025, 0.035), vec3(0.5, 0.56, 0.62), 0.18 + 0.4 * sheen + 0.12 * smoothstep(-0.38, -0.49, u.y)), cov(dG, px));
+    acc = over(acc, vec3(1.0), 0.45 * clamp(1.0 - abs(dC + 0.008) / 0.008, 0.0, 1.0) * smoothstep(-0.44, -0.52, u.y));
+    vec3 red = vec3(1.0, 0.14, 0.1);
+    float dL = min(rbox(u - vec2(0.0, -0.318), vec2(0.46, 0.011), 0.011), rbox(vec2(abs(u.x) - 0.405, u.y + 0.3), vec2(0.075, 0.03), 0.02));
+    acc = over(acc, red * (0.6 + 0.4 * brake), cov(dL, px));
+    acc = over(acc, red, (0.18 + 0.5 * brake) * exp(-max(dL, 0.0) / (0.03 + 0.04 * brake)) * step(0.0, dL));
+    float dK = rbox(u - vec2(0.0, -0.508), vec2(0.07, 0.007), 0.007);
+    acc = over(acc, red, brake * cov(dK, px));
     return acc;
 }
 void main() {
