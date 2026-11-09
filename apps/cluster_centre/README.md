@@ -84,7 +84,7 @@ Settings, 52 of them, kept for each driver profile:
 - **Warm-up**: the oil temperature that counts as warm, the rev limit while cold and when warm. The cool-down:
   what counts as hard driving.
 - **Units**: temperature (°F / °C), pressure (psi / bar / kPa), speed and distance (mph / km/h), torque
-  (lb-ft / Nm).
+  (lb-ft / Nm / kgm).
 - **Warnings**: when oil, coolant, intake air, gearbox and battery count as too hot, and low pressure fuel as
   too low (the value and its bar turn red).
 - **Custom pages**: how many slots, the tile style, and the reading in each slot.

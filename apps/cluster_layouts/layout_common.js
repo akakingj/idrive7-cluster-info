@@ -123,12 +123,16 @@ const engineFocus = (o) => !!o && (o.vehicle === 'ice' || o.focus === 'engine');
 const boostIn = (o, bar0) => (o.speedUnit === 'kmh' ? bar0 : bar0 * 14.5038);
 const boostText = (o, d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual)
     ? (o.speedUnit === 'kmh' ? boostIn(o, d.boostActual).toFixed(2) + ' bar' : boostIn(o, d.boostActual).toFixed(1) + ' psi') : '--');
-const torqueText = (d) => (isNum(d.torque) ? Math.round(d.torque) + ' Nm' : '--');
+/** Engine torque (Nm) in Settings > Torque unit: Nm, or kgm (to a tenth). */
+const torqueKgm = (o) => !!o && o.torqueUnit === 'kgm';
+const torqueNum = (o, nm) => (!isNum(nm) ? '--' : torqueKgm(o) ? (nm / 9.80665).toFixed(1) : String(Math.round(nm)));
+const torqueUnit = (o) => (torqueKgm(o) ? 'kgm' : 'Nm');
+const torqueText = (o) => (d) => (isNum(d.torque) ? torqueNum(o, d.torque) + ' ' + torqueUnit(o) : '--');
 const timingText = (d) => (isNum(d.timing) ? d.timing.toFixed(1) + '°' : '--');
 /** Boost (bar over atmosphere) 0..1.6 as 0..1. */
 const boostFrac = (d) => (d.engineOn === false || !isNum(d.boostActual) ? 0 : Math.max(0, Math.min(1, d.boostActual / 1.6)));
 const focus = {
-    power: (o) => (engineFocus(o) ? torqueText : kwText),
+    power: (o) => (engineFocus(o) ? torqueText(o) : kwText),
     powerLabel: (o, long) => (engineFocus(o) ? (long ? 'ENGINE TORQUE' : 'TORQUE') : (long ? 'BATTERY POWER' : 'POWER')),
     /** 0..1 for the power bar: torque to 450 Nm, or none (the eDrive layouts draw their own centre-zero bar) */
     torqueFrac: (d) => (isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : 0),
@@ -175,5 +179,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, timingText, boostFrac,
+    MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
 };

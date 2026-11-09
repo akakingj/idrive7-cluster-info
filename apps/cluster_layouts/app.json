@@ -353,6 +353,22 @@
       ]
     },
     {
+      "key": "torqueUnit",
+      "label": "Torque unit",
+      "type": "choice",
+      "default": "nm",
+      "options": [
+        [
+          "nm",
+          "Nm"
+        ],
+        [
+          "kgm",
+          "kgm"
+        ]
+      ]
+    },
+    {
       "key": "redline",
       "label": "Red zone from",
       "type": "number",

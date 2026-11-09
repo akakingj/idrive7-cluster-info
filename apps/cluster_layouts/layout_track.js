@@ -93,7 +93,7 @@ const boostNum = (o) => (d) => {
     return o.speedUnit === 'kmh' ? d.boostActual.toFixed(2) : (d.boostActual * 14.5038).toFixed(1);
 };
 const powerNum = (o) => (d) => {
-    if (C.engineFocus(o)) return C.isNum(d.torque) ? String(Math.round(d.torque)) : '--';
+    if (C.engineFocus(o)) return C.torqueNum(o, d.torque);
     return C.isNum(d.kw) ? (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : String(Math.round(d.kw))) : '--';
 };
 
@@ -105,7 +105,7 @@ module.exports = {
 
     pieces(o) {
         const engine = C.engineFocus(o);
-        const boostLbl = engine ? 'TIMING' : o.speedUnit === 'kmh' ? 'BOOST BAR' : 'BOOST PSI', powerLbl = engine ? 'TORQUE NM' : 'POWER KW';
+        const boostLbl = engine ? 'TIMING' : o.speedUnit === 'kmh' ? 'BOOST BAR' : 'BOOST PSI', powerLbl = engine ? 'TORQUE ' + C.torqueUnit(o).toUpperCase() : 'POWER KW';
         const right = () => [
             ...C.reading('fuel', 1672, 292, 216, 44, (d) => C.distText(o, d.frange), 'FUEL RANGE', white, lbl),
             ...C.reading('elec', 1672, 400, 216, 44, C.focus.range(o), C.focus.rangeLabel(o), engine ? white : (t) => ({ color: [t.ev, 1], glow: [t.ev, 0.2] }), lbl),

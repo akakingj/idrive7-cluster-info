@@ -33,25 +33,26 @@ const READINGS = {
     frange: { title: 'Fuel range', short: 'FUEL RANGE', icon: 4, kind: 'km', min: 0, max: 700, warnLow: 50 },
 };
 
-/** Units now: { temp: 'f' | 'c', press: 'bar' | 'psi' | 'kpa', speed: 'mph' | 'kmh' }. */
+/** Units now: { temp: 'f' | 'c', press: 'bar' | 'psi' | 'kpa', speed: 'mph' | 'kmh', torque: 'lbft' | 'nm' | 'kgm' }. */
 function convert(kind, v, u) {
     if (!isNum(v)) return v;
     if (kind === 'temp') return u.temp === 'f' ? v * 9 / 5 + 32 : v;
     if (kind === 'tempDelta') return u.temp === 'f' ? v * 9 / 5 : v;
     if (kind === 'press') return u.press === 'psi' ? v * 14.5038 : u.press === 'kpa' ? v * 100 : v;
     if (kind === 'speed' || kind === 'km') return u.speed === 'mph' ? v / 1.609344 : v;
-    if (kind === 'nm') return u.torque === 'lbft' ? v * 0.737562 : v;
+    if (kind === 'nm') return u.torque === 'lbft' ? v * 0.737562 : u.torque === 'kgm' ? v / 9.80665 : v;
     return v;
 }
 function unitText(kind, u) {
     return { temp: '°' + (u.temp === 'f' ? 'F' : 'C'), tempDelta: '°' + (u.temp === 'f' ? 'F' : 'C'), press: u.press === 'psi' ? 'PSI' : u.press === 'kpa' ? 'KPA' : 'BAR',
-        speed: u.speed === 'mph' ? 'mph' : 'km/h', km: u.speed === 'mph' ? 'mi' : 'km', rpm: 'rpm', pct: '%', kw: 'kW', nm: u.torque === 'lbft' ? 'lb-ft' : 'Nm', deg: '°', g: 'G' }[kind] || '';
+        speed: u.speed === 'mph' ? 'mph' : 'km/h', km: u.speed === 'mph' ? 'mi' : 'km', rpm: 'rpm', pct: '%', kw: 'kW', nm: u.torque === 'lbft' ? 'lb-ft' : u.torque === 'kgm' ? 'kgm' : 'Nm', deg: '°', g: 'G' }[kind] || '';
 }
 /** Decimals for a kind in a unit. */
 function decimals(kind, v, u) {
     if (kind === 'press') return u.press === 'bar' ? (Math.abs(v) < 10 ? 2 : 0) : u.press === 'psi' && Math.abs(v) < 30 ? 1 : 0;
     if (kind === 'g') return 2;
     if (kind === 'kw' || kind === 'deg') return Math.abs(v) < 10 ? 1 : 0;
+    if (kind === 'nm' && u.torque === 'kgm') return Math.abs(v) < 100 ? 1 : 0;   // kgm: a tenth of Nm's, so a decimal
     return 0;
 }
 
