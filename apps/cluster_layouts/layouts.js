@@ -89,11 +89,13 @@ function mMoves(L, o, list) {
  */
 const CUT_Y = C0.STRIP_Y;
 /* Below the layout, to BG_Y, a black band over the stock dials' edges and the separator the KOMBI draws above its
- * strip (seen at 646 on the car), except over the strip's drive mode and gear (x BG_NOTCH), whose tops 660 clipped. */
-const BG_Y = 662, BG_NOTCH = [1236, 1446];
+ * strip (seen at 646 on the car); over the strip's drive mode and gear (x BG_NOTCH) only to BG_NOTCH_Y, short of
+ * their tops at 660 (to 662 clipped them; a notch the band's whole height showed the separator's grey line, and
+ * reached past the gear on the right: from a photo of the car, 2026-11-09). */
+const BG_Y = 662, BG_NOTCH = [1236, 1424], BG_NOTCH_Y = 658;
 const stripOn = (o) => C0.strip(o);
-const blackBand = () => [[0, BG_NOTCH[0]], [BG_NOTCH[1], 1920]].map(([x0, x1], i) =>
-    ({ key: 'bgBand' + i, kind: 'flat', x: x0, y: CUT_Y, w: x1 - x0, h: BG_Y - CUT_Y, colors: () => ({ color: ['#000000', 1] }) }));
+const blackBand = () => [[0, BG_NOTCH[0], BG_Y], [BG_NOTCH[0], BG_NOTCH[1], BG_NOTCH_Y], [BG_NOTCH[1], 1920, BG_Y]].map(([x0, x1, y1], i) =>
+    ({ key: 'bgBand' + i, kind: 'flat', x: x0, y: CUT_Y, w: x1 - x0, h: y1 - CUT_Y, colors: () => ({ color: ['#000000', 1] }) }));
 function bottomCut(list) {
     const out = [];
     list.forEach((p) => {
@@ -116,9 +118,9 @@ LAYOUTS.forEach((L) => {
         if (mCar(o)) list = mMoves(L, o, list);
         if (stripOn(o)) {
             list = list.filter((p) => !C0.STRIP_DROP.test(p.key));
-            // the strip shows the gear and the drive mode: never a second of either (each layout's strip variant
-            // fills their places itself; with the map or the stock centre they are simply left out)
-            list = list.filter((p) => !/^(gear|sel[PRND]?|mode|gearCard|gearChip|selChip)$/.test(p.key));
+            // the strip shows the gear and the drive mode: no second drive mode, and no second gear but in the
+            // layouts made round a big gear (L.stripGear: Track, Pulse, Digital dash); the others fill its place
+            list = list.filter((p) => !/^(sel[PRND]?|mode|selChip)$/.test(p.key) && (L.stripGear || !/^(gear|gearCard|gearChip)$/.test(p.key)));
             // the strip shows the time and the outside temperature: their places get the battery's temperature
             // (intake air on a petrol or diesel car) and the xDrive split
             // (each only where the layout doesn't show it already)
@@ -148,4 +150,4 @@ LAYOUTS.forEach((L) => {
     };
 });
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
-module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, bottomCut };
+module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, BG_NOTCH_Y, bottomCut };

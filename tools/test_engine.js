@@ -48,13 +48,14 @@ LAYOUTS.forEach((L) => {
         assert(perSec < 16 * 1024);
         s.stop();
     });
-    check(id + ': parked with nothing changing sends nothing', () => {
+    check(id + ': parked with nothing changing sends nothing (but an animated background\'s clock)', () => {
         const s = makeScene({ layout: id, data: {} });
         const still = () => ({ speed: 0, rpm: 0, stage: 'P', oil: 50, coolant: 50 });
         drive(s, 2, still);
         s.client.reset();
         drive(s, 10, still);
-        assert.strictEqual(s.client.messages, 0, JSON.stringify(s.client.log.slice(0, 3)));
+        const other = s.client.log.filter((m) => !(m.op === 'uniform' && m.name === 'u_time'));
+        assert.strictEqual(other.length, 0, JSON.stringify(other.slice(0, 3)));
         s.stop();
     });
     check(id + ': the readings reach the cluster (gear, digits, values)', () => {
@@ -123,7 +124,7 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ic
 
 /* Settings > Layout: Bottom strip: the car's own: no background below CUT_Y but the black band, nothing small crossing it, and
  * the same readings clear of the KOMBI's boxes as without it */
-const { CUT_Y, BG_Y, BG_NOTCH } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
+const { CUT_Y, BG_Y, BG_NOTCH, BG_NOTCH_Y } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
 LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['standard', 'm'].forEach((cluster) => check(L.id + ' (' + centre + ', ' + cluster + ', stock bottom strip): the layout ends at y ' + CUT_Y, () => {
     const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle: 'phev', cluster, bottomStrip: 'stock' };
     const ps = L.pieces(o);
@@ -131,7 +132,8 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['standard',
     assert(!low.length, low.map((p) => p.key + ' ' + p.y + '+' + p.h).join(', '));
     // the black band below, to BG_Y, over the stock dials' edges, but not over the strip's drive mode and gear
     const band = ps.filter((p) => /^bgBand/.test(p.key));
-    assert(band.length === 2 && band.every((p) => p.y === CUT_Y && p.y + p.h === BG_Y && (p.x + p.w <= BG_NOTCH[0] || p.x >= BG_NOTCH[1])), JSON.stringify(band.map((p) => [p.x, p.w])));
+    // the band to BG_Y, but over the drive mode and gear only to BG_NOTCH_Y (short of their tops at 660)
+    assert(band.length === 3 && band.every((p) => p.y === CUT_Y && (p.x + p.w <= BG_NOTCH[0] || p.x >= BG_NOTCH[1] ? p.y + p.h === BG_Y : p.y + p.h === BG_NOTCH_Y && BG_NOTCH_Y < 660)), JSON.stringify(band.map((p) => [p.x, p.w, p.h])));
     assert(ps.some((p) => /^bg/.test(p.key)), 'a background still');
     const bad = ps.map((p) => [p.key, clashes(p, o).filter((c) => !(c === 'in an M box' && M_ON_DIAL.indexOf(p.key) >= 0))]).filter(([, c]) => c.length).map(([k, c]) => k + ' ' + c.join(', '));
     assert(!bad.length, bad.join('; '));

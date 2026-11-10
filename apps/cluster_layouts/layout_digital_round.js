@@ -60,7 +60,7 @@ function dialSet(o, which, cx, size, cy) {
         dyn: which === 'speed' ? undefined : C.tachDyn(o, s, s.red),
     }, C.text(which + 'Unit', cx - 120, cy + Math.round(86 * k), 240, Math.round(20 * k), which === 'speed' ? C.speedUnit(o) : (d) => (C.electric(o, d) ? C.kwText(d).toUpperCase() : 'X1000 RPM'), lbl, { tracking: 0.14 })];
     // the tach: a small power gauge across its top (the battery's draw right, recuperation left), on a plug-in hybrid
-    if (which === 'rpm' && !C.engineFocus(o) && o.vehicle !== 'ice' && !C.mCar(o)) parts.push(...C.powerMeter(cx, size, cy, lbl));   // (an M car's boxes cover it)
+    if (which === 'rpm' && !C.engineFocus(o) && o.vehicle !== 'ice' && !C.mCar(o)) parts.push(...C.powerMeter(cx, size, cy, lbl, o));   // (an M car's boxes cover it)
     const y = cy + Math.round(130 * k), w = Math.round(220 * k), h = Math.round(36 * k);
     if (which === 'speed') return parts.concat(C.reading('fuel', cx - w / 2, y, w, h, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, lbl));
     // the electric range and charge, or (Show: Engine) the boost and timing
@@ -103,7 +103,7 @@ module.exports = {
             const keep = (list) => list.filter((p) => !/^(fuel|elec|soc)(Lbl)?$/.test(p.key));
             const ty = scy + Math.round(120 * kk);
             return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(keep(dialSet(o, 'speed', 452, SS, scy)), keep(dialSet(o, 'rpm', 1468, SS, scy)),
-                tempArc('coolant', 452 - 100, ty, 'coolant', 118, o), tempArc('oil', 1468 - 100, ty, 'oil', 130, o), card(o, 830, 134, 260, 470, true));
+                tempArc('coolant', 452 - 100, ty, 'coolant', 118, o), tempArc('oil', 1468 - 100, ty, 'oil', 130, o), card(o, 830, 164, 260, 440, true));   // (its top clear of the camera's cowl: a photo of the car)
         }
         const S = 520, cy = 392, L = 300;
         const stock = o.centre === 'stock', R = stock ? 1256 : 1120, SR = stock ? 296 : S;

@@ -189,7 +189,8 @@ module.exports = {
             params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R - 52, 10], u_span: [lo, 62, 30, 0.3], u_marks: [0, 0, 0, 0], u_red: [2] },
             colors: (t, d) => (evOff(d) ? { track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.tick, num: t.num }
                 : { track: t.track, fill0: t.road, fill1: t.ev, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
-            value: (d) => (evOff(d) ? Math.max(0, Math.min(1, -kwOf(d) / 60)) : Math.max(0, Math.min(1, kwOf(d) / KW_MAX))), max: 1, sweep: true,
+            value: (d) => Math.max(0, Math.min(1, kwOf(d) / KW_MAX)), max: 1, sweep: true,
+            visible: (d) => !evOff(d),   // (gone while the arc itself reads the battery's power)
         });
         const gearC = (t, d) => ({ color: [C.gearText(d) === 'R' ? '#ff3b30' : t.text, 1], glow: [t.glow, 0.45] });
         const rpmTxt = (d) => (evOff(d) ? 'ENGINE OFF' : C.isNum(d.rpm) ? Math.round(d.rpm / 50) * 50 + ' RPM' : '-- RPM');

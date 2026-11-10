@@ -99,6 +99,7 @@ const powerNum = (o) => (d) => {
 
 module.exports = {
     id: 'track',
+    stripGear: true,   // (its gear card is the layout's centre: kept over the car's own strip too)
     title: 'Track',
     palette: pal,
     gearText: C.gearText,
@@ -158,11 +159,10 @@ module.exports = {
         if (strip) {
             return [C.flat('bg', 0, 0, 1920, 720, 'bg'), shiftLights(o, X0, 136, X1 - X0, 40, 15), rpmBar(o, X0, 188, X1 - X0, 26)].concat(
                 [
-                    // over the car's own strip, which shows the gear and the drive mode: the card holds the engine
-                    // speed, large, the way a race display does
-                    { key: 'rpmCard', kind: 'panel', x: GX, y: 262, w: GW, h: 290, params: { u_box: [14, 2, 0.4, 1] }, colors: (t) => ({ top: t.tileTop, bottom: t.tileBottom, border: t.accent }) },
-                    C.text('rpm', GX, 300, GW, 150, rpmText, acc),
-                    C.text('rpmLbl', GX, 470, GW, 22, 'RPM', lbl, { tracking: 0.2 }),
+                    { key: 'gearCard', kind: 'panel', x: GX, y: 262, w: GW, h: 290, params: { u_box: [14, 2, 0.4, 1] }, colors: (t) => ({ top: t.tileTop, bottom: t.tileBottom, border: t.accent }) },
+                    C.text('gear', GX, 272, GW, 200, C.gearText, gearC),
+                    C.text('rpm', GX, 478, GW, 40, rpmText, acc),
+                    C.text('rpmLbl', GX, 522, GW, 18, 'RPM', lbl, { tracking: 0.2 }),
                     C.text('speedDigits', 60, 216, 460, 190, (d) => C.speedText(o, d), white),
                     C.text('speedUnit', 60, 410, 460, 28, C.speedUnit(o), lbl, { tracking: 0.12 }),
                     C.text('clock', 90, 486, 200, 36, C.clock, white, { align: 0 }),

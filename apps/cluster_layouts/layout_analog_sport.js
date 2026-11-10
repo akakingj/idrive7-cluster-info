@@ -48,7 +48,7 @@ function dialSet(o, which, cx, size, cy) {
     const dense = which === 'speed' && o.speedUnit === 'kmh';
     const sub = Math.round(176 * k), subDy = Math.round(168 * k), ks = sub / 640;
     const temp = which === 'speed' ? 'coolant' : 'oil', tempRed = which === 'speed' ? 120 : 130;
-    const extra = which === 'rpm' && !C.engineFocus(o) ? C.powerMeter(cx, size, cy, lbl) : [];   // (Show: Engine: no power meter)
+    const extra = which === 'rpm' && !C.engineFocus(o) ? C.powerMeter(cx, size, cy, lbl, o) : [];   // (Show: Engine: no power meter)
     return extra.concat([
         {
             key: which, kind: 'dial', x: cx - size / 2, y: cy - size / 2, w: size, h: size,
@@ -67,6 +67,8 @@ function dialSet(o, which, cx, size, cy) {
         C.text(which + 'Unit', cx - 120, cy + Math.round(50 * k), 240, Math.round(20 * k), which === 'speed' ? C.speedUnit(o)
             : (d) => (C.electric(o, d) ? C.kwText(d) : 'x1000 rpm'), which === 'speed' ? lbl : (t, d) => (C.electric(o, d) ? powerTxt(t, d) : lbl(t)), { tracking: 0.08 }),
         C.text(temp + 'Lbl', cx - 60, cy + subDy + Math.round(26 * k), 120, Math.max(11, Math.round(14 * k)), temp === 'oil' ? 'OIL' : 'COOLANT', lbl, { tracking: 0.16 }),
+        // its reading in figures, just under the small dial
+        C.text(temp + 'Num', cx - 70, cy + subDy + sub / 2 + Math.round(4 * k), 140, Math.round(26 * k), (d) => C.tempText(o, d[temp]), glowText),
     ]);
 }
 
@@ -103,7 +105,7 @@ module.exports = {
             // the car's own bottom strip (layout_common.STRIP_Y): no boxes to keep clear of, so the dials stand
             // centred either side of the display as first drawn, sized to end above the strip; the ranges are
             // the strip's, the fuel and charge gauges above them (layouts.js)
-            const SS = 600, scy = 328, X = 830, W = 260, Y = 134, H = 470;
+            const SS = 600, scy = 328, X = 830, W = 260, Y = 164, H = 440;   // (its top clear of the camera's cowl: a photo of the car)
             return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, SS, scy), dialSet(o, 'rpm', 1468, SS, scy), centreDisplay(o, X, Y, W, H, gearC, elecTxt, true));
         }
         // the speedometer left; with the stock centre the tach between it and the dark box, else full size left

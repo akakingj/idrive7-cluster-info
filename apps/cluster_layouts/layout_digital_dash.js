@@ -141,6 +141,7 @@ const pct = (v) => (isNum(v) ? Math.round(v) + '%' : '--');
 
 module.exports = {
     id: 'digital_dash',
+    stripGear: true,   // (the gear in the right column: kept over the car's own strip too)
     title: 'Digital dash',
     palette: (lookId) => PALETTES[lookId] || PALETTES.comfort,
     gearText: C.gearText,
@@ -187,11 +188,11 @@ module.exports = {
         const RX = 1520, RW = 350;
         const strip = C.strip(o) && !map && !stock;
         if (strip) list.push(
-            // the car's own bottom strip shows the gear, the drive mode and the ranges (its fuel and charge
-            // gauges sit above them): this column is the charge, large, the way the speed is on the left
-            label('socL', RX, 214, RW, C.focus.chargeLabel(o), { align: 0.5 }),
-            C.text('soc', RX - 20, 236, RW + 40, 150, engine ? C.timingText : (d) => pct(d.soc), engine ? txt : evTxt, { align: 0.5, chars: 4 }),
-            bar('socBar', RX + 20, 400, RW - 40, 12, C.focus.bar(o), barC(engine ? 'fill1' : 'ev'), { segments: 20 }),
+            // the car's own bottom strip shows the ranges (its fuel and charge gauges sit above them): the gear
+            // large, the charge and the xDrive split under it
+            C.text('gear', 1480, 214, 390, 170, C.gearText, gearC, { align: 0.5, chars: 3 }),
+            label('socL', RX, 404, RW, C.focus.chargeLabel(o), { align: 0.5 }),
+            C.text('soc', RX, 424, RW, 64, engine ? C.timingText : (d) => pct(d.soc), engine ? txt : evTxt, { align: 0.5, chars: 5 }),
         );
         else list.push(
             // the gear beside the dark box the KOMBI leaves (left of it) and below its eDrive readout (top right)
@@ -230,8 +231,8 @@ module.exports = {
         // (over the car's own strip, which shows the time and the outside temperature: the xDrive split under the
         // charge instead; the battery's temperature is a tile)
         if (strip) list.push(
-            label('splitL', RX, 452, RW, 'XDRIVE  F : R', { align: 0.5 }),
-            C.text('split', RX, 474, RW, 52, (d) => (isNum(d.splitRear) ? Math.round(100 - d.splitRear) + ' : ' + Math.round(d.splitRear) : '--'), txt, { align: 0.5, chars: 7 }),
+            label('splitL', RX, 504, RW, 'XDRIVE  F : R', { align: 0.5 }),
+            C.text('split', RX, 524, RW, 40, (d) => (isNum(d.splitRear) ? Math.round(100 - d.splitRear) + ' : ' + Math.round(d.splitRear) : '--'), txt, { align: 0.5, chars: 7 }),
         );
         else list.push(
             C.text('clock', 60, map ? 606 : 552, 170, 44, C.clock, txt, { align: 0, chars: 5 }),

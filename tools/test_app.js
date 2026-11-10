@@ -96,7 +96,7 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     check('warnings only for what this machine lacks (no catalog, no diagnostic link)', () => assert(warns.some((w) => /catalog not readable/.test(w)) && warns.every((w) => /catalog not readable|TASU/.test(w)), JSON.stringify(warns)));
     check('the stock strip\'s time and outside temperature left to the car: its slots show the battery and xDrive', () => {
         const texts = eng()._pieces().filter((p) => p.text !== null).map((p) => p.text);
-        assert(texts.some((x) => /^BATT /.test(x)) && texts.some((x) => /^XDRIVE$|^F\d+ R\d+$/.test(x)) && !texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
+        assert(texts.some((x) => /^BATT /.test(x)) && texts.some((x) => /^XDRIVE --$|^F\d+ R\d+$/.test(x)) && !texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
     });
     console.log(ok + ' passed');
     process.exit(0);

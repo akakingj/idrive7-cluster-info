@@ -27,7 +27,8 @@
  *     frame(d, dtMs) -> { u_name: [numbers] }  uniforms worked out every frame (motion: the road's distance
  *                                         run), sent when they change,
  *     sample(d) -> 0..1, every            a trend line's samples (kind spark), every `every` ms (2 s),
- *     time: true                          u_time from the renderer's clock (car and leds always),
+ *     time: true                          u_time, seconds, sent every frame (TIMED kinds always),
+ *     visible(d) -> bool                  shown only while true (sent when it changes),
  *     text: 'fixed' | (d, t) -> string, align (0 left .. 1 right), tracking (glyph heights)   texts }
  *
  * One small shader per piece, each over only its own rectangle: the shaders the KOMBI is known to run. (One
@@ -47,7 +48,7 @@ const EPS = 0.0015;          // a value moving less than this (of its max) is no
 const SWEEP_MS = 700;        // up, then as long back down
 const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, flag: SH.FLAG_FS, eagles: SH.EAGLE_FS, fireworks: SH.FIREWORKS_FS, road: SH.ROAD_FS };
 const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20 };
-/* kinds that animate on the renderer's own clock (u_time): nothing is sent to move them */
+/* kinds that animate (u_time): their clock sent from the head unit every frame (values()) */
 const TIMED = { car: true, leds: true, flag: true, eagles: true, fireworks: true };
 const HIST = 64;
 /* the most layers up at once while one set replaces another (the service allows 64 an app) */
@@ -141,9 +142,11 @@ function startCluster(opts) {
         want.forEach((s) => {
             // shown at once when the old page is up: the new page goes up before the old one goes, so the target
             // is never left empty (which would hand it back to the stock HMI)
-            const ref = cr.effect({ target: TARGET, klass: 'content', z: zShift + (s.z !== undefined ? s.z : Z[s.kind]), x: s.x, y: s.y, w: s.w, h: s.h, fs: FS[s.kind], visible: shown, contend, time: !!(s.time || TIMED[s.kind]) });
+            // (shown only if it shows now: visible(d), a piece that comes and goes with the car's state)
+            const vis = s.visible ? !!s.visible(opts.data()) : true;
+            const ref = cr.effect({ target: TARGET, klass: 'content', z: zShift + (s.z !== undefined ? s.z : Z[s.kind]), x: s.x, y: s.y, w: s.w, h: s.h, fs: FS[s.kind], visible: shown && vis, contend });
             if (!ref) { warnOnce('piece ' + s.key + ' refused here'); return; }
-            const p = { ref, spec: s, colours: '', text: null, value: 0, sent: -1, anim: 0, dyn: '', histSent: -1 };
+            const p = { ref, spec: s, colours: '', text: null, value: 0, sent: -1, anim: 0, dyn: '', histSent: -1, vis, clock: !!(s.time || TIMED[s.kind]) };
             if (s.kind !== 'flat') cr.uniform(ref, 'u_size', [s.w, s.h]);
             if (s.kind === 'dial' || s.kind === 'band' || s.kind === 'text') {
                 cr.bind(ref, 'u_font', fontRef);
@@ -183,6 +186,10 @@ function startCluster(opts) {
             if (s.colors) {
                 const c = s.colors(t, d) || {}, key = JSON.stringify(c);
                 if (force || key !== p.colours) { p.colours = key; Object.keys(c).forEach((n) => cr.uniform(p.ref, 'u_' + n, colourValue(c[n]))); }
+            }
+            if (s.visible) {
+                const v = !!s.visible(d);
+                if (v !== p.vis) { p.vis = v; if (shown) cr.set(p.ref, { visible: v }); }
             }
             if (s.dyn) {
                 const u = s.dyn(d, t) || {}, key = JSON.stringify(u);
@@ -230,6 +237,7 @@ function startCluster(opts) {
 
     /** Values (needles, bands): each eased towards its reading, sent when it moved enough. */
     let valuesAt = 0, valuesAt0 = 0;
+    const clock0 = Date.now();
     function values(d0) {
         const d = d0 || opts.data(), now = Date.now();
         // eased by time, not by update: the same TAU_MS whether a reading or the frame timer brought it
@@ -240,6 +248,9 @@ function startCluster(opts) {
         valuesAt0 = now;
         pieces.forEach((p) => {
             const s = p.spec;
+            // the animated kinds' clock (u_time, seconds, again from 0 every hour), from here every frame: the
+            // renderer's own clock (time: 1) never ran on the car (Freedom's flag and Modern wide's road stood still)
+            if (p.clock && inGroup(p)) cr.uniform(p.ref, 'u_time', [Math.round(((now - clock0) / 1000) % 3600 * 1000) / 1000]);
             if (s.frame && inGroup(p)) {
                 const u = s.frame(d, dt) || {};
                 Object.keys(u).forEach((n) => { const v = u[n], key = String(v); if ((p.frameSent || (p.frameSent = {}))[n] !== key) { p.frameSent[n] = key; cr.uniform(p.ref, n, v); } });
@@ -274,7 +285,7 @@ function startCluster(opts) {
         if (on) {
             build();
             shown = true;
-            pieces.forEach((p) => cr.set(p.ref, { visible: true }));
+            pieces.forEach((p) => cr.set(p.ref, { visible: p.vis !== false }));
             if (!opts.sweep || opts.sweep()) sweep();
         } else {
             endSweep();

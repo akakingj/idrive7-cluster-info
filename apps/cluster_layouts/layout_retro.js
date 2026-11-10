@@ -80,12 +80,14 @@ function dialSet(o, which, cx, size, cy) {
             value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : C.tachValue(o),
             dyn: which === 'speed' ? undefined : C.tachDyn(o, s, red),
         }),
-        subPiece,
+        // (the small kW gauge is gone while the tach itself reads the battery's power: an electric mode)
+        which === 'speed' || C.engineFocus(o) || o.vehicle === 'ice' ? subPiece : Object.assign({}, subPiece, { visible: (d) => !engineOffKw(d) }),
         // the dial's unit (the tach's: the battery's power while the engine is off)
         C.text(which + 'Unit', cx - 130, cy + Math.round(50 * k), 260, Math.max(16, Math.round(25 * k)),
             which === 'speed' ? C.speedUnit(o) : (d) => (engineOffKw(d) ? C.kwText(d) : '1/min x1000'),
             which === 'speed' ? lbl : (t, d) => (engineOffKw(d) ? (C.isNum(d.kw) && d.kw < -0.3 ? regenTxt : lit(t)) : lbl(t)), { tracking: 0.08 }),
-        C.text(which + 'SubLbl', cx - 60, subY + Math.round(22 * k), 120, Math.max(13, Math.round(19 * k)), subLbl, lbl, { tracking: 0.12 }),
+        Object.assign(C.text(which + 'SubLbl', cx - 60, subY + Math.round(22 * k), 120, Math.max(13, Math.round(19 * k)), subLbl, lbl, { tracking: 0.12 }),
+            which === 'speed' || C.engineFocus(o) || o.vehicle === 'ice' ? {} : { visible: (d) => !engineOffKw(d) }),
     ];
 }
 
@@ -115,7 +117,7 @@ module.exports = {
         if (C.strip(o) && o.centre !== 'stock') {
             // the car's own bottom strip: the dials centred either side of the middle column, ending above the
             // strip (the speedometer keeps its fuel gauge; the ranges are the strip's)
-            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, 600, 328), dialSet(o, 'rpm', 1468, 600, 328), middle(o, 830, 260, gearC, 134, 590, true));
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dialSet(o, 'speed', 452, 600, 328), dialSet(o, 'rpm', 1468, 600, 328), middle(o, 830, 260, gearC, 164, 590, true));   // (its top clear of the camera's cowl: a photo of the car)
         }
         const S = 520, cy = 392, L = 300;
         const stock = o.centre === 'stock', R = stock ? 1256 : 1120, SR = stock ? 296 : S;
@@ -145,6 +147,7 @@ function middle(o, X, W, gearC, top, bottom, stripped) {
         C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
         small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
         C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
+        C.text('coolantNum', mid - 60, gy + 50, 120, 24, (d) => C.tempText(o, d.coolant), lit),   // (in figures)
         { key: 'lcd', kind: 'panel', x: X + 10, y: ly, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
     ];
     // over the car's own strip (it shows the gear and the drive mode): the LCD is the digital speed, large
@@ -158,6 +161,7 @@ function middle(o, X, W, gearC, top, bottom, stripped) {
         // coolant: cold left, hot right, red from 120 °C (a 40-140 °C scale)
         small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
         C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
+        C.text('coolantNum', mid - 60, gy + 50, 120, 24, (d) => C.tempText(o, d.coolant), lit),   // (in figures)
         { key: 'lcd', kind: 'panel', x: X + 10, y: ly, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
         C.text('gear', X + 10, ly + 12, W - 20, 100, C.gearText, gearC),
         C.text('speedDigits', X + 10, ly + 118, W / 2 + 26, 46, (d) => C.speedText(o, d), lit, { align: 1 }),

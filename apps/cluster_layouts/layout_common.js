@@ -107,11 +107,12 @@ function stripGauges(o, opts) {
     const fuelC = (t) => ({ track: t.track || '#1a1a1a', fill0: t.text || t.tick || '#e8e8e8', fill1: t.text || t.tick || '#e8e8e8', redc: t.red || '#ff3b30', tip: t.text || '#ffffff', tick: t.dim || '#888888', num: t.num || '#888888' });
     const evC = (t) => ({ track: t.track || '#1a1a1a', fill0: t.ev || '#4ab4ff', fill1: t.ev || '#4ab4ff', redc: t.red || '#ff3b30', tip: t.ev || '#4ab4ff', tick: t.dim || '#888888', num: t.num || '#888888' });
     const out = opts && opts.fuel === false ? [] : [
-        text('stripFuelLbl', 96, 598, 120, 16, 'FUEL', lab, { align: 0, tracking: 0.18 }),
+        // each with its level in % beside its name (the strip under it shows the range)
+        text('stripFuelLbl', 96, 598, 220, 16, (d) => 'FUEL' + (isNum(d.fuelPct) ? '  ' + Math.round(d.fuelPct) + '%' : ''), lab, { align: 0, tracking: 0.18 }),
         bar('stripFuel', 90, 618, 250, 16, (d) => (isNum(d.fuelPct) ? d.fuelPct / 100 : 0), fuelC, 16),
     ];
     if (o.vehicle !== 'ice') out.push(
-        text('stripSocLbl', 1710, 598, 120, 16, 'CHARGE', lab, { align: 1, tracking: 0.18 }),
+        text('stripSocLbl', 1610, 598, 220, 16, (d) => (isNum(d.soc) ? Math.round(d.soc) + '%  ' : '') + 'CHARGE', lab, { align: 1, tracking: 0.18 }),
         bar('stripSoc', 1580, 618, 250, 16, (d) => (isNum(d.soc) ? d.soc / 100 : 0), evC, 16));
     return out;
 }
@@ -134,14 +135,14 @@ const tachValue = (o) => (d) => (electric(o, d) ? (isNum(d.kw) ? Math.max(0, Mat
  * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the xDrive split. */
 const stripInfoA = (o) => (o.vehicle === 'ice' || engineFocus(o)
     ? (d) => 'INTAKE ' + tempText(o, d.iat) : (d) => 'BATT ' + tempText(o, d.battTemp));
-const stripInfoB = (d) => (isNum(d.splitRear) ? 'F' + Math.round(100 - d.splitRear) + ' R' + Math.round(d.splitRear) : 'XDRIVE');
+const stripInfoB = (d) => (isNum(d.splitRear) ? 'F' + Math.round(100 - d.splitRear) + ' R' + Math.round(d.splitRear) : 'XDRIVE --');
 
 /*
  * A tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, zero at
  * twelve o'clock; right of it the power drawn from the battery (blue, to 100 kW), left of it charging and
  * recuperation (green, to 60 kW), one degree a kW. lbl: the label's colours.
  */
-function powerMeter(cx, size, cy, lbl) {
+function powerMeter(cx, size, cy, lbl, o) {
     const k = size / 640, r = Math.round(150 * k), th = Math.max(8, Math.round(12 * k)), half = r + th + Math.round(22 * k);
     const box = { x: cx - half, y: cy - half, w: half * 2, h: half };     // the top half around the dial's centre
     const arc = (key, a0, a1, value, colour, step) => ({
@@ -149,11 +150,13 @@ function powerMeter(cx, size, cy, lbl) {
         params: { u_geo: [half, half, r, th], u_span: [a0, a1, 0, 0], u_marks: [Math.abs(a1 - a0) / step, step, Math.round(19 * k), -Math.round(24 * k)], u_red: [2] },
         colors: (t) => ({ track: t.track, fill0: colour(t), fill1: colour(t), redc: t.red, tip: colour(t), tick: t.dim, num: t.num }),
         value, max: 1, sweep: true,
+        // (gone while the dial itself reads the battery's power: an electric mode)
+        visible: o ? (d) => !electric(o, d) : undefined,
     });
     return [
         arc('kwDraw', 0, 100, (d) => Math.max(0, Math.min(1, (isNum(d.kw) ? d.kw : 0) / 100)), (t) => t.ev, 25),
         arc('kwRegen', 0, -60, (d) => Math.max(0, Math.min(1, -(isNum(d.kw) ? d.kw : 0) / 60)), (t) => t.regen || '#3ddc84', 30),
-        text('kwLbl', cx - 40, cy - r + Math.round(46 * k), 80, Math.round(20 * k), 'kW', lbl, { tracking: 0.04 }),
+        Object.assign(text('kwLbl', cx - 40, cy - r + Math.round(46 * k), 80, Math.round(20 * k), 'kW', lbl, { tracking: 0.04 }), o ? { visible: (d) => !electric(o, d) } : {}),
     ];
 }
 
