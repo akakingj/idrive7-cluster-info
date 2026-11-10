@@ -122,40 +122,74 @@ const STRIP_DROP = /^(fuel|elec|frange|erange|range2)(Lbl)?$|^erangeL$/;
 /*
  * A plug-in hybrid in an electric eDrive mode (ELECTRIC, ELECTRIC INDIVIDUAL; the car's drive mode, data.js
  * driveMode), or, before the car has named its mode, with the engine off: the analog layouts' tachs read the
- * battery's power instead (KW_SCALE). In HYBRID, SPORT, BATTERY CONTROL and the rest they are tachs, with a small
+ * battery's power instead (tachDyn, below). In HYBRID, SPORT, BATTERY CONTROL and the rest they are tachs, with a small
  * power gauge inside. Never with Show: Engine or on a petrol or diesel car.
  */
 const electric = (o, d) => !engineFocus(o) && !!o && o.vehicle !== 'ice' && !!d
     && (typeof d.driveMode === 'string' && d.driveMode ? /ELECTRIC/.test(d.driveMode) : d.engineOn === false);
-const KW_SCALE = [100, 25, 5, 101];     // a tach as a power gauge: 0-100 kW, numerals every 25, no red
-/** A tach dial's dyn and value: kW in an electric mode, else the engine speed (s: rpmScale(o), red where it is). */
-const tachDyn = (o, s, red) => (d) => ({ u_scale: electric(o, d) ? KW_SCALE : [s.max, s.major, s.minor, red] });
-const tachValue = (o) => (d) => (electric(o, d) ? (isNum(d.kw) ? Math.max(0, Math.min(100, d.kw)) : 0) : isNum(d.rpm) ? d.rpm / 1000 : 0);
+/*
+ * The power gauges: 0 a quarter along (KW_ZERO), the battery's power drawn above it to the gauge's top, the
+ * regeneration below it to its start, each side on its own scale. The ends are eDrive Live's (the battery's
+ * discharge and charge limits, data.js kwOut / kwIn), else 100 and 35 kW.
+ */
+const KW_ZERO = 0.25;
+const KW_FLOOR = -500;                  // (a dial's lowest value passed on: the engine's clamp; the gauge clamps itself)
+const REGEN_RGB = [0.24, 0.86, 0.52];   // (#3ddc84, the layouts' regeneration green)
+/** The gauge's ends now: { out, in } kW. */
+const kwRange = (d) => ({ out: d && isNum(d.kwOut) && d.kwOut >= 20 ? d.kwOut : 100, in: d && isNum(d.kwIn) && d.kwIn >= 5 ? d.kwIn : 35 });
+/** kW as a place along a power gauge (0..1, 0 kW at z). */
+const kwFrac = (kw, r, z) => {
+    const zz = isNum(z) ? z : KW_ZERO;
+    if (!isNum(kw)) return zz;
+    return kw >= 0 ? zz + (1 - zz) * Math.min(1, kw / r.out) : zz * (1 - Math.min(1, -kw / r.in));
+};
+/** A round scale for out kW: { max, major, minor }, its numerals every major (4-5 of them). */
+function kwDialScale(out) {
+    const major = [20, 25, 40, 50].find((m) => Math.ceil(out / m) <= 5) || 100;
+    return { max: Math.ceil(out / major) * major, major, minor: major / 5 };
+}
+/** A tach dial's dyn, value and range: kW in an electric mode (0 a quarter round), else the engine speed
+ * (s: rpmScale(o), red where it is). */
+const tachDyn = (o, s, red) => (d) => {
+    if (!electric(o, d)) return { u_scale: [s.max, s.major, s.minor, red], u_min: [0], u_zero: [0], u_regen: REGEN_RGB };
+    const r = kwRange(d), k = kwDialScale(r.out);
+    return { u_scale: [k.max, k.major, k.minor, k.max + 1], u_min: [-r.in], u_zero: [KW_ZERO], u_regen: REGEN_RGB };
+};
+const tachValue = (o) => (d) => {
+    if (!electric(o, d)) return isNum(d.rpm) ? d.rpm / 1000 : 0;
+    const r = kwRange(d);
+    return isNum(d.kw) ? Math.max(-r.in, Math.min(kwDialScale(r.out).max, d.kw)) : 0;
+};
+const tachRange = (o, s) => (d) => (electric(o, d) ? [-kwRange(d).in, kwDialScale(kwRange(d).out).max] : [0, s.max]);
 /* The readings put where the time and outside temperature were, with the car's own bottom strip (which shows
- * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the xDrive split. */
+ * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the gearbox oil's. */
 const stripInfoA = (o) => (o.vehicle === 'ice' || engineFocus(o)
     ? (d) => 'INTAKE ' + tempText(o, d.iat) : (d) => 'BATT ' + tempText(o, d.battTemp));
-const stripInfoB = (d) => (isNum(d.splitRear) ? 'F' + Math.round(100 - d.splitRear) + ' R' + Math.round(d.splitRear) : 'XDRIVE --');
+const stripInfoB = (o) => (d) => 'GEARBOX ' + tempText(o, d.gearbox);
 
 /*
- * A tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, zero at
- * twelve o'clock; right of it the power drawn from the battery (blue, to 100 kW), left of it charging and
- * recuperation (green, to 60 kW), one degree a kW. lbl: the label's colours.
+ * A tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, 0 a quarter
+ * along it (40 degrees left of twelve o'clock); right of it the power drawn from the battery (blue, 120 degrees, to
+ * the battery's limit), left of it charging and recuperation (green, 40 degrees, to its limit): eDrive Live's ends
+ * (kwRange), numbered in round steps. lbl: the label's colours.
  */
 function powerMeter(cx, size, cy, lbl, o) {
     const k = size / 640, r = Math.round(150 * k), th = Math.max(8, Math.round(12 * k)), half = r + th + Math.round(22 * k);
     const box = { x: cx - half, y: cy - half, w: half * 2, h: half };     // the top half around the dial's centre
-    const arc = (key, a0, a1, value, colour, step) => ({
+    // (each side's end rounded: the power drawn to 20 kW, in 4 marks; the regeneration to 10 kW, in 2)
+    const outN = (d) => Math.ceil(kwRange(d).out / 20) * 20, inN = (d) => Math.ceil(kwRange(d).in / 10) * 10;
+    const arc = (key, a0, a1, value, colour, marks, end) => ({
         key, kind: 'band', x: box.x, y: box.y, w: box.w, h: box.h + th, z: 2,
-        params: { u_geo: [half, half, r, th], u_span: [a0, a1, 0, 0], u_marks: [Math.abs(a1 - a0) / step, step, Math.round(19 * k), -Math.round(24 * k)], u_red: [2] },
+        params: { u_geo: [half, half, r, th], u_span: [a0, a1, 0, 0], u_marks: [marks, 25, Math.round(19 * k), -Math.round(24 * k)], u_red: [2] },
         colors: (t) => ({ track: t.track, fill0: colour(t), fill1: colour(t), redc: t.red, tip: colour(t), tick: t.dim, num: t.num }),
+        dyn: (d) => ({ u_marks: [marks, end(d) / marks, Math.round(19 * k), -Math.round(24 * k)] }),
         value, max: 1, sweep: true,
         // (gone while the dial itself reads the battery's power: an electric mode)
         visible: o ? (d) => !electric(o, d) : undefined,
     });
     return [
-        arc('kwDraw', 0, 100, (d) => Math.max(0, Math.min(1, (isNum(d.kw) ? d.kw : 0) / 100)), (t) => t.ev, 25),
-        arc('kwRegen', 0, -60, (d) => Math.max(0, Math.min(1, -(isNum(d.kw) ? d.kw : 0) / 60)), (t) => t.regen || '#3ddc84', 30),
+        arc('kwDraw', -40, 80, (d) => Math.max(0, Math.min(1, (isNum(d.kw) ? d.kw : 0) / outN(d))), (t) => t.ev, 4, outN),
+        arc('kwRegen', -40, -80, (d) => Math.max(0, Math.min(1, -(isNum(d.kw) ? d.kw : 0) / inN(d))), (t) => t.regen || '#3ddc84', 2, inN),
         Object.assign(text('kwLbl', cx - 40, cy - r + Math.round(46 * k), 80, Math.round(20 * k), 'kW', lbl, { tracking: 0.04 }), o ? { visible: (d) => !electric(o, d) } : {}),
     ];
 }
@@ -181,9 +215,6 @@ const inCorner = (x, y) => y < 217 - 0.55 * Math.min(x, 1920 - x);
 const distText = (o, km) => (isNum(km) ? Math.round(o.speedUnit === 'kmh' ? km : km / KMH_PER_MPH) + (o.speedUnit === 'kmh' ? ' km' : ' mi') : '--');
 /** The electric range: '~31 MI' when it is the estimate from the charge (data.js), else as distText. */
 const erangeText = (o, d) => (isNum(d.erange) && d.erangeEst ? '~' : '') + distText(o, d.erange);
-/** The xDrive split: 'F 38   R 62', 'FRONT 140 NM' (the transfer case's front torque, data.js), or 'XDRIVE --'. */
-const splitText = (d) => (isNum(d.splitRear) ? 'F ' + Math.round(100 - d.splitRear) + '   R ' + Math.round(d.splitRear)
-    : isNum(d.splitFrontNm) ? 'FRONT ' + d.splitFrontNm + ' Nm' : 'XDRIVE --');
 /*
  * Settings > Vehicle: a plug-in hybrid (o.vehicle 'phev', the eDrive readings) or a petrol or diesel car
  * ('ice'). With ICE the layouts trade their eDrive readings for the engine's: battery power -> engine torque, charge -> ignition timing, electric range -> boost, the charge bar
@@ -265,5 +296,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_SCALE, powerMeter, tachDyn, tachValue, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
 };

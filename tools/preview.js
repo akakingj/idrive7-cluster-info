@@ -41,7 +41,9 @@ function args(argv) {
 /** The page: draws the scene with WebGL, quad by quad, alpha-blended in order. */
 function page(scene, mapWindow, over) {
     /* with the map in the centre, a stand-in for it behind the cluster's layers, where slot 0x100 shows */
-    const map = mapWindow ? `<div style="position:absolute;left:416px;top:120px;width:1088px;height:480px;background:#1b222b;
+    /* (mapWindow: true for the native map area, or the layout's own window { x, y, w, h }) */
+    const mw = mapWindow && mapWindow.w ? mapWindow : { x: 416, y: 120, w: 1088, h: 480 };
+    const map = mapWindow ? `<div style="position:absolute;left:${mw.x}px;top:${mw.y}px;width:${mw.w}px;height:${mw.h}px;background:#1b222b;
 background-image:linear-gradient(28deg,transparent 47%,#3a4656 47%,#3a4656 53%,transparent 53%),linear-gradient(-62deg,transparent 48%,#2f3a48 48%,#2f3a48 52%,transparent 52%),
 linear-gradient(90deg,transparent 30%,#4ea3ff 30%,#4ea3ff 31.4%,transparent 31.4%);background-size:260px 200px,340px 300px,100% 100%;
 color:#6f7f92;font:600 22px sans-serif;display:flex;align-items:center;justify-content:center">map</div>` : '';
@@ -114,7 +116,7 @@ if (require.main === module) {
     const a = args(process.argv.slice(2));
     const s = makeScene({ layout: a.layout, look: a.look, black: !!a.black, options: { centre: a.centre, speedUnit: a.kmh ? 'kmh' : 'mph', vehicle: a.engine ? 'ice' : 'phev', cluster: a.mcar ? 'm' : 'standard', bottomStrip: a.strip ? 'stock' : 'layout' },
         data: { speed: a.speed * (a.kmh ? 1 : 1.609344), rpm: a.rpm, gear: a.gear, stage: a.stage, mode: a.mode, driveMode: a.drive, oil: a.oil, coolant: a.coolant, outside: a.outside, soc: a.soc, kw: a.kw, erange: a.erange, frange: a.frange,
-            gearbox: a.gearbox, iat: a.iat, battTemp: a.batt, boostActual: a.boost, torque: 312, timing: 14.5, hpfp: 205, boostTarget: 0.9, splitRear: a.split, engineOn: a.rpm > 300, fuelPct: a.fuel, pdDrive: 62, pdClimate: 24, pdSeats: 14, dap: a.dap ? require('../apps/cluster_layouts/dap').DEMO : null } });
+            gearbox: a.gearbox, iat: a.iat, battTemp: a.batt, boostActual: a.boost, torque: 312, timing: 14.5, hpfp: 205, boostTarget: 0.9, engineOn: a.rpm > 300, tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } }, fuelPct: a.fuel, pdDrive: 62, pdClimate: 24, pdSeats: 14, dap: a.dap ? require('../apps/cluster_layouts/dap').DEMO : null } });
     // let the needles ease to their readings
     // two minutes first, on a made-up clock, so trend lines have a past
     const base = Object.assign({}, s.data()), now = Date.now;
@@ -133,7 +135,7 @@ if (require.main === module) {
     const scene = s.scene();
     s.stop();
     scene.time = a.time || 0;
-    render(scene, a.out, a.centre === 'map', a.mcar ? require('../apps/cluster_layouts/layout_common').M_BOXES : []).then((errors) => {
+    render(scene, a.out, a.centre === 'map' && (require('../apps/cluster_layouts/layouts').byId(a.layout).mapWindow || true), a.mcar ? require('../apps/cluster_layouts/layout_common').M_BOXES : []).then((errors) => {
         if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
         console.log('wrote ' + path.resolve(a.out) + ' (' + scene.quads.length + ' layers)');
         process.exit(0);

@@ -62,30 +62,40 @@ LAYOUTS.forEach((L) => {
         const s = makeScene({ layout: id, data: {} });
         drive(s, 2, () => ({ speed: 50 * 1.609344, rpm: 2500, stage: 'D', gear: 3, oil: 100, coolant: 90 }));
         const t = textsOf(s);
-        ['D3', '50'].forEach((x) => assert(t.indexOf(x) >= 0, x + ' in ' + JSON.stringify(t)));
+        // (Sport shows the gear's number alone, as theirs: L.gearNumber)
+        [L.gearNumber ? '3' : 'D3', '50'].forEach((x) => assert(t.indexOf(x) >= 0, x + ' in ' + JSON.stringify(t)));
         const vals = s.engine._pieces().filter((p) => p.value !== null).map((p) => p.value);
-        assert(vals.some((v) => Math.abs(v - 50) < 0.3 || Math.abs(v - 50 / 160) < 0.003), 'speed ' + vals);
+        // (on the scale's 160 mph, or a layout's own scale: L._speedFrac; M's and Sport's speed not a value: L.speedGauge)
+        assert(L.speedGauge === false || vals.some((v) => Math.abs(v - 50) < 0.3 || Math.abs(v - 50 / 160) < 0.003 || (L._speedFrac && Math.abs(v - L._speedFrac(50)) < 0.003)), 'speed ' + vals);
         s.stop();
     });
     check(id + ': S on the selector shows S3', () => {
         const s = makeScene({ layout: id, data: {} });
         drive(s, 1, () => ({ speed: 60, rpm: 4000, stage: 'D', gear: 3, mode: 'S' }));
-        assert(textsOf(s).indexOf('S3') >= 0);
+        assert(textsOf(s).indexOf(L.gearNumber ? '3' : 'S3') >= 0);
         s.stop();
     });
     check(id + ': centre left to the stock cluster: nothing over the middle', () => {
         const s = makeScene({ layout: id, options: { centre: 'stock' }, data: { speed: 0 } });
         s.engine._tick();
-        assert(!s.engine._pieces().some((l) => l.x < 1100 && l.x + l.w > 820), 'a piece over x 820-1100');
+        // (a whole-view backdrop, M's and Sport's, with that area cut see-through: u_hole)
+        const cutOut = (l) => /^(mdash|sdash)$/.test(l.kind) && l.params.u_hole && l.params.u_hole[0] <= 820 && l.params.u_hole[0] + l.params.u_hole[2] >= 1100;
+        assert(!s.engine._pieces().some((l) => l.x < 1100 && l.x + l.w > 820 && !cutOut(l)), 'a piece over x 820-1100');
         s.stop();
     });
     check(id + ': map in the centre: nothing over the map window, the readings round it', () => {
         const C = require(path.join(APP, 'layout_common'));
         const s = makeScene({ layout: id, options: { centre: 'map' }, data: { speed: 0 } });
         s.engine._tick();
-        const over = s.engine._pieces().filter((l) => C.overMap(l));
-        // a band's rectangle may reach into the window as long as what it draws stays out: only bands may overlap
-        assert(over.every((l) => l.geo && l.geo[2] > 0), 'over the map: ' + over.map((l) => l.key).join(' '));
+        // (the layout's own map window, M's and Sport's, else the native map area)
+        const W = L.mapWindow || C.MAP, overMap = (r) => r.x < W.x + W.w && r.x + r.w > W.x && r.y < W.y + W.h && r.y + r.h > W.y;
+        const over = s.engine._pieces().filter((l) => overMap(l));
+        // a band's or a chevron's rectangle may reach into the window as long as what it draws stays out (a
+        // chevron's ink: clearance.js): only those may overlap
+        const { clashes } = require('./clearance');
+        const o = { speedUnit: 'mph', tempUnit: 'f', centre: 'map', redline: 7000, rpmMax: 8000 };
+        const hole = (l) => /^(mdash|sdash)$/.test(l.kind) && l.params.u_hole && l.params.u_hole[2] > 0;   // (cut see-through there)
+        assert(over.every((l) => (l.geo && l.geo[2] > 0) || hole(l) || (l.kind === 'chevron' && clashes(l, o).indexOf('over the map') < 0)), 'over the map: ' + over.map((l) => l.key).join(' '));
         s.stop();
     });
     ['comfort', 'sport', 'efficient'].forEach((look) => check(id + ': ' + look + ' palette has every colour its pieces use', () => {
@@ -146,8 +156,9 @@ LAYOUTS.forEach((L) => ['phev', 'ice'].forEach((vehicle) => check(L.id + ' (' + 
     const o = { speedUnit: 'mph', tempUnit: 'f', centre: 'info', redline: 7000, rpmMax: 8000, vehicle, cluster: 'standard', bottomStrip: 'stock' };
     const ps = L.pieces(o), keys = ps.map((p) => p.key);
     assert(!keys.some((k) => /^(fuel|elec|frange|erange)(Lbl|L)?$/.test(k)), 'range numbers: ' + keys.filter((k) => /fuel|elec|range/.test(k)).join(' '));
-    assert.strictEqual(keys.indexOf('stripFuel') >= 0, L.id !== 'retro', 'fuel gauge');
-    assert.strictEqual(keys.indexOf('stripSoc') >= 0, vehicle !== 'ice', 'charge gauge');
+    // (Retro, M, Sport and Classic M: their own fuel gauges; M, Sport and Classic M their own charge, in their own look)
+    assert.strictEqual(keys.indexOf('stripFuel') >= 0, L.stripFuel !== false && !L.ownStripGauges, 'fuel gauge');
+    assert.strictEqual(keys.indexOf('stripSoc') >= 0, vehicle !== 'ice' && !L.ownStripGauges, 'charge gauge');
     assert(ps.length <= 60, ps.length + ' pieces');
     const dials = ps.filter((p) => (p.key === 'speed' || p.key === 'rpm') && p.kind === 'dial');
     if (dials.length === 2) {
@@ -182,6 +193,46 @@ check('start-up sweep: played by the cluster (one animation per needle and band)
     assert(anims.length >= 4 && anims.every((a) => a.property === 'uniform' && a.name === 'u_value'));
     s.stop();
     assert(s.client.log.filter((m) => m.op === 'stop').length >= 4);
+});
+
+check('electric tach: the battery\'s power reaches the needle (past the rev scale\'s 8), regeneration below 0, scale from eDrive Live\'s ends', () => {
+    const d = { speed: 40, rpm: 0, stage: 'D', driveMode: 'ELECTRIC', engineOn: false, kw: 55, kwOut: 120, kwIn: 50 };
+    const s = makeScene({ layout: 'analog_sport', data: d });
+    const tach = () => s.engine._pieces().find((p) => p.key === 'rpm');
+    drive(s, 3, () => d);
+    assert(Math.abs(tach().value - 55) < 0.5, 'drawing: ' + tach().value);
+    const u = s.client.layers.get(tach().layer).uniforms;
+    assert.deepStrictEqual(u.u_min.v, [-50]); assert.strictEqual(u.u_scale.v[0], 125); assert.deepStrictEqual(u.u_zero.v, [0.25]);
+    drive(s, 3, () => Object.assign({}, d, { kw: -80 }));
+    assert(Math.abs(tach().value + 50) < 0.5, 'regenerating, held at the limit: ' + tach().value);
+    s.stop();
+});
+
+check('electric: Classic M\'s tach and Retro\'s economy gauge read the battery\'s power to its limits', () => {
+    const d = { speed: 40, rpm: 0, stage: 'D', driveMode: 'ELECTRIC', engineOn: false, kw: 55, kwOut: 120, kwIn: 50 };
+    const c = makeScene({ layout: 'classic', data: d });
+    drive(c, 3, () => d);
+    assert(Math.abs(c.engine._pieces().find((p) => p.key === 'rpm').value - 55) < 0.5);
+    drive(c, 3, () => Object.assign({}, d, { kw: -30 }));
+    assert(Math.abs(c.engine._pieces().find((p) => p.key === 'rpm').value + 30) < 0.5);
+    c.stop();
+    const h = Object.assign({}, d, { driveMode: 'HYBRID', engineOn: true, rpm: 1500, kw: -30 });
+    const r = makeScene({ layout: 'retro', data: h });
+    drive(r, 3, () => h);
+    assert(Math.abs(r.engine._pieces().find((p) => p.key === 'econDial').value + 30) < 0.5);
+    r.stop();
+});
+
+check('settle: shown only once wanted for a moment without a break (no flashing while the car comes up)', () => {
+    let live = true;
+    const s = makeScene({ data: { speed: 10 }, live: () => live, settleMs: 1200 });
+    const now = Date.now, at = (ms) => { Date.now = () => now() + ms; s.engine._tick(); };
+    try {
+        at(0); assert(!s.engine.status().shown, 'not at once');
+        at(600); live = false; at(700); live = true; at(800);
+        at(1900); assert(!s.engine.status().shown, 'a break starts the wait again');
+        at(2100); assert(s.engine.status().shown, 'shown after 1.2 s wanted');
+    } finally { Date.now = now; s.stop(); }
 });
 
 check('fail-safe: hidden while the car data is not live, shown again when it is; off when disabled', () => {

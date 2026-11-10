@@ -8,7 +8,7 @@
  *   right:   the gear, large; the battery's charge with the electric and fuel ranges
  *   middle:  six tiles - oil, coolant, gearbox oil, intake air, the battery's temperature, boost - each with an
  *            icon, its value, a trend line of the last two minutes and a bar that turns red where it is too hot
- *   bottom:  the time, outside, the xDrive split, the engine on or off
+ *   bottom:  the time, outside, the gearbox oil, the engine on or off
  *
  * With the map in the centre the tiles give way to it: oil, coolant, gearbox and battery temperature move to
  * a strip under the map. With the centre left to the stock cluster, nothing goes between x 820 and 1100.
@@ -144,7 +144,7 @@ module.exports = {
     palette: (lookId) => PALETTES[lookId] || PALETTES.comfort,
     gearText: C.gearText,
     /* the engine unit's readings it shows: read fast while it is up */
-    needs: ['iat', 'boostActual', 'gearbox', 'splitRear'],   // (and C.focus.needs with Show: Engine)
+    needs: ['iat', 'boostActual', 'gearbox'],   // (and C.focus.needs with Show: Engine)
 
     pieces(o) {
         const r = C.rpmScale(o);
@@ -187,7 +187,7 @@ module.exports = {
         const strip = C.strip(o) && !map && !stock;
         if (strip) list.push(
             // the car's own bottom strip shows the ranges (its fuel and charge gauges sit above them): the gear
-            // large, the charge and the xDrive split under it
+            // large, the charge and the gearbox oil under it
             C.text('gear', 1480, 214, 390, 170, C.gearText, gearC, { align: 0.5, chars: 3 }),
             label('socL', RX, 404, RW, C.focus.chargeLabel(o), { align: 0.5 }),
             C.text('soc', RX, 424, RW, 64, engine ? C.timingText : (d) => pct(d.soc), engine ? txt : evTxt, { align: 0.5, chars: 5 }),
@@ -225,20 +225,20 @@ module.exports = {
             ['iat', engine ? 'rail' : 'batt', 'boost'].forEach((id, i) => list.push(...compact(o, id, 1120, 214 + i * 110, 280)));
         }
 
-        /* the bottom of the side columns: time, outside, the xDrive split (clear of the warning lights) */
-        // (over the car's own strip, which shows the time and the outside temperature: the xDrive split under the
+        /* the bottom of the side columns: time, outside, the gearbox oil (clear of the warning lights) */
+        // (over the car's own strip, which shows the time and the outside temperature: the gearbox oil under the
         // charge instead; the battery's temperature is a tile)
         if (strip) list.push(
-            label('splitL', RX, 504, RW, 'XDRIVE  F : R', { align: 0.5 }),
-            C.text('split', RX, 524, RW, 40, (d) => (isNum(d.splitRear) ? Math.round(100 - d.splitRear) + ' : ' + Math.round(d.splitRear) : '--'), txt, { align: 0.5, chars: 7 }),
+            label('gboxL', RX, 504, RW, 'GEARBOX OIL', { align: 0.5 }),
+            C.text('gbox', RX, 524, RW, 40, (d) => C.tempText(o, d.gearbox), txt, { align: 0.5, chars: 7 }),
         );
         else list.push(
             C.text('clock', 60, map ? 606 : 552, 170, 44, C.clock, txt, { align: 0, chars: 5 }),
             C.text('outside', 240, map ? 606 : 552, 160, 44, (d) => C.outsideText(o, d.outside), txt, { align: 0, chars: 6 }),
         );
         if (!strip) list.push(
-            label('splitL', RX, 634, 100, 'XDRIVE'),
-            C.text('split', RX + 100, 628, RW - 100, 32, C.splitText, txt, { align: 1, chars: 12 }),
+            label('gboxL', RX, 634, 120, 'GEARBOX'),
+            C.text('gbox', RX + 120, 628, RW - 120, 32, (d) => C.tempText(o, d.gearbox), txt, { align: 1, chars: 7 }),
         );
         return list;
     },

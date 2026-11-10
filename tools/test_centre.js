@@ -83,7 +83,8 @@ check('every reading has a view in each unit set', () => {
 check('pages are groups: a page is built alone, a layer a piece; a switch puts the new page up before the old goes', () => {
     const { startCluster } = require(path.join(APP, 'engine'));
     const client = new FakeClient(), d = sample({ rpm: 3000 });
-    const e = startCluster({ client, log: { info() {}, warn(m) { throw new Error(m); } }, target: 'map', contend: true, z: 200, layout: () => ({ id: 'c', pieces }), options: () => opts(),
+    const e = startCluster({ client, log: { info() {}, warn(m) { throw new Error(m); } }, target: 'map', contend: true, z: 200,
+        settleMs: 0, layout: () => ({ id: 'c', pieces }), options: () => opts(),
         theme: () => palette('blue'), data: () => d, live: () => true, enabled: () => true, sweep: () => false, group: 'temps' });
     e._tick();
     const effects = () => Array.from(client.layers.values()).filter((l) => l.kind === 'effect');
@@ -106,10 +107,10 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
         assert(e._pieces().length > 3 && e._pieces().every((p) => !p.group || p.group === g), g);
         console.log('     ' + g + ': ' + e._pieces().length + ' pieces, ' + peak + ' layers at most during the switch, ' + (client.bytes / 1024).toFixed(1) + ' KB');
     });
-    e.setGroup('xdrive');
+    e.setGroup('edrive');
     client.reset();
-    for (let i = 0; i < 25 * 30; i++) { d.rpm = 2500 + 2000 * Math.sin(i / 20); d.splitRear = 60 + 20 * Math.sin(i / 30); e._tick(); }
-    console.log('     driving on the xDrive page: ' + (client.bytes / 30 / 1024).toFixed(1) + ' KB/s');
+    for (let i = 0; i < 25 * 30; i++) { d.rpm = 2500 + 2000 * Math.sin(i / 20); d.kw = 20 * Math.sin(i / 30); e._tick(); }
+    console.log('     driving on the eDrive page: ' + (client.bytes / 30 / 1024).toFixed(1) + ' KB/s');
     assert(client.bytes / 30 < 12 * 1024);
     e.stop();
 });
@@ -118,6 +119,7 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
 (async () => {
     process.env.SOMEIP_CATALOG = '/nonexistent/someip-interfaces.json';
     process.env.CLUSTER_INFO_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-'));
+    process.env.CLUSTER_SETTLE_MS = '0';
     process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
     let app = null, client = null;
     const load = Module._load;

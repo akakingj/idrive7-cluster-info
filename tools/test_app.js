@@ -21,7 +21,8 @@ Module._load = function (req, parent, isMain) {
 };
 process.env.SOMEIP_CATALOG = '/nonexistent/someip-interfaces.json';
 process.env.CLUSTER_INFO_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-'));
-process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
+process.env.CLUSTER_SETTLE_MS = '0';
+    process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
 const SPEC = JSON.parse(fs.readFileSync(path.join(APP, 'app.json'), 'utf8'));
 const themes = require(path.join(KIT, 'themes'));
 const { Recorder: Canvas } = require(path.join(KIT, 'record'));
@@ -94,9 +95,9 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     check('the readings centre: no map window', () => assert(!fs.existsSync(mw)));
     check('the page draws', () => assert(pages > 0));
     check('warnings only for what this machine lacks (no catalog, no diagnostic link)', () => assert(warns.some((w) => /catalog not readable/.test(w)) && warns.every((w) => /catalog not readable|TASU/.test(w)), JSON.stringify(warns)));
-    check('the stock strip\'s time and outside temperature left to the car: its slots show the battery and xDrive', () => {
+    check('the stock strip\'s time and outside temperature left to the car: its slots show the battery and the gearbox oil', () => {
         const texts = eng()._pieces().filter((p) => p.text !== null).map((p) => p.text);
-        assert(texts.some((x) => /^BATT /.test(x)) && texts.some((x) => /^XDRIVE --$|^F\d+ R\d+$/.test(x)) && !texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
+        assert(texts.some((x) => /^BATT /.test(x)) && texts.some((x) => /^GEARBOX /.test(x)) && !texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
     });
     console.log(ok + ' passed');
     process.exit(0);

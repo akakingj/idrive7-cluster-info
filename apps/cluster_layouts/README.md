@@ -4,12 +4,13 @@
 
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
 itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro, Track and
-Pulse), each in comfort, sport and efficient colours (following the selector's S / M
+Pulse), Classic M, and GT3, M and Sport (after bimmer-lab's), each in comfort, sport and efficient colours (following the selector's S / M
 programme, or chosen), each with three centres: the **readings**, **Waze** or the **stock** centre content.
 
 With the car's own bottom strip (the default) the strip shows the gear, the drive mode, the ranges, the time and the
-outside temperature, so no layout shows them a second time: the places the time and temperature had show the
-battery's temperature (intake air on a petrol or diesel car) and the xDrive split, and where a layout had its gear
+outside temperature, so no layout shows them a second time (M, Sport and Classic M never show the time, the outside
+temperature or the fuel range at all): the places the time and temperature had show the
+battery's temperature (intake air on a petrol or diesel car) and the gearbox oil's, and where a layout had its gear
 it now has the digital speed or another reading. With **Waze** in the centre, Waze on cluster (0.9.107 or later,
 [eroobeeroo/idrive-apps](https://github.com/eroobeeroo/idrive-apps)) draws the map in the layout's own panel,
 above it, filling the window exactly; under the layout the cluster drew its own map screen (its speed, edge shading)
@@ -24,8 +25,11 @@ battery's own pace sets the limit: its current answers 10-20 times a second over
 
 Deep analog dials with satin metal bezels and warm backlit markings, coolant and oil dials set into them, and a
 slim display between them with the digital speed, large, and the battery's power. On a plug-in hybrid in an
-electric mode the rev counter reads the battery's power (0-100 kW); in the hybrid, sport and battery control modes
-it is the rev counter with a small power gauge inside.
+electric mode the rev counter reads the battery's power (Digital round and Retro likewise): 0 a quarter of the way
+round, the power drawn above it and regeneration below it in green, each to the battery's own limit as eDrive Live
+reads it (100 and 35 kW without eDrive Live); in the hybrid, sport and battery control modes it is the rev counter
+with a small power gauge inside, on the same scale (its 0 a quarter along the arc). Every power gauge in every layout
+works this way.
 
 ![Analog sport](../../docs/analog_sport.png)
 
@@ -52,11 +56,11 @@ No round dials: segmented arcs frame the cluster, a hairline outside each. With 
 default) it is laid out like a new car's: the speed large in the middle over the road ahead (its lane line runs
 toward you with the car, the dashes 3 m in 12 as painted, moved by the distance actually driven each frame), the
 battery's temperature and the engine speed in the top corners, a glass card on the left with the battery's power, a
-centre-zero bar (regenerating left, drawing right) and its trend, and one on the right with oil, coolant, the
-charge and the xDrive split, each with its icon, over a softly lit, finely dotted background. Its colours follow
+power bar (0 a quarter along: regenerating left, drawing right, each to the battery's limit) and its trend, and one on the right with oil, coolant, the
+charge and the gearbox oil, each with its icon, over a softly lit, finely dotted background. Its colours follow
 the drive mode. On a plug-in hybrid the right arc
-turns into the battery's power gauge (0-100 kW) while the engine is off, and is the tach again, with a small power
-gauge inside it, as soon as the engine runs.
+turns into the battery's power gauge (0 a quarter up, regeneration green below it) while the engine is off, and is
+the tach again, with a small power gauge inside it, as soon as the engine runs.
 
 The road shows what the car's driving assistant sees, from the same feeds as BMW's assisted driving view: your car
 from behind (every car is a 3D model of our own, rendered once by `tools/render_cars.py` with soft lighting and
@@ -76,8 +80,8 @@ object's position is lives in config.dap.posScale, to be set from a drive's log.
 ### Digital dash
 
 No dials at all, as much as the car tells: the engine speed as a long segmented bar under the camera's cowl,
-the speed and battery power (charging or drawing) on the left, the charge large on the right with the xDrive
-split under it, and six tiles in
+the speed and battery power (charging or drawing) on the left, the charge large on the right with the gearbox
+oil under it, and six tiles in
 the middle (oil, coolant, gearbox oil, intake air, the battery's temperature, boost; boost reads `--` with
 the engine off), each with a trend line of its last two minutes and a bar that turns red where it is too
 hot. With the map in the centre the tiles become a strip under it. 60 pieces: within the 64 layers the renderer gives an app.
@@ -99,7 +103,7 @@ Over the top and American: the stars and stripes wave behind everything, bald ea
 fireworks go off in red, white and blue, all drawn and moved by the cluster itself (`shaders.js`: `FLAG_FS`,
 `EAGLE_FS`, `FIREWORKS_FS`, on the renderer's clock, so nothing is sent to animate them). Over it: a huge speed
 inside a red-to-blue tach arc, the battery's power large on the left (the gear there without the car's own strip), a
-FREEDOM banner, a gold-edged plaque of readings along the bottom, and the xDrive split on the right.
+FREEDOM banner, a gold-edged plaque of readings along the bottom, and the gearbox oil on the right.
 
 ![Freedom](../../docs/freedom.png)
 
@@ -108,7 +112,7 @@ FREEDOM banner, a gold-edged plaque of readings along the bottom, and the xDrive
 A tribute to the round-dial clusters of the 1980s and 90s: matte black faces with a thin dark rim, numerals
 and ticks lit orange the way those clusters glowed at night, long slim red-orange needles over black hub caps.
 A fuel gauge is set into the speedometer (the reserve in red), an economy gauge into the tach (the battery's
-power on a plug-in hybrid, recuperation left of the top; boost with Vehicle: ICE), a small coolant gauge sits
+power on a plug-in hybrid, 0 a quarter round, recuperation below it in green; boost with Vehicle: ICE), a small coolant gauge sits
 between the dials over an amber LCD with the speed. With the engine off the tach's legend reads the battery's power. Comfort colours
 are the classic orange, Sport a deeper red-orange, Efficient white daytime markings. An original design: no
 maker's marks or names.
@@ -139,7 +143,7 @@ the drive) and the drive's peak power (or boost), and the ranges and charge righ
 Made for the car's own bottom strip, in large type: the speed large in the middle with the battery's power and the
 engine speed either side of it at the same height, one long segmented bar under all three for the engine speed,
 nearly the panel's width, red from the red line, and one row along the bottom: oil, coolant, the charge, the
-battery's temperature and the xDrive split. Its colours follow the drive mode. With Waze in the centre the speed
+battery's temperature and the gearbox oil. Its colours follow the drive mode. With Waze in the centre the speed
 sits beside it and the rpm bar runs under it.
 
 ![Pulse](../../docs/pulse.png)
@@ -147,6 +151,79 @@ sits beside it and the rpm bar runs under it.
 | Sport | Map in the centre |
 |---|---|
 | ![](../../docs/pulse_sport.png) | ![](../../docs/pulse_map.png) |
+
+### GT3
+
+A race dash, after bimmer-lab's GT3 theme for Cluster Themes ([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT):
+its arrangement and its shift grading, redrawn with this app's engine and fitted to the G05 and a plug-in hybrid.
+Eighteen round shift lights over a segmented rev bar (the lights fill to the shift point, the red line less 300
+rpm, pulled down while the oil is cold, and all flash there); the gear huge in the middle with the coolant and oil
+under it; on the left the speed, the engine speed (OFF in an electric drive) and the **tyres**: pressure and
+temperature at each corner from the car's tyre monitor (read every 10 s); on the right the battery's power, the
+charge, and the last upshift with its grade (EARLY, SPOT ON, LATE, COLD REV or LIMITER). On a petrol or diesel car,
+or with Show: Engine, boost and the shift point take the battery's places.
+
+![GT3](../../docs/gt3.png)
+
+| Sport colours at the shift point |
+|---|
+| ![](../../docs/gt3_sport.png) |
+
+### M
+
+The M8's M view: the backdrop and the two bowed glass rev blades from bimmer-lab's M theme
+([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT; their own shaders, traced off an M8's cluster), the
+scale 0-8 with the numerals every 2000, the gear's number with the shift programme's stack beside it, the speed under
+the line, and the M8's flat gauges in its own manner (an icon over the bar, the unit at the right, a white fill over a
+thin track with its red zones, the scale's numbers under it; each temperature's reading in figures beside its icon,
+red when hot): in the cards the coolant and oil temperatures (the gearbox oil's in place of the oil on a petrol
+or diesel car) on the
+left, and on the right the battery's power (its first quarter, left of the 0, regeneration in green) and
+temperature on a plug-in hybrid, the boost and torque on a petrol or diesel car; along the bottom, as the M8's fuel
+gauge, long flat bars for the fuel level (left) and the charge with its percentage (right; the oil temperature on a
+petrol or diesel car), so the strip's own bars aren't added. In an
+electric drive the blades read the battery's power in kW: 0 at the 2000 mark, regeneration below it in green to the
+battery's limit, the power drawn above it to the blades' top. Its colours follow the drive mode as the M8's: silver
+glass in comfort, lit red in a sport mode, blue in ECO PRO and on electricity alone. With the Waze map the map goes
+in the window between the blades.
+
+![M](../../docs/m.png)
+
+| Map in the centre |
+|---|
+| ![](../../docs/m_map.png) |
+
+### Sport
+
+The iDrive 8 M cars' Sport view, from bimmer-lab's Sport theme (their shader, MIT) brought closer to BMW's own: the
+blue speed bracket and the red rev bracket with flares where they bend and meet the bottom line, segmented fuel and
+oil bars, and the bottom bar's halves as gauges (the charge on blue and the battery's power on red, green while
+regenerating; boost and coolant on a petrol or diesel car). In an electric drive the rev bracket reads **ePower %**
+(the share of the most the battery gives), as BMW's electric M cars do, its bottom quarter regeneration (green, to
+the most it takes). The rev bracket's colour follows the drive mode: red in a sport mode (as BMW's Sport view),
+silver in comfort, teal in ECO PRO and on electricity alone. The cruise control's
+icon is grey, and green with the set speed beside it while the cruise control holds a speed (the driving assistant's
+own services, as Modern wide's road; those send nothing on the G05 tried, so else the head-up display's set speed,
+`DisplayDataServer.functionalLibraryData`). Pressed 5% in height to end at the car's own strip; with the Waze map the map
+goes in the window between the brackets.
+
+![Sport](../../docs/sport.png)
+
+| Map in the centre |
+|---|
+| ![](../../docs/sport_map.png) |
+
+### Classic M
+
+The round dials of BMW's M cars of the late 2000s, drawn after a photo of an E92 M3's cluster at night: black faces,
+a ring of cool white-blue light round each scale (open across the bottom), white bars, dots and numerals (one scale:
+mph or km/h, as set), thin glowing red needles over dark hubs, the fuel gauge across the speedometer's foot
+and the oil temperature across the tach's, and one amber LCD between them under the M tricolour: the battery's
+power along the top, the speed in large figures in the middle, the charge along the bottom (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). In
+an electric drive the tach reads the battery's power in kW: 0 a quarter round, the ring green below it for
+regeneration. An original drawing.
+
+![Classic M](../../docs/classic.png)
 
 *(Drawn by `tools/preview.js` from the same shaders the cluster runs; the map is a stand-in for the real one.)*
 
@@ -157,10 +234,10 @@ sits beside it and the rpm bar runs under it.
 | speed, engine speed, gear, oil, coolant | the car's signals (`kit/car.js`); both apps read through `shared/data.js` |
 | S / M programme (the gear's letter, the Auto colours) | `MDrive.dataDisplayGearbox` |
 | outside temperature | `EnvironmentalInformation.ExteriorTemperature` |
-| gearbox oil, the xDrive split | `BasicDataSet.basicDataSet` (the split from the transfer case when the car sends none) |
+| gearbox oil | `BasicDataSet.basicDataSet` |
 | battery temperature, where the power goes | `Efficiencytainment2.statusBatteryTemperature`, `KombiIF.statusDisplayElectricalPowerDistribution` |
 | intake air, boost | the engine unit over UDS, as M Vitals reads it (only while a layout that shows them is up) |
-| battery charge and power | eDrive Live, through the shared folder `/dev/shm/cluster-info` (asked for while the layout shows, as Cluster Info does) |
+| battery charge and power | eDrive Live, through the shared folder `/dev/shm/cluster-info` (asked for while the layout shows and the car is switched on, as Cluster Info does) |
 | fuel range, electric range | an app that shares them (eDrive Live, `values.frange.km` / `values.erange.km` in that folder), else the car's `KombiIF.statusRangeTankStatus` and `VehicleInformation.Range`, numbers picked by field name (`shared/data.js` `rangesOf`) |
 | drive mode (SPORT, SPORT INDIVIDUAL, HYBRID, HYBRID COMFORT, HYBRID ECO PRO, ELECTRIC, ELECTRIC INDIVIDUAL, BATTERY CONTROL, ADAPTIVE, + XTRABOOST) | `FES.statusFESVehicleDynamicSwitchHMI` (and `statusSwitchDriveDynamicSport2`), decoded with BMW's FES mode table (TAB_FES_MODUS_ARG); the Auto colours follow it |
 | steering angle, yaw rate | `SteeringAngle.ActualSteeringAngleDriver`, `CDS2.statusYawVelocityVehicle` (scaling in `config.scaling`, from the CAN signals, to confirm) |
@@ -219,19 +296,39 @@ readings in the centre a fuel gauge sits above the strip's fuel range (bottom le
 electric range (bottom right), bars with no numbers. With the stock centre the layout takes the same form as with Waze, its window left clear for the car's own centre
 content. `tools/preview.js --strip` shows it.
 
+### Nothing asked of a parked car
+
+Every diagnostic read (and every read eDrive Live makes for the shared power) goes through the car's gateway and
+wakes its networks. **Show** stays on with the car locked, so the layout alone can't say when to stop: until 0.27.2
+it kept asking, and the car couldn't sleep (body controller 801C16 - 801C18 "no sleep in parking state", the engine
+unit's switch-off time missing, *Battery management: malfunction while shutting down the vehicle electronics*). Now
+`shared/data.js` reads nothing and asks eDrive Live for nothing unless the car is switched on, by its own state
+(`VehicleCondition`, `kit/awake.js`: ignition on, ready to drive, driving), or, before the car has said, moved or ran
+in the last 3 minutes. The layout itself stays up; its readings simply stop until the car is on again. After
+installing, clear the stored faults once (Fault Scanner) and check they stay away.
+
 ## Vehicles
 
 Made and measured on a G05 X5 xDrive45e (iDrive 7 MGU, the 12.3" Live Cockpit Professional cluster); every
 car is taken to have the same cluster. What differs between cars is a setting, or found from the car:
 
 - **Vehicle** (default **Auto**): found from the car the way other apps identify one before assuming
-  anything: a plug-in hybrid's drive mode names, or an answer from its high-voltage battery unit, say
-  plug-in hybrid; that unit never answering while the engine unit does says petrol or diesel. A petrol or
-  diesel car gets the engine readings (boost, timing, torque, fuel rail), its own drive modes and no eDrive
-  page; nothing asks it for a battery. Or set it.
+  anything: a plug-in hybrid's drive mode names, eDrive Live sharing its battery readings or the car giving an
+  electric range say plug-in hybrid; none of these in 90 s shown, while the engine unit answers, says petrol
+  or diesel. A petrol or diesel car gets the engine readings (boost, timing, torque, fuel rail), its own drive
+  modes and no eDrive page. Or set it.
 - **Fuel tank size** (40-90 L, 69 for an X5 45e): the fuel bar.
-- **Battery readings**: the battery unit's charge and power over diagnostics (DDBC, DDB4, DD69 on ecu 7, as
-  eDrive Live reads them on the X5 45e), or off (charge and power from eDrive Live or the car only).
+- The battery's charge and power come from **eDrive Live** only: this app never asks the battery unit itself
+  (two apps asking it in turn left both without answers).
+- **Battery power (kW)**: *Fast* (the default) moves every power gauge as the car accelerates or regenerates, without
+  waiting for eDrive Live's next reading. The car's own signals that move with the battery's power, each fitted
+  continuously to eDrive Live's readings of the battery (`shared/kwfuse.js`), the best fitting one shown: the stock
+  cluster's own power meter (`Efficiencytainment2.statusPowerRelativHybrid`, electric drive and recuperation in %),
+  the sport display's powertrain power (`FES.displaySportPowertrain`, on electricity), the onboard computer's
+  consumption now x the speed (`ResetLogic.currentConsumption`), and the power at the wheels from the speed and
+  acceleration (on electricity). With the engine running and none of the car's signals fitted, and with *eDrive
+  Live's readings only*, the readings as they are. Nothing shows when eDrive Live has said nothing for 4 s. Logs >
+  *fast power* shows each source: how often it came, its fit and its average miss in kW.
 - **Electric range when full**: the estimate shown (with ~) until the car's own electric range arrives.
 - The glass and the KOMBI's boxes (the camera cowl, the gear bracket, the eDrive box, the warning lights)
   are taken as the same on every car with this cluster (`layout_common.js`; every layout is checked against
@@ -309,6 +406,10 @@ dynamic text's `chars` sets how many glyphs it can show):
 | `panel` | a rounded card: gradient, top light, border | `params.u_box` (radius, border, light, opacity) |
 | `dial` | a round dial with its needle: face, metal bezel, ticks, red zone, numerals, backlight, value arc, shadow, hub, glass | `params.u_scale`, `u_arc`, `u_needle_dim`, `u_look`, `u_look2`; `value(d)`, `max` |
 | `band` | a gauge along an arc (or a straight bar): segments, gradient fill, red zone, glowing tip, marks, numerals | `params.u_geo`, `u_span`, `u_marks`, `u_red`; `value(d)` 0..1 |
+| `mdash`, `mtach`, `sdash`, `licon` | bimmer-lab's M backdrop, M rev blade, whole Sport view and line icons (their shaders) | their layout JSON's numbers as `params`; readings through `dyn` |
+| `mbar` | an M8 side gauge's bar: thin track, thicker fill (white, or blue below its zero), red zones, start tick, notches | `params.u_zero`, `u_zones`, `u_marks`; `value(d)` 0..1 |
+| `e9x` | a classic M dial: ring of light, bars, dots, numerals, a second scale, a small gauge at its foot, needles | `params.u_scale`, `u_arc`, `u_inner`, `u_sub`; `value(d)`, `dyn` `u_subv` |
+| `chevron` | a gauge along two straight segments (A, the corner B, C): track, gradient fill, white marker, glowing outer line, inner line, shift dashes, ticks, numerals beside it | `params.u_ab`, `u_c`, `u_lines`, `u_marks`, `u_nums`, `u_red`; `value(d)` 0..1 |
 | `text` | a line of glyphs with an optional glow | `text` (fixed, or `(d, t) => string`), `align`, `tracking` |
 
 ```js
@@ -328,14 +429,16 @@ module.exports = {
 
 `o` holds the options (units, red zone, rev scale, centre: `info`, `map` or `stock`); `d` the car's data
 (`speed` km/h, `rpm`, `gear`, `stage`, `mode`, `oil`, `coolant`, `outside` °C, `soc` %, `kw`, `erange` and
-`frange` km); `t` the layout's palette for the look now. Texts use the glyphs in `font.js`; add more there.
+`frange` km); `t` the layout's palette for the look now. Texts use the glyphs in `font.js`; add more there. A layout's
+`font` picks its face for every text and numeral: `'bold'` (the default), `'light'`, `'wide'` (Michroma, Sport) or
+`'orb'` (Orbitron, M); its `mapWindow` ({ x, y, w, h }) where Waze on cluster draws the map, if not the native map area.
 
 Check it before the car:
 
 ```sh
 node tools/preview.js --layout my_layout --look sport --centre map --out preview.png   # WebGL, the cluster's shader language
 node tools/test_engine.js && node tools/test_app.js && node tools/test_finder.js && node tools/test_centre.js && node tools/test_shared.js
-node tools/preview_centre.js --page xdrive --accent orange --out page.png                # a Cluster Centre page
+node tools/preview_centre.js --page edrive --accent orange --out page.png                # a Cluster Centre page
 python3 kit/tools/build.py cluster_layouts     # needs an oap-sdk/ folder (a stub is enough to check the build)
 ```
 

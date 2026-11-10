@@ -1,5 +1,5 @@
 {
- "comment": "Signal flags the installer accepts on the car, as the apps of idrive7-apps (cauliflowermossgrape and eroobeeroo) declare them: r needs a getter, s a notifier; the head unit's app manager refuses an app whose flags its catalog does not have (generateSomeipInterfaces). tools/test_signals.js checks every app.json against this. KombiIF.displayRangeElectricVehicle (get, notify): from the G05 PHEV's own catalog (Cluster Layouts logs).",
+ "comment": "Signal flags the installer accepts on the car, as the apps of idrive7-apps (cauliflowermossgrape and eroobeeroo) declare them: r needs a getter, s a notifier; the head unit's app manager refuses an app whose flags its catalog does not have (generateSomeipInterfaces). tools/test_signals.js checks every app.json against this. KombiIF.displayRangeElectricVehicle (get, notify): from the G05 PHEV's own catalog (Cluster Layouts logs). Efficiencytainment2.statusPowerRelativHybrid, ResetLogic.currentConsumption, DisplayDataServer.functionalLibraryData (get, notify) and FES.displaySportPowertrain (notify): the same catalog, Nov 10 2026.",
  "signals": {
   "de.bmw.body.Light": {
    "StatusFunctionsIndicators": [
@@ -115,6 +115,9 @@
   "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
    "statusBatteryTemperature": [
     "rs"
+   ],
+   "statusPowerRelativHybrid": [
+    "rs"
    ]
   },
   "de.bmw.infotainment.drivingexcitement.FES": {
@@ -132,6 +135,9 @@
    ],
    "statusVehicleDynamicEngineMaxValue": [
     "rs"
+   ],
+   "displaySportPowertrain": [
+    "s"
    ]
   },
   "de.bmw.infotainment.lsc.LSCDataSink": {
@@ -262,6 +268,16 @@
   "de.bmw.powertrain.Powertrain": {
    "ActualValueRPMWheel": [
     "s"
+   ]
+  },
+  "de.bmw.infotainment.resetlogic.ResetLogic": {
+   "currentConsumption": [
+    "rs"
+   ]
+  },
+  "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
+   "functionalLibraryData": [
+    "rs"
    ]
   }
  }

@@ -17,7 +17,7 @@ refund.**
 |---|---|
 | **[Cluster Info](#cluster-info)** | a small panel of live values over the Waze map in the cluster or on the HUD, and turn signal arrows on the HUD |
 | **[Cluster Layouts](apps/cluster_layouts/README.md)** | your own layout on the whole instrument cluster, drawn by the cluster itself: eight layouts, each in three colour sets and with three centres (readings, Waze over the layout, stock) |
-| **[Cluster Centre](apps/cluster_centre/README.md)** | the factory cluster kept, its centre taken over by pages of live data (temperatures, fuel and boost, warm-up, turbo cool-down, xDrive, eDrive, a 0-60 timer, custom pages) |
+| **[Cluster Centre](apps/cluster_centre/README.md)** | the factory cluster kept, its centre taken over by pages of live data (temperatures, fuel and boost, warm-up, turbo cool-down, eDrive, a 0-60 timer, custom pages) |
 
 ![Cluster Layouts: Analog sport](docs/analog_sport.png)
 
@@ -33,7 +33,8 @@ which it installs with them:
   the map Cluster Info sits on, from [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps).
 
 [eroobeeroo/idrive7-apps](https://github.com/eroobeeroo/idrive7-apps) is optional: it has **eDrive Live**, which
-shares the battery's power and temperature with these apps.
+shares the battery's charge, power and temperature with these apps. On a plug-in hybrid it is where Cluster Layouts and
+Cluster Centre get the charge and power: they leave the battery unit to it rather than read it too.
 
 Cluster Info is in eroobeeroo/idrive7-apps as well. Install it from only one of the two: if both are installed,
 the Store adds the second beside the first as a separate app (`cluster_info2`).
@@ -103,6 +104,6 @@ the parts below, which keep their own licenses.
   was written there; versions of it published in eroobeeroo/idrive7-apps before this repository remain under the MIT
   license they were published with.
 - The cluster renderer's Node client (`cluster_render_client.js`) is by Robert Nisipeanu, MPL-2.0, as its header says.
-- Fonts: the cluster apps' Barlow Semi Condensed atlases and the bundled Noto Sans SC glyphs are under the SIL Open
+- Fonts: the cluster apps' Barlow, Michroma and Orbitron atlases and the bundled Noto Sans SC glyphs are under the SIL Open
   Font License 1.1 (`shared/NOTICE`, `kit/runtime/fonts/OFL-NotoSansSC.txt`).
 - The Chinese translation's credit is in [NOTICE.zh-CN.md](NOTICE.zh-CN.md). More in [NOTICE.md](NOTICE.md).

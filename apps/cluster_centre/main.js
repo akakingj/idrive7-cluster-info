@@ -4,7 +4,7 @@
  *
  * The stock speedometer, rev counter and warning lights stay; the centre (the map area, slot 0x100, 1088x480,
  * taken over from the stock map in Map view as Waze on cluster does) shows one of the pages chosen in the
- * settings (pages.js): temperatures, fuel and boost, warm-up, turbo cool-down, the xDrive split, eDrive, the
+ * settings (pages.js): temperatures, fuel and boost, warm-up, turbo cool-down, eDrive, the
  * engine on / off, steering, the 0-60 timer and two custom pages. Every page is built once on the cluster
  * (engine.js groups); changing page sends only which group shows. A shift light with the gear sits at the top.
  *
@@ -52,7 +52,7 @@ function half(d, w, h) {
 }
 /** A cheap fingerprint of the preview's pixels (every 997th byte), so an unchanged picture is not sent again. */
 function previewSig(d) { let h = 0; for (let i = 0; i < d.length; i += 997) h = (h * 31 + d[i]) | 0; return d.length + ':' + h; }
-const PAGE_IDS = ['temps', 'fuel', 'warmup', 'cooldown', 'xdrive', 'edrive', 'engine', 'steering', 'timer', 'custom1', 'custom2'];
+const PAGE_IDS = ['temps', 'fuel', 'warmup', 'cooldown', 'edrive', 'engine', 'steering', 'timer', 'custom1', 'custom2'];
 const FIND = [
     { name: 'steering and yaw', match: /lenkwinkel|steer|yaw|gier|drehrate/i },
     { name: 'why the engine started', match: /startgrund|startreason|enginestart|combustion|verbrennungsmotor|engineon|motorstart|startrequest/i },

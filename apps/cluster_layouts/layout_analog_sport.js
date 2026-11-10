@@ -55,7 +55,7 @@ function dialSet(o, which, cx, size, cy) {
             params: { u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round((dense ? 32 : 44) * k + 2), (dense ? 230 : 220) * k], u_needle_dim: [283 * k, 50 * k, 17 * k, 5], u_look: [0.9, 0.85, 0, 0], u_look2: [Math.round(16 * k), k, 0.85, 1] },
             colors: dialColours, max: s.max, sweep: true,
             // the tach reads the battery's power in an electric eDrive mode (layout_common.electric)
-            value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : C.tachValue(o),
+            value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : C.tachValue(o), range: which === 'speed' ? undefined : C.tachRange(o, s),
             dyn: which === 'speed' ? undefined : C.tachDyn(o, s, red),
         },
         {

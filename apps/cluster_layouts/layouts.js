@@ -3,7 +3,7 @@
  * layouts.js - the layouts this app offers, by id. A layout is one file, layout_<id>.js, next to this one
  * (the build ships only top-level .js files); list it here and in app.json's "layout" setting (README.md).
  */
-const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse')];
+const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse'), require('./layout_gt3'), require('./layout_m'), require('./layout_sport'), require('./layout_classic')];
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
@@ -18,7 +18,7 @@ const { boxBezel, MAP, mCar } = C0;
  * (slim tiles, layout_digital_dash.js). The big rev counters of the dial layouts can't move out of the middle:
  * the boxes sit on their faces (tools/clearance.js lists them; test_engine.js allows only those, M_ON_DIAL).
  */
-const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl'];
+const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl', 'rpmRim', 'tachR', 'nr2', 'nr4'];
 const shiftAll = (keys, dy) => keys.reduce((m, k) => { m[k] = { dy }; return m; }, {});
 const M_MOVES = {
     pulse: {
@@ -92,7 +92,9 @@ const CUT_Y = C0.STRIP_Y;
  * strip (seen at 646 on the car); over the strip's drive mode and gear (x BG_NOTCH) only to BG_NOTCH_Y, short of
  * their tops at 660 (to 662 clipped them; a notch the band's whole height showed the separator's grey line, and
  * reached past the gear on the right: from a photo of the car, 2026-11-09). */
-const BG_Y = 662, BG_NOTCH = [1236, 1424], BG_NOTCH_Y = 658;
+// (the notch's left end at 1196: from 1236 the band still covered the top of the E of ELECTRIC INDIVIDUAL, the longest
+// drive mode, car photo Nov 9 2026)
+const BG_Y = 662, BG_NOTCH = [1196, 1424], BG_NOTCH_Y = 658;
 const stripOn = (o) => C0.strip(o);
 const blackBand = () => [[0, BG_NOTCH[0], BG_Y], [BG_NOTCH[0], BG_NOTCH[1], BG_NOTCH_Y], [BG_NOTCH[1], 1920, BG_Y]].map(([x0, x1, y1], i) =>
     ({ key: 'bgBand' + i, kind: 'flat', x: x0, y: CUT_Y, w: x1 - x0, h: y1 - CUT_Y, colors: () => ({ color: ['#000000', 1] }) }));
@@ -122,12 +124,12 @@ LAYOUTS.forEach((L) => {
             // layouts made round a big gear (L.stripGear: Track, Pulse, Digital dash); the others fill its place
             list = list.filter((p) => !/^(sel[PRND]?|mode|selChip)$/.test(p.key) && (L.stripGear || !/^(gear|gearCard|gearChip)$/.test(p.key)));
             // the strip shows the time and the outside temperature: their places get the battery's temperature
-            // (intake air on a petrol or diesel car) and the xDrive split
+            // (intake air on a petrol or diesel car) and the gearbox oil's
             // (each only where the layout doesn't show it already)
             const has = (re) => list.some((p) => re.test(p.key));
-            const hasSplit = has(/^split$/), hasBatt = o.vehicle !== 'ice' && !C0.engineFocus(o) && has(/^(battT|c_battV|batt)$/);
-            list = list.filter((p) => !((p.key === 'outside' && hasSplit) || (p.key === 'clock' && hasBatt)))
-                .map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB }) : p));
+            const hasGbox = has(/^gbox$/), hasBatt = o.vehicle !== 'ice' && !C0.engineFocus(o) && has(/^(battT|c_battV|batt)$/);
+            list = list.filter((p) => !((p.key === 'outside' && hasGbox) || (p.key === 'clock' && hasBatt)))
+                .map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB(o) }) : p));
             // the gauges above everything but the backgrounds
             // (only with the readings in the centre: with the map or the stock centre the side columns reach
             // down to the strip, and keep their own charge and fuel bars)
