@@ -27,7 +27,7 @@ const READINGS = {
     gLat: { title: 'Lateral g', short: 'LAT G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     gLong: { title: 'Longitudinal g', short: 'LONG G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     soc: { title: 'Battery charge', short: 'CHARGE', icon: 6, kind: 'pct', min: 0, max: 100, warnLow: 10 },
-    kw: { title: 'Battery power', short: 'POWER', icon: 7, kind: 'kw', min: -60, max: 100 },
+    kw: { title: 'Battery power', short: 'POWER', icon: 7, kind: 'kw', min: -35, max: 100 },
     battTemp: { title: 'Battery temperature', short: 'BATTERY', icon: 6, kind: 'temp', min: 0, max: 50, warnHigh: 42, cold: 5 },
     erange: { title: 'Electric range', short: 'ELECTRIC', icon: 7, kind: 'km', min: 0, max: 60 },
     frange: { title: 'Fuel range', short: 'FUEL RANGE', icon: 4, kind: 'km', min: 0, max: 700, warnLow: 50 },

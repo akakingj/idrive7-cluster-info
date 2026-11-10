@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.23.1",
+  "version": "0.24.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -175,22 +175,6 @@
         83,
         85,
         90
-      ]
-    },
-    {
-      "key": "batteryReads",
-      "label": "Battery readings (plug-in hybrid)",
-      "type": "choice",
-      "default": "auto",
-      "options": [
-        [
-          "auto",
-          "Read the battery unit (charge, power) when the car has one"
-        ],
-        [
-          "off",
-          "Off: from eDrive Live or the car only"
-        ]
       ]
     },
     {
@@ -1047,46 +1031,6 @@
       ]
     },
     "comment": "scaling, xdrive and dme as M Vitals (cauliflowermossgrape/idrive7-apps apps/car_vitals) reads them",
-    "battery": {
-      "comment": "the high-voltage battery unit (SME, ecu 7), as eDrive Live reads it (confirmed on the X5 45e): power = voltage x current x powerSign / 1000 (kW, + drawing)",
-      "powerSign": -1,
-      "hvV": [
-        {
-          "ecu": 7,
-          "did": "DDB4",
-          "bytes": 2,
-          "at": 0,
-          "factor": 0.01,
-          "min": 150,
-          "max": 500,
-          "timeoutMs": 600
-        }
-      ],
-      "hvI": [
-        {
-          "ecu": 7,
-          "did": "DD69",
-          "bytes": 4,
-          "at": 0,
-          "factor": 0.01,
-          "signed": true,
-          "min": -800,
-          "max": 800,
-          "timeoutMs": 600
-        }
-      ],
-      "soc": [
-        {
-          "ecu": 7,
-          "did": "DDBC",
-          "bytes": 2,
-          "at": 0,
-          "factor": 0.1,
-          "min": 0,
-          "max": 100
-        }
-      ]
-    },
     "dap": {
       "posScale": 0.01,
       "note": "Modern wide's road (dap.js): metres a unit of an object's x and y in ObjectListSuAAR (not yet seen on a car: check 'dap raw objects' in the log against a car followed at a known distance)"

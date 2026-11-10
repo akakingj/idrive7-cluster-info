@@ -152,9 +152,6 @@ function startData(ctx, opts) {
     const detect = (v, why) => { if (detected.vehicle !== v) { detected.vehicle = v; detected.why = why; log.info('vehicle: ' + v + ' (' + why + ')'); } };
     const vehicleNow = () => (setting('vehicle') === 'ice' || setting('vehicle') === 'phev' ? setting('vehicle') : detected.vehicle || 'phev');
     const ice = () => vehicleNow() === 'ice';
-    /** Settings > Battery readings: 'off' leaves the high-voltage battery unit alone (charge and power from
-     * eDrive Live or the car only). */
-    const batteryReads = () => setting('batteryReads') !== 'off';
     const fresh_ = () => { for (const f of freshFns) { try { f(); } catch (e) { /* the listener's own */ } } };
     const put = (k, v) => { if (isNum(v)) { const ch = x[k] !== v; x[k] = v; x.at[k] = Date.now(); if (ch) fresh_(); } };
     const fresh = (k, ms) => isNum(x[k]) && Date.now() - x.at[k] < (ms || 30000);
@@ -299,7 +296,6 @@ function startData(ctx, opts) {
     }, 'power distribution', { pollMs: 15000 });
 
     /* ---------- the engine unit, the gearbox unit and the transfer case over UDS ---------- */
-    const bat = Object.assign({ hvV: [], hvI: [], soc: [] }, cfg.battery || {});
     const dme = Object.assign({ ecu: 18 }, cfg.dme || {}), xcfg = Object.assign({ front: [], gearRatios: [] }, cfg.xdrive || {});
     const link = new Diag(ctx.signals, log);
     link.quiet = true;
@@ -318,27 +314,15 @@ function startData(ctx, opts) {
             return tg;
         }
         if (k === 'lmv') { const v = await rd.value('lmvFront', xcfg.front); if (v !== null) put('lmvFront', v); return v; }
-        // the high-voltage battery (SME, ecu 7): its power from voltage x current, and its charge (eDrive Live's
-        // reads, confirmed on the X5 45e), so the apps don't depend on it sharing
-        if ((k === 'hv' || k === 'hvSoc') && (ice() || !batteryReads())) return null;   // a petrol or diesel car has no HV battery
-        if (k === 'hv') {
-            // the current every turn; the voltage (it moves slowly) every 2 s
-            if (!isNum(hvVolt) || Date.now() - hvVoltT > 2000) { const v = await rd.value('hvV', bat.hvV); if (v !== null) { hvVolt = v; hvVoltT = Date.now(); } }
-            if (!isNum(hvVolt)) return null;
-            const a = await rd.value('hvI', bat.hvI);
-            if (a !== null) put('hvKw', (bat.powerSign || -1) * hvVolt * a / 1000);
-            return a;
-        }
-        if (k === 'hvSoc') { const v = await rd.value('hvSoc', bat.soc); if (v !== null) put('hvSoc', v); return v; }
+        // (the high-voltage battery is eDrive Live's alone: its charge and power come from its shared file, below.
+        // Two apps asking the battery unit in turn left both without answers, eDrive Live showing 'NO REPLY'.)
         const v = await rd.value(k, dme[k]);
         if (v !== null) put(k === 'egs' ? 'gearbox' : k, v);
         return v;
     }
-    let slowAt = 0, hvVolt = null, hvVoltT = 0, queue = [];
+    let slowAt = 0, queue = [];
     /*
-     * One turn: the battery's current first (its power is the most watched reading: as often as the battery unit
-     * answers, 10-20 times a second, unless eDrive Live shares it), then
-     * one other reading, round-robin: what the layout wants, every DME reading every 10 s, the charge every 10 s.
+     * One turn: one reading, round-robin: what the layout wants, every DME reading every 10 s.
      * Only while shown: each read puts "Diagnostic mode active" on the cluster.
      */
     let lastPollErr = '';
@@ -346,15 +330,14 @@ function startData(ctx, opts) {
         const on = !opts || !opts.shown || opts.shown();
         const now = Date.now(), wantedNow = on && now - wantedT < 3000;
         const usable = (k) => (k === 'lmv' ? xcfg.front.length : k === 'boostCtl' ? (dme.boostTarget || []).length
-            : k === 'hv' ? !ice() && batteryReads() && bat.hvV.length && bat.hvI.length && !sharedKw() : k === 'hvSoc' ? !ice() && batteryReads() && bat.soc.length : (dme[k] || []).length);
+            : (dme[k] || []).length);
         const ready = (k) => !((fail[k] || 0) >= 3 && Date.now() - (tried[k] || 0) < 30000);
         if (!queue.length && on) {
             queue = wantedNow ? wanted.filter((k) => DME_KEYS.indexOf(k) >= 0) : [];
             if (wantedNow && now - slowAt > 10000) { slowAt = now; DME_KEYS.forEach((k) => { if (k !== 'lmv' && queue.indexOf(k) < 0) queue.push(k); }); }
-            if (now - (tried.hvSoc || 0) > 10000) queue.push('hvSoc');
             queue = queue.filter(usable);
         }
-        const turn = on ? ['hv'].filter(usable).concat(queue.length ? [queue.shift()] : []) : [];
+        const turn = on && queue.length ? [queue.shift()] : [];
         let asked = 0;
         try {
             if (link.available) {
@@ -364,37 +347,32 @@ function startData(ctx, opts) {
                     tried[k] = Date.now();
                     const v = await readOne(k);
                     fail[k] = v === null ? (fail[k] || 0) + 1 : 0;
-                    // Auto: the battery unit answering says plug-in hybrid; never answering, while the engine unit
-                    // does on the same link (so not a link problem), a petrol or diesel car
-                    if (v !== null && k !== 'hv' && k !== 'hvSoc') dmeAnswered = true;
-                    if (k === 'hvSoc' && setting('vehicle') !== 'ice' && setting('vehicle') !== 'phev') {
-                        if (v !== null) detect('phev', 'its high-voltage battery unit answers');
-                        else if (fail[k] >= 3 && dmeAnswered && detected.vehicle !== 'phev') detect('ice', 'no high-voltage battery unit answers (the engine unit does)');
-                    }
+                    if (v !== null) dmeAnswered = true;
                 }
             }
         } catch (e) { const m = String(e); if (m !== lastPollErr) { lastPollErr = m; log.warn('diagnostic poll: ' + m); } }   // (once per distinct error)
-        // the battery's current read again soon (about 10 a second); a little longer with other reads in the turn,
-        // so the link isn't held without a gap
-        // (nothing asked, the link down or every reading resting after failures: no spinning, a look again soon)
-        // (the battery's current: at most 10 a second, the unit's own pace, and less after misses: a unit that stops
-        // answering is given room, not asked harder)
-        const hvMiss = fail.hv || 0;
-        timer = setTimeout(poll, !turn.length ? 2000 : !asked ? 250 : turn.length === 1 && turn[0] === 'hv' ? (hvMiss >= 3 ? 1000 : hvMiss ? 250 : 100) : 60);
+        // the next reading soon, with a gap so the link isn't held; nothing asked, the link down or every reading
+        // resting after failures: no spinning, a look again soon
+        timer = setTimeout(poll, !turn.length ? 2000 : !asked ? 250 : 60);
     }
     timer = setTimeout(poll, 1500);
 
     /* ---------- eDrive Live's charge and power, asked for while shown ---------- */
     const providers = startProviders(log, { onChange: () => fresh_() });
-    // eDrive Live reads the battery's power already and shares each reading: this app then doesn't read it too
-    // (two apps asking the battery unit in turn halves the rate each gets)
-    /* eDrive Live sharing the power (its file fresh, even with its last read missed): the battery unit is left to it.
-     * Asking it from here as well, while its reads miss, made both miss: two apps reading the same unit back to back
-     * till neither got an answer (eDrive Live 'NO REPLY', the kW frozen). Not shared for 30 s: read here. */
-    let sharedAt = 0;
-    function sharedKw() { if (providers.powerShared()) sharedAt = Date.now(); return Date.now() - sharedAt < 30000; }
+    /* Auto vehicle: a plug-in hybrid by its drive modes (above), eDrive Live sharing its battery readings or the
+     * car giving an electric range; none of these in 90 s shown, while the engine unit answers (so the link is up),
+     * a petrol or diesel car. A later sign of a plug-in hybrid changes it back. */
+    let shownFor = 0;
+    const vehicleTimer = setInterval(() => {
+        if (setting('vehicle') === 'ice' || setting('vehicle') === 'phev') return;
+        const p = providers.readings();
+        if (providers.powerShared() || isNum(p.soc)) return detect('phev', 'eDrive Live shares its battery readings');
+        if (fresh('carErange', 120000) && x.carErange > 0) return detect('phev', 'the car gives an electric range');
+        if (opts && opts.shown && opts.shown()) shownFor += 5000;
+        if (!detected.vehicle && dmeAnswered && shownFor >= 90000) detect('ice', 'no drive modes, electric range or eDrive Live of a plug-in hybrid (the engine unit answers)');
+    }, 5000);
     // while shown, ask eDrive Live to share; otherwise let go at once (providers.js: Cluster Info's file)
-    setInterval(() => { if (opts && opts.shown && opts.shown()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
+    const wantTimer = setInterval(() => { if (opts && opts.shown && opts.shown()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
 
     /** The xDrive split: { rear %, from } from the car's own signal, else the transfer case's front torque
      * against the gearbox output (engine torque x the gear's ratio), else none. */
@@ -428,9 +406,9 @@ function startData(ctx, opts) {
         data() {
             const d = car.data(), p = providers.readings();
             // ranges: an app that shares them first (eDrive Live), else the car's own signal
-            // the battery: eDrive Live's when it shares, else this app's own reads of the battery unit
-            const o = Object.assign({}, d, { mode: x.mode, soc: isNum(p.soc) ? p.soc : fresh('hvSoc', 30000) ? x.hvSoc : undefined,
-                kw: isNum(p.kw) ? p.kw : fresh('hvKw', 2000) ? x.hvKw : undefined, driveMode: x.driveMode,
+            // the battery: eDrive Live's (it alone reads the battery unit)
+            const o = Object.assign({}, d, { mode: x.mode, soc: isNum(p.soc) ? p.soc : undefined,
+                kw: isNum(p.kw) ? p.kw : undefined, driveMode: x.driveMode,
                 erange: isNum(p.erange) ? p.erange : fresh('carErange', 120000) ? x.carErange : undefined,
                 frange: isNum(p.frange) ? p.frange : fresh('carFrange', 120000) ? x.carFrange : undefined,
                 trange: fresh('carTrange', 120000) ? x.carTrange : undefined, fuelLevel: fresh('fuelLevel', 120000) ? x.fuelLevel : undefined });
@@ -467,7 +445,7 @@ function startData(ctx, opts) {
         vehicle: () => ({ vehicle: vehicleNow(), how: setting('vehicle') === 'ice' || setting('vehicle') === 'phev' ? 'set' : detected.vehicle ? 'found' : 'assumed', why: detected.why }),
         /** fn() on each new reading (the car's speed and rpm samples, every changed reading). */
         onFresh(fn) { freshFns.push(fn); },
-        stop() { clearTimeout(timer); providers.stop(); },
+        stop() { clearTimeout(timer); clearInterval(wantTimer); clearInterval(vehicleTimer); providers.stop(); },
     };
 }
 

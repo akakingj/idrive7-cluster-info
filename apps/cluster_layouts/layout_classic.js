@@ -2,7 +2,7 @@
 /**
  * layout_classic.js - "Classic M": the round dials of BMW's M cars of the late 2000s, drawn after a photo of an E92
  * M3's cluster at night (E9X_FS): black faces, a ring of cool white-blue light round each scale (open across the
- * bottom), white bars, dots and numerals, km/h in small numerals inside the mph, thin glowing red needles over dark
+ * bottom), white bars, dots and numerals, thin glowing red needles over dark
  * hubs, the fuel gauge across the speedometer's foot and the oil temperature across the tach's, and the amber
  * display between them. An original drawing, every piece a shader on the cluster's own GPU.
  *
@@ -37,8 +37,6 @@ function dial(o, which, cx, cy, size) {
         key: which, kind: 'e9x', x: cx - R, y: cy - R, w: size, h: size,
         params: {
             u_scale: sc, u_arc: [A0, A1, red, speed ? 0.095 : 0.14],
-            // inside the mph: km/h, every 20 to 120, then every 30 (the photo's)
-            u_inner: speed && !kmh ? [1.609344, 20, 120, 30] : [0, 0, 0, 0],
             u_sub: [SUB[0], SUB[1], 2, 2],
         },
         colors: (t) => ({ face: t.face, ring: t.ring, ring2: t.ring2, bezel: t.bezel, tick: t.tick, needle: t.needle, red: t.red }),
@@ -56,8 +54,7 @@ function dial(o, which, cx, cy, size) {
         lab(which + 'Sub2', SUB[1] - 4, lr, labels[2], Math.round(70 * k)));
     if (speed) {
         out.push(B.icon('fuelIcon', Math.round(cx - 14 * k), Math.round(pv[1] + 0.13 * R), Math.round(28 * k), Math.round(28 * k), 'fuel', 'dim'),
-            C.text('speedUnit', Math.round(cx - 0.40 * R), Math.round(cy + 0.42 * R), Math.round(70 * k), Math.round(22 * k), kmh ? 'km/h' : 'mph', white, { align: 0 }),
-            ...(kmh ? [] : [C.text('speed2Unit', Math.round(cx - 0.30 * R), Math.round(cy + 0.30 * R), Math.round(70 * k), Math.round(20 * k), 'km/h', white, { align: 0 })]));
+            C.text('speedUnit', Math.round(cx - 0.40 * R), Math.round(cy + 0.42 * R), Math.round(70 * k), Math.round(22 * k), kmh ? 'km/h' : 'mph', white, { align: 0 }));
     } else {
         out.push(B.icon('oilIcon', Math.round(cx - 34 * k), Math.round(pv[1] + 0.12 * R), Math.round(34 * k), Math.round(24 * k), 'oilcan', 'dim'),
             C.text('oilUnit', Math.round(cx + 2 * k), Math.round(pv[1] + 0.12 * R), Math.round(40 * k), Math.round(22 * k), '°' + (o.tempUnit === 'c' ? 'C' : 'F'), white, { align: 0 }),

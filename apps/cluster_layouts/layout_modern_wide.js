@@ -154,6 +154,7 @@ function newCar(o, arcs, gearC, rpmTxt) {
 module.exports = {
     id: 'modern_wide',
     title: 'Modern wide',
+    dap: true,          // (its road: the driving assistant's view, dap.js)
     palette: (lookId) => PALETTES[lookId] || PALETTES.comfort,
     gearText: C.gearText,
 

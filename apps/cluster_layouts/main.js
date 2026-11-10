@@ -59,9 +59,10 @@ mgu.run({
         // what a layout needs (layout.needs), eDrive Live's charge and power while shown
         const D = startData(ctx, { shown: showing, tyres: true });
         const car = D.car;
-        // the driving assistant (dap.js), for Modern wide's road: subscribed once that layout is first shown
+        // the driving assistant (dap.js), for the layouts that show it (layout.dap: Modern wide's road, Sport's
+        // cruise control): subscribed once one is first shown
         let dap = null;
-        const dapWanted = () => showing() && settings.get('layout') === 'modern_wide';
+        const dapWanted = () => showing() && !!byId(settings.get('layout')).dap;
         const data = () => {
             const d = D.data();
             if (!dap && dapWanted() && !d.demo) dap = startDap(ctx, log);
@@ -133,7 +134,7 @@ mgu.run({
         settings.onChange((k) => {
             if (k === 'look' || k === 'background') return cluster.recolour();
             if (k === 'layout') layout = byId(settings.get('layout'));
-            if (['layout', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'batteryReads'].indexOf(k) >= 0) cluster.rebuild();
+            if (['layout', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres'].indexOf(k) >= 0) cluster.rebuild();
         });
 
         /* ---------- the car's range and charge signals, from its own catalog ---------- */
@@ -172,7 +173,7 @@ mgu.run({
                 ['cluster renderer status', squeeze(cluster.rendererStatus() || '(no answer yet)', full)],
                 ['data now', JSON.stringify(snap)],
                 ['raw signals', JSON.stringify(D.status().raw || {})],
-                ['driving assistant (Modern wide)', dap ? JSON.stringify(dap.status()) + '\nnow ' + JSON.stringify(dap.state()) : 'not started (Modern wide not shown yet)'],
+                ['driving assistant (Modern wide, Sport)', dap ? JSON.stringify(dap.status()) + '\nnow ' + JSON.stringify(dap.state()) : 'not started (Modern wide or Sport not shown yet)'],
                 ['vehicle', (() => { const v = D.vehicle(); return v.vehicle + ' (' + v.how + ': ' + v.why + ')'; })()],
                 ['data status', JSON.stringify(Object.assign({}, D.status(), { raw: undefined }))],
                 // the car's own names for these (its service catalog): what to declare for the electric range

@@ -25,8 +25,9 @@ battery's own pace sets the limit: its current answers 10-20 times a second over
 
 Deep analog dials with satin metal bezels and warm backlit markings, coolant and oil dials set into them, and a
 slim display between them with the digital speed, large, and the battery's power. On a plug-in hybrid in an
-electric mode the rev counter reads the battery's power (0-100 kW); in the hybrid, sport and battery control modes
-it is the rev counter with a small power gauge inside.
+electric mode the rev counter reads the battery's power (0-100 kW, and its first quarter green down to -35 kW for
+regeneration; Digital round and Retro likewise); in the hybrid, sport and battery control modes it is the rev counter
+with a small power gauge inside.
 
 ![Analog sport](../../docs/analog_sport.png)
 
@@ -171,11 +172,12 @@ or with Show: Engine, boost and the shift point take the battery's places.
 The M8's M view: the backdrop and the two bowed glass rev blades from bimmer-lab's M theme
 ([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT; their own shaders, traced off an M8's cluster), the
 scale 0-8 with the numerals every 2000, the gear's number with the shift programme's stack beside it, the speed under
-the line, and the M8's side gauges in its own manner (an icon over the bar, the unit at the right, a white fill over a
-thin track with its red zones, three scale numbers under it): for a plug-in hybrid the coolant and the battery's
-temperature on the left, the battery's power (charging in blue) and the charge on the right; on a petrol or diesel
-car the coolant and boost, the torque and the intake air. The fuel and oil dials in the corners; the charge is its own
-gauge, so the strip's charge bar isn't added. With the Waze map the map goes in the window between the blades.
+the line, and the M8's flat gauges in its own manner (an icon over the bar, the unit at the right, a white fill over a
+thin track with its red zones, the scale's numbers under it): in the cards the coolant and oil temperatures on the
+left, and on the right the battery's power (its first quarter, left of the 0, regeneration in green, to -35 kW) and
+temperature on a plug-in hybrid, the boost and torque on a petrol or diesel car; along the bottom, as the M8's fuel
+gauge, long flat bars for the fuel level (left) and the charge (right), so the strip's own bars aren't added. With
+the Waze map the map goes in the window between the blades.
 
 ![M](../../docs/m.png)
 
@@ -189,8 +191,10 @@ The iDrive 8 M cars' Sport view, from bimmer-lab's Sport theme (their shader, MI
 blue speed bracket and the red rev bracket with flares where they bend and meet the bottom line, segmented fuel and
 oil bars, and the bottom bar's halves as gauges (the charge on blue and the battery's power on red; boost and coolant
 on a petrol or diesel car). In an electric drive the rev bracket reads **ePower %** (the battery's power, 0-100 kW),
-as BMW's electric M cars do. Pressed 5% in height to end at the car's own strip; with the Waze map the map goes in
-the window between the brackets.
+as BMW's electric M cars do, its bottom quarter regeneration (green, down from the 0 to -33%). The cruise control's
+icon is grey, and green with the set speed beside it while the cruise control holds a speed (the driving assistant's
+own services, as Modern wide's road). Pressed 5% in height to end at the car's own strip; with the Waze map the map
+goes in the window between the brackets.
 
 ![Sport](../../docs/sport.png)
 
@@ -201,8 +205,8 @@ the window between the brackets.
 ### Classic M
 
 The round dials of BMW's M cars of the late 2000s, drawn after a photo of an E92 M3's cluster at night: black faces,
-a ring of cool white-blue light round each scale (open across the bottom), white bars, dots and numerals, km/h in
-small numerals inside the mph, thin glowing red needles over dark hubs, the fuel gauge across the speedometer's foot
+a ring of cool white-blue light round each scale (open across the bottom), white bars, dots and numerals (one scale:
+mph or km/h, as set), thin glowing red needles over dark hubs, the fuel gauge across the speedometer's foot
 and the oil temperature across the tach's, and the amber display between them with the battery's power, the speed
 and the charge (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). An
 original drawing.
@@ -286,13 +290,13 @@ Made and measured on a G05 X5 xDrive45e (iDrive 7 MGU, the 12.3" Live Cockpit Pr
 car is taken to have the same cluster. What differs between cars is a setting, or found from the car:
 
 - **Vehicle** (default **Auto**): found from the car the way other apps identify one before assuming
-  anything: a plug-in hybrid's drive mode names, or an answer from its high-voltage battery unit, say
-  plug-in hybrid; that unit never answering while the engine unit does says petrol or diesel. A petrol or
-  diesel car gets the engine readings (boost, timing, torque, fuel rail), its own drive modes and no eDrive
-  page; nothing asks it for a battery. Or set it.
+  anything: a plug-in hybrid's drive mode names, eDrive Live sharing its battery readings or the car giving an
+  electric range say plug-in hybrid; none of these in 90 s shown, while the engine unit answers, says petrol
+  or diesel. A petrol or diesel car gets the engine readings (boost, timing, torque, fuel rail), its own drive
+  modes and no eDrive page. Or set it.
 - **Fuel tank size** (40-90 L, 69 for an X5 45e): the fuel bar.
-- **Battery readings**: the battery unit's charge and power over diagnostics (DDBC, DDB4, DD69 on ecu 7, as
-  eDrive Live reads them on the X5 45e), or off (charge and power from eDrive Live or the car only).
+- The battery's charge and power come from **eDrive Live** only: this app never asks the battery unit itself
+  (two apps asking it in turn left both without answers).
 - **Electric range when full**: the estimate shown (with ~) until the car's own electric range arrives.
 - The glass and the KOMBI's boxes (the camera cowl, the gear bracket, the eDrive box, the warning lights)
   are taken as the same on every car with this cluster (`layout_common.js`; every layout is checked against

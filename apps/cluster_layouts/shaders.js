@@ -89,6 +89,8 @@ void main() {
  * major ticks, numerals at the major ticks (digits from the atlas), a backlight glow round the markings, the
  * needle with its shadow and glow, the hub and a faint glass reflection.
  *   u_scale   max, major step, minor step, red zone start (>= max: none)
+ *   u_min     the scale's start (0 unless set; below 0: a power gauge's regeneration, its zone in u_regen and
+ *             no numerals there)
  *   u_arc     start and end angle, numeral height px (0: none), numeral radius px
  *   u_needle_dim  length, tail, width at the hub, width at the tip (px)
  *   u_look    backlight glow 0..1, metal 0..1, value arc 0/1, value arc radius (px from the face's edge in)
@@ -100,6 +102,8 @@ const DIAL_FS = `#version 100
 ${HIGHP}${COMMON}${GLYPH}
 uniform vec2 u_size;
 uniform vec4 u_scale;
+uniform float u_min;
+uniform vec3 u_regen;
 uniform vec4 u_arc;
 uniform vec4 u_needle_dim;
 uniform vec4 u_look;
@@ -120,7 +124,7 @@ uniform vec3 u_accent;
 uniform vec3 u_glow;
 varying vec2 v_uv;
 
-float angleOf(float v) { return mix(u_arc.x, u_arc.y, clamp(v / u_scale.x, 0.0, 1.0)); }
+float angleOf(float v) { return mix(u_arc.x, u_arc.y, clamp((v - u_min) / (u_scale.x - u_min), 0.0, 1.0)); }
 /* a radial tick at value v: r0..r1, half width hw; soft adds a glow falloff that wide */
 float tick(float v, float ang, float r, float r0, float r1, float hw, float soft) {
     float off = abs(ang - angleOf(v)) * DEG * r;
@@ -154,24 +158,31 @@ void main() {
     col *= 1.0 - 0.38 * smoothstep(0.78, 1.0, f);
     col *= 1.0 + 0.018 * sin(r * 2.1);
 
-    float v = (clamp(ang, a0, a1) - u_arc.x) / (u_arc.y - u_arc.x) * u_scale.x;
+    float sc = u_scale.x - u_min;
+    float v = u_min + (clamp(ang, a0, a1) - u_arc.x) / (u_arc.y - u_arc.x) * sc;
     bool inArc = ang >= a0 - 3.0 && ang <= a1 + 3.0;
-    /* the value arc: a lit band from the start to the reading, brighter towards the needle */
+    /* the value arc: a lit band from 0 to the reading (either way), brighter towards the needle */
     if (u_look.z > 0.5 && inArc) {
         float rr0 = R - u_look.w - 8.0 * k, rr1 = R - u_look.w;
-        float frac = clamp(v / max(u_value, 0.001), 0.0, 1.0);
-        float lit = (v <= u_value ? 1.0 : 0.0) * span(r, rr0, rr1);
+        float on = v >= min(0.0, u_value) && v <= max(0.0, u_value) ? 1.0 : 0.0;
+        float frac = clamp(abs(v) / max(abs(u_value), 0.001), 0.0, 1.0);
+        vec3 ac = v < 0.0 ? u_regen : u_accent;
         col = mix(col, u_minor * 0.35, span(r, rr0, rr1) * 0.5);
-        col = mix(col, u_accent * (0.45 + 0.55 * frac), lit);
-        col += u_accent * 0.25 * (v <= u_value ? 1.0 : 0.0) * clamp(1.0 - abs(r - (rr0 + rr1) * 0.5) / (14.0 * k), 0.0, 1.0) * frac;
+        col = mix(col, ac * (0.45 + 0.55 * frac), on * span(r, rr0, rr1));
+        col += ac * 0.25 * on * clamp(1.0 - abs(r - (rr0 + rr1) * 0.5) / (14.0 * k), 0.0, 1.0) * frac;
     }
     if (inArc) {
-        float vm = clamp(floor(v / u_scale.z + 0.5) * u_scale.z, 0.0, u_scale.x);
-        float vM = clamp(floor(v / u_scale.y + 0.5) * u_scale.y, 0.0, u_scale.x);
+        float vm = clamp(floor(v / u_scale.z + 0.5) * u_scale.z, u_min, u_scale.x);
+        float vM = clamp(floor(v / u_scale.y + 0.5) * u_scale.y, u_min, u_scale.x);
         /* the red zone */
         if (u_scale.w < u_scale.x) {
-            float zone = clamp((v - u_scale.w) / u_scale.x * (a1 - a0) * DEG * r + 0.5, 0.0, 1.0);
+            float zone = clamp((v - u_scale.w) / sc * (a1 - a0) * DEG * r + 0.5, 0.0, 1.0);
             col = mix(col, u_red, zone * span(r, R - 34.0 * k, R - 14.0 * k));
+        }
+        /* the regeneration zone, below 0 */
+        if (u_min < 0.0) {
+            float zone = clamp(-v / sc * (a1 - a0) * DEG * r + 0.5, 0.0, 1.0);
+            col = mix(col, u_regen * 0.8, zone * span(r, R - 34.0 * k, R - 14.0 * k));
         }
         /* backlight round the ticks */
         float gl = max(tick(vM, ang, r, R - 46.0 * k, R - 14.0 * k, 3.0 * k, 7.0 * k), tick(vm, ang, r, R - 30.0 * k, R - 14.0 * k, 1.5 * k, 5.0 * k) * 0.6);
@@ -189,7 +200,7 @@ void main() {
         vec2 q = (d - pc) / h;
         float x = q.x + n * adv * 0.5;
         float i = floor(x / adv);
-        if (i >= 0.0 && i < n) {
+        if (i >= 0.0 && i < n && v > -0.5 * u_scale.y) {
             float s = sdf(digitOf(vk, i, n), vec2(x - (i + 0.5) * adv, q.y + 0.5));
             float ink = smoothstep(0.5 - 2.0 / h, 0.5 + 2.0 / h, s);
             float halo = smoothstep(0.22, 0.5, s) * (1.0 - ink);
@@ -1002,9 +1013,9 @@ void main() {
  */
 const MDASH_FS = `// The M theme's backdrop (GLSL ES 1.00), traced off a photo of a current M8's cluster (design/photos/ref-m8-cluster.png,
 // warped to 1920x720): a near-black card either side whose inner edge follows the rev blade, whose top edge is the
-// photo's curve and whose bottom outer corner is a big round; the centre line with its bright end caps, the two side
-// dials over the cards (the photo's thin glass bracket, hatched bezel, red streaks) and the tricolour mark. (Here each
-// part in its own small layer, u_part, u_off; their tyre block and setup bars left out.) v_uv (0,0) is the top-left.
+// photo's curve and whose bottom outer corner is a big round; the centre line with its bright end caps and the
+// tricolour mark. (Here each part in its own small layer, u_part, u_off; their tyre block, setup bars and side dials
+// left out: the gauges are flat bars, MBAR_FS.) v_uv (0,0) is the top-left.
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -1020,12 +1031,10 @@ uniform float u_cardFill; // the card's grey level 0..1 (0 = black, outline only
 uniform vec4 u_blade;     // the left rev blade's outer edge: x at the bend, y of the bend, x per y px above / below it
 uniform vec2 u_bladeB;    // the bend's roundness px, the card's gap from the blade px
 uniform vec4 u_line;      // centre line x0, y, x1, cap length
-uniform vec4 u_gaugeL;    // left gauge centre x, y, radius, value 0..1
-uniform vec4 u_gaugeR;    // right gauge
 uniform vec3 u_mark;      // tricolour mark x, y, scale (0 = none)
 uniform vec3 u_red;
 uniform vec2 u_off;       // (here) the layer's place on the panel: the parts are drawn each in its own small layer
-uniform float u_part;     // (here) which part: 1 the cards, 2 the centre line, 3 the side dials, 4 the stripes
+uniform float u_part;     // (here) which part: 1 the cards, 2 the centre line, 4 the stripes
 
 const float PI = 3.14159265;
 
@@ -1064,75 +1073,14 @@ float cardD(vec2 p, float right) {
 }
 // the card: near-black (the panel brightens every dark tint, so the fill stays tiny), a shade lighter and bluer at
 // the top, with a faint lighter rim
-vec4 card(vec2 p, vec2 dial, float right, vec4 c) {
+vec4 card(vec2 p, float right, vec4 c) {
     float d = cardD(p, right);
     if (d > 2.0) return c;
     float top = u_cardTop.z - u_cardTop.y * u_cardTop.y / (4.0 * u_cardTop.x);   // the curve's lowest y (its vertex)
     float fy = clamp((p.y - top) / max(u_card.y - top, 1.0), 0.0, 1.0);
     float grey = u_cardFill * mix(1.3, 0.75, fy);
     c = over(vec4(vec3(grey, grey, grey * 1.18), cov(d)), c);
-    // the rim stops inside the dial's area (as on the M8, where the dial covers the card's edge), so no label sits on it;
-    // 118..130 px at the photo's dial size (r 120), scaled with the layout's
-    float kd = u_gaugeL.z / 120.0;
-    float hide = 1.0 - smoothstep(118.0 * kd, 130.0 * kd, length(p - dial));
-    c = over(vec4(0.5, 0.53, 0.58, 0.3 * cov(abs(d + 1.2) - 0.9) * (1.0 - hide)), c);
-    return c;
-}
-
-// a side dial as the M8 draws it, traced off the photo: not a round gauge but a tall thin bracket cut from big
-// circles. The glass lies inside a circle of radius 120 round the anchor g.xy and outside one of radius 180 round
-// (57, -68), so it is ~20 px wide at the top and widens to ~50 at the bottom; a hatched chrome bezel (an arc between
-// radii 113 and 124 round (-13, 11)) runs down its outer side. The level reads by height: the glass is lit from the
-// bottom up to the level, dark above it (a thin bright line along its outer edge), and a horizontal red streak runs in
-// from the outer edge at the level. Fixed streaks mark the end zones (zones 0, fuel: the reserve at the bottom; 1, oil:
-// blue at the cold bottom end, red at the hot top end). Units are the photo's px with g.z = 120 there.
-// Drawn in the left frame; the right dial comes through the mirror.
-vec4 streak(vec2 q, float py, float len, vec3 col, float k, vec4 c) {
-    float xo = -sqrt(max(14400.0 - py * py, 0.0)) - 3.0;                         // the glass's outer edge at that height
-    float dx = q.x - (xo + len * 0.5), dy = abs(q.y - py);
-    float taper = 1.0 - clamp(abs(dx) / (len * 0.5), 0.0, 1.0);
-    float sd = (max(abs(dx) - len * 0.5, dy - (1.2 + 2.3 * taper))) * k;
-    c = over(vec4(col, 0.3 * exp(-max(sd, 0.0) / (5.0 * k))), c);
-    return over(vec4(mix(col, vec3(1.0, 0.55, 0.5), 0.25 * taper), cov(sd)), c);
-}
-vec4 gauge(vec2 p, vec4 g, float zones, vec4 c) {
-    float k = g.z / 120.0;
-    vec2 q = (p - g.xy) / k;
-    if (q.x < -140.0 || q.x > 70.0 || q.y < -22.0 || q.y > 140.0) return c;
-    float v = clamp(g.w, 0.0, 1.0);
-    // the bezel: double-edged and hatched, from its top end down round to its bottom end
-    vec2 qb = q - vec2(-13.0, 11.0);
-    float rb = length(qb);
-    if (q.y > -16.0 && q.x < -30.0 && rb > 111.0 && rb < 126.0) {
-        float ab = atan(qb.y, qb.x);
-        float hatch = step(0.5, fract(ab * 30.0));
-        float edge = max(cov((abs(rb - 112.5)) * k - 0.8), cov((abs(rb - 124.0)) * k - 0.8));
-        float body = (rb > 112.5 && rb < 124.0) ? 0.4 + 0.35 * hatch : 0.0;
-        c = over(vec4(0.8, 0.82, 0.88, min(1.0, body + 0.7 * edge)), c);
-    }
-    // the glass
-    float dOut = 120.0 - length(q);
-    float dIn = length(q - vec2(57.0, -68.0)) - 180.0;
-    float inside = min(min(dOut, dIn), min(q.y + 10.0, 14.0 - q.x));
-    if (zones > 0.5) inside = min(min(inside, 104.0 - q.y), -30.0 - q.x);       // the oil glass ends higher and shorter (photo: y 564, x 1686)
-    if (inside > -1.5) {
-        float f = clamp(dOut / max(dOut + max(dIn, 0.0), 1.0), 0.0, 1.0);        // 0 at the outer edge, 1 at the inner
-        float yv = zones > 0.5 ? mix(97.0, 7.0, v) : mix(100.0, 2.0, v);
-        float lit = smoothstep(yv - 2.0, yv + 4.0, q.y);
-        vec4 dark = vec4(0.85, 0.87, 0.92, 0.75 * (1.0 - smoothstep(0.0, 6.0, dOut)));
-        vec4 bright = vec4(mix(vec3(0.96, 0.97, 0.99), vec3(0.55, 0.57, 0.63), f), mix(1.0, 0.55, f));
-        vec4 glass = mix(dark, bright, lit);
-        c = over(vec4(glass.rgb, glass.a * cov(-inside * k)), c);
-        c = over(vec4(1.0, 1.0, 1.0, 0.7 * cov(abs(inside * k) - 0.6) * (1.0 - lit) * step(dOut, 3.0)), c);
-    }
-    float yv = zones > 0.5 ? mix(97.0, 7.0, v) : mix(100.0, 2.0, v);
-    if (zones > 0.5) {
-        c = streak(q, -8.0, 44.0, u_red, k, c);                                    // hot end, above the top label as the photo
-        c = streak(q, 101.0, 34.0, vec3(0.3, 0.55, 1.0), k, c);                    // cold end, along the glass's bottom
-    } else {
-        c = streak(q, 112.0, 50.0, u_red, k, c);                                   // reserve
-    }
-    c = streak(q, yv, 38.0, u_red, k, c);                                          // the level, across the glass only
+    c = over(vec4(0.5, 0.53, 0.58, 0.3 * cov(abs(d + 1.2) - 0.9)), c);
     return c;
 }
 
@@ -1144,18 +1092,14 @@ void main() {
     vec4 c = vec4(0.0);
     if (u_part < 1.5) {
         // the two cards: the left one as laid out, the right one its mirror
-        if (p.x < 960.0) c = card(p, u_gaugeL.xy, 0.0, c);
-        else c = card(pm, vec2(1920.0 - u_gaugeR.x, u_gaugeR.y), 1.0, c);
+        if (p.x < 960.0) c = card(p, 0.0, c);
+        else c = card(pm, 1.0, c);
     } else if (u_part < 2.5) {
         // centre line, bright caps at both ends
         c = over(vec4(0.62, 0.66, 0.73, 0.8 * cov(segD(p, u_line.xy, u_line.zy) - 1.6)), c);
         float l = segD(p, u_line.xy + vec2(6.0, 0.0), u_line.xy + vec2(u_line.w, 0.0)) - 2.0 - 1.2 * clamp((p.x - u_line.x) / u_line.w, 0.0, 1.0);
         float r = segD(p, u_line.zy - vec2(u_line.w, 0.0), u_line.zy - vec2(6.0, 0.0)) - 2.0 - 1.2 * clamp((u_line.z - p.x) / u_line.w, 0.0, 1.0);
         c = over(vec4(0.95, 0.96, 0.98, cov(min(l, r))), c);
-    } else if (u_part < 3.5) {
-        // the side dials, traced off the M8 photo: the fuel one as laid out, the oil one its mirror
-        if (p.x < 960.0) c = gauge(p, u_gaugeL, 0.0, c);
-        else c = gauge(pm, vec4(1920.0 - u_gaugeR.x, u_gaugeR.yzw), 1.0, c);
     } else {
         // tricolour mark: three slanted bars
         vec2 m = (p - u_mark.xy) / u_mark.z;
@@ -1284,6 +1228,8 @@ uniform float u_topEnd;   // the top lines run from the bracket to this x (left;
 uniform vec2 u_off;       // (here) the layer's place on the panel
 uniform float u_part;     // (here) 1 the speed bracket (and the fuel bar), 2 the rev bracket (and the oil bar), 3 the bottom line and strip
 uniform vec2 u_stripFill; // (here) the bottom strip's halves as gauges: the left half lit from its left end to x, the right from the middle to y (0..1; negative: all lit)
+uniform float u_zero;     // (here) the rev bracket's 0 (0..1 up it): above 0 a power gauge's regeneration below it, lit green
+                          // from the 0 down to the value, its marks counted from the 0
 
 const vec3 BLUE_LINE = vec3(0.36, 0.62, 1.0);
 const vec3 BLUE_BAND = vec3(0.13, 0.3, 0.78);
@@ -1293,6 +1239,7 @@ const vec3 RED_LINE = vec3(0.95, 0.12, 0.16);
 const vec3 RED_BAND = vec3(0.33, 0.06, 0.1);
 const vec3 RED_LIT = vec3(0.93, 0.1, 0.15);
 const vec3 RED_IN = vec3(0.86, 0.08, 0.13);
+const vec3 REGEN_LIT = vec3(0.24, 0.86, 0.52);
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 top, vec4 under) {
@@ -1317,7 +1264,7 @@ float outerSlope(float y) {
 float dIn(vec2 q) { return (q.x - outerX(q.y)) / sqrt(1.0 + outerSlope(q.y) * outerSlope(q.y)); }
 
 // one bracket in the left frame (q mirrored for the right one)
-vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec3 line, vec3 band, vec3 lit, vec3 inner, vec4 c) {
+vec4 bracket(vec2 q, float val, float zero, float redFrom, float orange, float ticks, vec3 line, vec3 band, vec3 lit, vec3 inner, vec4 c) {
     float d = dIn(q);
     float yTopI = u_geo.x + 8.0;                              // the inner line's top run
     float t = (u_scale.x - q.y) / (u_scale.x - u_scale.y);    // 0 at the scale's 0
@@ -1327,14 +1274,19 @@ vec4 bracket(vec2 q, float val, float redFrom, float orange, float ticks, vec3 l
     if (inB > 0.0) {
         vec3 col = band;
         float a = 0.96;
-        if (t <= val) col = mix(lit, mix(lit, vec3(1.0), 0.25), clamp((d - 5.0) / u_w, 0.0, 1.0)) * mix(0.8, 1.0, clamp(t / max(val, 0.01), 0.0, 1.0));
+        // (here) lit from the 0 to the value: up from it, or (below it: regeneration) down from it in green
+        bool on = t >= min(zero, val) && t <= max(zero, val);
+        vec3 lc = t < zero ? REGEN_LIT : lit;
+        if (on) col = mix(lc, mix(lc, vec3(1.0), 0.25), clamp((d - 5.0) / u_w, 0.0, 1.0)) * mix(0.8, 1.0, clamp(abs(t - zero) / max(abs(val - zero), 0.01), 0.0, 1.0));
+        if (zero > 0.0 && t < zero && !on) col = mix(band, REGEN_LIT * 0.3, 0.6);
         c = over(vec4(col, a * inB), c);
         float yv = u_scale.x - val * (u_scale.x - u_scale.y);
-        if (val > 0.002) c = over(vec4(1.0, 1.0, 1.0, inB * cov(abs(q.y - yv) - 2.0)), c);
-        // marks at every label, on the band's outer half
-        float kk = floor(t * ticks + 0.5);
-        float yk = u_scale.x - kk / ticks * (u_scale.x - u_scale.y);
-        if (kk >= 0.0 && kk <= ticks && d > 7.0 && d < 19.0) c = over(vec4(line, 0.9 * cov(abs(q.y - yk) - 1.2)), c);
+        if (val > 0.002 || zero > 0.0) c = over(vec4(1.0, 1.0, 1.0, inB * cov(abs(q.y - yv) - 2.0)), c);
+        // marks at every label, on the band's outer half (counted from the 0, both ways)
+        float st = (1.0 - zero) / ticks;
+        float kk = floor((t - zero) / st + 0.5), tk = zero + kk * st;
+        float yk = u_scale.x - tk * (u_scale.x - u_scale.y);
+        if (tk >= -0.001 && kk <= ticks && d > 7.0 && d < 19.0) c = over(vec4(kk < 0.0 ? REGEN_LIT : line, 0.9 * cov(abs(q.y - yk) - 1.2)), c);
         // redline: yellow dashes, then a solid red line, on the outer edge of the band
         if (redFrom < 1.5 && d > 8.0 && d < 13.0) {
             if (t >= redFrom && t <= 1.02) c = over(vec4(1.0, 0.2, 0.2, 1.0), c);
@@ -1401,7 +1353,7 @@ void main() {
         hole = clamp(length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR + 0.5, 0.0, 1.0);
     }
     if (u_part < 1.5) {
-        c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
+        c = bracket(p, u_speed, 0.0, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
         // (here) the flares at the bracket's bend and at its foot, where it meets the bottom line
         c = flare(p, vec2(u_geo.w - 1.0, u_geo.y), BLUE_LINE, 26.0, c);
         c = flare(p, vec2(outerX(u_geo.z), u_geo.z), BLUE_LINE, 18.0, c);
@@ -1409,7 +1361,7 @@ void main() {
         if (u_hole.z <= 0.0) c = bar(p, u_fuelSeg, u_fuel, 0.0, c);
         c.a *= hole;
     } else if (u_part < 2.5) {
-        c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, RED_BAND, RED_LIT, RED_IN, c);
+        c = bracket(pm, u_rpm, u_zero, u_redFrom, u_orange, u_ticks.y, RED_LINE, RED_BAND, RED_LIT, RED_IN, c);
         c = flare(pm, vec2(u_geo.w - 1.0, u_geo.y), RED_LINE, 26.0, c);
         c = flare(pm, vec2(outerX(u_geo.z), u_geo.z), RED_LINE, 18.0, c);
         if (u_hole.z <= 0.0) c = bar(p, u_oilSeg, u_oil, 1.0, c);
@@ -1520,7 +1472,6 @@ void main() {
  * centre. Sizes in the dial's radius R (the layer's half side).
  *   u_scale   max, numeral step, bar step, dot step
  *   u_arc     start and end angle (degrees clockwise from 12), the red zone's start (>= max: none), numeral size (of R)
- *   u_inner   the second scale: its unit a main unit (km/h per mph; 0: none), numerals every x up to y, then every z
  *   u_sub     the small gauge: start and end angle round its pivot, its marks (bars) and dots between
  *   u_subv    its reading 0..1 (dyn)
  *   u_value   the reading on the scale (eased)
@@ -1530,7 +1481,6 @@ ${HIGHP}${COMMON}${GLYPH}
 uniform vec2 u_size;
 uniform vec4 u_scale;
 uniform vec4 u_arc;
-uniform vec4 u_inner;
 uniform vec4 u_sub;
 uniform float u_subv;
 uniform float u_value;
@@ -1601,19 +1551,6 @@ void main() {
             float an = a0 + sw * kn / mx, h = u_arc.w * R;
             vec2 cn = c + dirOf(an) * R * (0.725 - u_arc.w * 0.45);
             acc = over(acc, kn >= u_arc.z && u_arc.z < mx ? u_red : u_tick, numeral(p, cn, h, kn));
-        }
-    }
-    /* the second scale: small numerals and ticks further in */
-    if (u_inner.x > 0.0) {
-        float mx2 = mx * u_inner.x;
-        float v2 = clamp(t, 0.0, 1.0) * mx2;
-        /* its numerals: every x up to y, then every z */
-        float k2 = v2 <= u_inner.z ? floor(v2 / u_inner.y + 0.5) * u_inner.y : u_inner.z + floor((v2 - u_inner.z) / u_inner.w + 0.5) * u_inner.w;
-        if (k2 > 0.0 && k2 <= mx2) {
-            float a2 = a0 + sw * k2 / mx2;
-            float o2 = abs(ang - a2) * DEG * r * R;
-            acc = over(acc, u_tick, 0.85 * clamp(R * 0.006 - o2 + 0.5, 0.0, 1.0) * span(r / px, 0.555 / px, 0.6 / px));
-            acc = over(acc, u_tick, 0.9 * numeral(p, c + dirOf(a2) * R * 0.48, R * 0.058, k2));
         }
     }
     /* the small gauge across the bottom: its marks, its needle round a pivot below the centre */

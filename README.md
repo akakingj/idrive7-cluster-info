@@ -33,7 +33,8 @@ which it installs with them:
   the map Cluster Info sits on, from [robertnisipeanu/idrive-apps](https://github.com/robertnisipeanu/idrive-apps).
 
 [eroobeeroo/idrive7-apps](https://github.com/eroobeeroo/idrive7-apps) is optional: it has **eDrive Live**, which
-shares the battery's power and temperature with these apps.
+shares the battery's charge, power and temperature with these apps. On a plug-in hybrid it is where Cluster Layouts and
+Cluster Centre get the charge and power: they leave the battery unit to it rather than read it too.
 
 Cluster Info is in eroobeeroo/idrive7-apps as well. Install it from only one of the two: if both are installed,
 the Store adds the second beside the first as a separate app (`cluster_info2`).

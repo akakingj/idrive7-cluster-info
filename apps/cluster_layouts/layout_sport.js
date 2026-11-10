@@ -31,6 +31,7 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const TOP = 120, SY = (C.STRIP_Y - TOP) / (674 - TOP);
 const Y = (y) => Math.round(TOP + (y - TOP) * SY);
 const RPM_MAX = 7000;   // their scale: 0-7 (ticks 7)
+const E_MIN = -100 / 3, E_ZERO = 0.25;   // the ePower scale: -33 to 100%, its 0 a quarter up
 
 /* their map window ("hole" [524, 120, 872, 480], inset 10), pressed as the rest */
 const WINDOW = { x: 534, y: Y(130), w: 852, h: Y(130 + 460) - Y(130) };
@@ -45,6 +46,7 @@ module.exports = {
     mapWindow: WINDOW,
     gearNumber: true,   // (the gear's number alone, as theirs)
     speedGauge: false,  // (its speed bracket reads through dyn, u_speed: the engine eases the engine speed alone)
+    dap: true,          // (the cruise control's icon and set speed: the driving assistant, dap.js)
     palette: pal,
     gearText: C.gearText,
 
@@ -55,9 +57,9 @@ module.exports = {
         const [redFrom, orange] = B.redMarks(o, RPM_MAX);
         const T = (key, box, font, txt, colors, align) => B.text('wide', key, box, font, txt, colors, align, Y);
         // a plug-in hybrid in an electric drive: the rev bracket reads the battery's power as ePower %, as BMW's
-        // electric M cars (i4 M50) do (0-100 kW as 0-100%)
+        // electric M cars (i4 M50) do (0-100 kW as 0-100%), its bottom quarter regeneration (to -33%, green)
         const elec = (d) => C.electric(o, d);
-        const ePower = (d) => (isNum(d.kw) ? clamp01(d.kw / 100) : 0);
+        const ePower = (d) => (isNum(d.kw) ? clamp01((d.kw - E_MIN) / (100 - E_MIN)) : E_ZERO);
         // the background: black (with the map round its window; the stock centre full screen round its area, x 566-1104)
         const W2 = WINDOW, around = [{ x: 0, y: 0, w: 1920, h: W2.y }, { x: 0, y: W2.y + W2.h, w: 1920, h: 720 - W2.y - W2.h },
             { x: 0, y: W2.y, w: W2.x, h: W2.h }, { x: W2.x + W2.w, y: W2.y, w: 1920 - W2.x - W2.w, h: W2.h }];
@@ -75,7 +77,7 @@ module.exports = {
             // the map window cut see-through (the map drawn in it); the stock centre's area likewise
             u_hole: map ? [WINDOW.x, WINDOW.y, WINDOW.w, WINDOW.h] : stock ? [566, 0, 538, 720] : [0, 0, 0, 0], u_holeR: [map ? 28 : 0],
             u_strip: [425, Y(632), Math.round(42 * SY), 26], u_topEnd: [726],
-            u_speed: [0], u_fuel: [0], u_oil: [0], u_stripFill: [0, 0],
+            u_speed: [0], u_fuel: [0], u_oil: [0], u_stripFill: [0, 0], u_zero: [0],
         };
         const bottom = strip ? C.STRIP_Y : 646;
         const part = (key, n, x, y, w, h, extra) => Object.assign({ key, kind: 'sdash', x, y, w, h, z: -90, params: Object.assign({ u_part: [n], u_off: [x, y] }, sd) }, extra);
@@ -88,7 +90,7 @@ module.exports = {
             part('revSide', 2, 1160, 60, 760, bottom - 60, {
                 value: (d) => (elec(d) ? ePower(d) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
                 dyn: (d) => ({
-                    u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : redFrom], u_orange: [elec(d) ? 2 : orange],
+                    u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : redFrom], u_orange: [elec(d) ? 2 : orange], u_zero: [elec(d) ? E_ZERO : 0],
                     u_oil: [isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 500) / 500 : 0],
                 }) }),
             // the bottom bar's halves as gauges: the charge and the battery's power (boost and the coolant)
@@ -101,19 +103,20 @@ module.exports = {
             return { color: [Math.round(v) === i ? t.fg : t.sblue, 1], glow: [t.sblue, 0] };
         };
         const nearRpm = (i) => (t, d) => ({ color: [isNum(d.rpm) && Math.round(d.rpm / 1000) === i ? t.fg : t.spink, 1], glow: [t.spink, 0] });
-        const nearPow = (i) => (t, d) => ({ color: [Math.round(ePower(d) * 4) === i ? t.fg : t.spink, 1], glow: [t.spink, 0] });
+        const nearPow = (i) => (t, d) => { const c = i < 0 ? t.regen : t.spink; return { color: [isNum(d.kw) && Math.round(d.kw / 25) === i ? t.fg : c, 1], glow: [c, 0] }; };
         const SPD = [[248, 596], [206, 540], [164, 483], [122, 426], [82, 369], [51, 312], [66, 255], [96, 198], [142, 142]];
         // (the top one nudged right of the glass's slanted corner: its right edge where theirs is)
         SPD.forEach(([x, y], i) => list.push(T('spd' + i, [x, y, i === 8 ? 96 : 110, 27], 's_scale', String(scale[i]), nearSpeed(i), 'right')));
         // (full screen 2 a few px right of the KOMBI's gear box, 5 a few down from its eDrive box)
         const RPM = [[1562, 596], [1610, 532], [strip ? 1658 : 1664, 466], [1706, 402], [1749, 336], [1752, strip ? 272 : 282], [1719, 206], [1682, 142]];
         RPM.forEach(([x, y], i) => list.push(Object.assign(T('rpm' + i, [x, y, 40, 27], 's_scale', String(i), nearRpm(i), 'left'), { visible: (d) => !elec(d) })));
-        // the ePower scale's numerals (0-100 in 25s) at their places along the bracket (between the rpm numerals')
-        if (o.vehicle !== 'ice' && !C.engineFocus(o)) [0, 1, 2, 3, 4].forEach((i) => {
-            const f = i * 7 / 4, k = Math.min(6, Math.floor(f)), u = f - k, at = RPM[k].map((v, j) => Math.round(v + (RPM[k + 1][j] - v) * u));
+        // the ePower scale's numerals (-25 to 100 in 25s, -25 green) at their places along the bracket (between the
+        // rpm numerals')
+        if (o.vehicle !== 'ice' && !C.engineFocus(o)) [-1, 0, 1, 2, 3, 4].forEach((i) => {
+            const f = 7 * (E_ZERO + i / 4 * (1 - E_ZERO)), k = Math.min(6, Math.floor(f)), u = f - k, at = RPM[k].map((v, j) => Math.round(v + (RPM[k + 1][j] - v) * u));
             // (full screen clear of the KOMBI's eDrive box, x 1770 on above y 265)
             if (!strip && at[0] + 50 > 1770 && at[1] < 284) at[1] = 284;
-            list.push(Object.assign(T('pow' + i, [at[0], at[1], 50, 27], 's_scale', String(i * 25), nearPow(i), 'left'), { visible: elec }));
+            list.push(Object.assign(T(i < 0 ? 'powRegen' : 'pow' + i, [at[0], at[1], i < 0 || i === 4 ? 74 : 50, 27], 's_scale', String(i * 25), nearPow(i), 'left'), { visible: elec }));
         });
         list.push(T('mphCap', [338, 88, 80, 29], 's_unit', C.speedUnit(o), B.role('sblue'), 'center'),
             T('rpmCap', [1430, 86, 200, 29], 's_unit', (d) => (elec(d) ? 'ePower %' : '1/min x 1000'), B.role('sred'), 'center'));
@@ -126,7 +129,11 @@ module.exports = {
                 T('speedUnit', [360, 358, 80, 29], 's_unit', C.speedUnit(o), B.role('sblue'), 'center'),
                 T('gear', [1415, strip ? 230 : 182, 200, 65], 's_gear', gearNum, gearC, 'center'));
         } else {
-            list.push(B.icon('driveIcon', 490, Y(182), 40, 36, 'gauge', 'dim'),
+            // the cruise control, as BMW's: its icon grey, green while it holds a speed, with the set speed beside it
+            const acc = (d) => !!(d.dap && d.dap.acc && d.dap.acc.on);
+            const setTxt = (d) => (acc(d) && isNum(d.dap.acc.set) ? String(Math.round(d.dap.acc.set)) : '');
+            list.push(Object.assign(B.icon('accIcon', 490, Y(182), 40, 36, 'gauge', 'faint'), { colors: (t, d) => ({ color: [acc(d) ? t.regen : t.faint, 1] }) }),
+                T('accSet', [538, 182, 110, 29], 's_val', setTxt, (t) => ({ color: [t.regen, 1], glow: [t.regen, 0] }), 'left'),
                 T('speedDigits', [420, 313, 280, 68], 's_speed', (d) => C.speedText(o, d), B.role('fg'), 'center'),
                 T('speedUnit', [580, 382, 80, 29], 's_unit', C.speedUnit(o), B.role('sblue'), 'center'),
                 // (an M car's KOMBI boxes in the middle: the gear above the right one)

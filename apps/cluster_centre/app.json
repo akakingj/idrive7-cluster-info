@@ -2,7 +2,7 @@
   "id": "cluster_centre",
   "title": "Cluster Centre",
   "description": "Pages of engine, gearbox, xDrive and eDrive data, warm-up, turbo cool-down, a shift light and a 0-60 timer in the centre of the factory cluster, drawn by the cluster itself",
-  "version": "0.7.13",
+  "version": "0.7.14",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9M",
@@ -150,22 +150,6 @@
         83,
         85,
         90
-      ]
-    },
-    {
-      "key": "batteryReads",
-      "label": "Battery readings (plug-in hybrid)",
-      "type": "choice",
-      "default": "auto",
-      "options": [
-        [
-          "auto",
-          "Read the battery unit (charge, power) when the car has one"
-        ],
-        [
-          "off",
-          "Off: from eDrive Live or the car only"
-        ]
       ]
     },
     {
@@ -2682,47 +2666,7 @@
         }
       ]
     },
-    "comment": "scaling, xdrive and dme as M Vitals (cauliflowermossgrape/idrive7-apps apps/car_vitals) reads them",
-    "battery": {
-      "comment": "the high-voltage battery unit (SME, ecu 7), as eDrive Live reads it (confirmed on the X5 45e): power = voltage x current x powerSign / 1000 (kW, + drawing)",
-      "powerSign": -1,
-      "hvV": [
-        {
-          "ecu": 7,
-          "did": "DDB4",
-          "bytes": 2,
-          "at": 0,
-          "factor": 0.01,
-          "min": 150,
-          "max": 500,
-          "timeoutMs": 600
-        }
-      ],
-      "hvI": [
-        {
-          "ecu": 7,
-          "did": "DD69",
-          "bytes": 4,
-          "at": 0,
-          "factor": 0.01,
-          "signed": true,
-          "min": -800,
-          "max": 800,
-          "timeoutMs": 600
-        }
-      ],
-      "soc": [
-        {
-          "ecu": 7,
-          "did": "DDBC",
-          "bytes": 2,
-          "at": 0,
-          "factor": 0.1,
-          "min": 0,
-          "max": 100
-        }
-      ]
-    }
+    "comment": "scaling, xdrive and dme as M Vitals (cauliflowermossgrape/idrive7-apps apps/car_vitals) reads them"
   },
   "requires": {
     "idrive7-renderd": "2.1.7",

@@ -77,7 +77,7 @@ function dialSet(o, which, cx, size, cy) {
             key: which, kind: 'dial', x: cx - size / 2, y: cy - size / 2, w: size, h: size,
             params: Object.assign({ u_scale: [s.max, s.major, s.minor, red], u_arc: [-135, 135, Math.round((dense ? 38 : 56) * k + 2), (dense ? 222 : 204) * k], u_needle_dim: [292 * k, 62 * k, 13 * k, 4] }, look(k, 0.75)),
             colors: dialColours, max: s.max, sweep: true,
-            value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : C.tachValue(o),
+            value: which === 'speed' ? (d) => (C.isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : C.tachValue(o), min: which === 'speed' ? 0 : C.KW_MIN,
             dyn: which === 'speed' ? undefined : C.tachDyn(o, s, red),
         }),
         // (the small kW gauge is gone while the tach itself reads the battery's power: an electric mode)

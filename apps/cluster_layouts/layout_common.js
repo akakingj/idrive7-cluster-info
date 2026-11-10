@@ -127,10 +127,13 @@ const STRIP_DROP = /^(fuel|elec|frange|erange|range2)(Lbl)?$|^erangeL$/;
  */
 const electric = (o, d) => !engineFocus(o) && !!o && o.vehicle !== 'ice' && !!d
     && (typeof d.driveMode === 'string' && d.driveMode ? /ELECTRIC/.test(d.driveMode) : d.engineOn === false);
-const KW_SCALE = [100, 25, 5, 101];     // a tach as a power gauge: 0-100 kW, numerals every 25, no red
-/** A tach dial's dyn and value: kW in an electric mode, else the engine speed (s: rpmScale(o), red where it is). */
-const tachDyn = (o, s, red) => (d) => ({ u_scale: electric(o, d) ? KW_SCALE : [s.max, s.major, s.minor, red] });
-const tachValue = (o) => (d) => (electric(o, d) ? (isNum(d.kw) ? Math.max(0, Math.min(100, d.kw)) : 0) : isNum(d.rpm) ? d.rpm / 1000 : 0);
+const KW_SCALE = [100, 25, 5, 101];     // a tach as a power gauge: 0-100 kW, numerals every 25, no red,
+const KW_MIN = -35;                     // and its bottom quarter (to -35 kW) green for regeneration
+const REGEN_RGB = [0.24, 0.86, 0.52];   // (#3ddc84, the layouts' regeneration green)
+/** A tach dial's dyn and value: kW in an electric mode, else the engine speed (s: rpmScale(o), red where it is).
+ * The dial piece takes min: KW_MIN, so a negative power reaches it. */
+const tachDyn = (o, s, red) => (d) => (electric(o, d) ? { u_scale: KW_SCALE, u_min: [KW_MIN], u_regen: REGEN_RGB } : { u_scale: [s.max, s.major, s.minor, red], u_min: [0], u_regen: REGEN_RGB });
+const tachValue = (o) => (d) => (electric(o, d) ? (isNum(d.kw) ? Math.max(KW_MIN, Math.min(100, d.kw)) : 0) : isNum(d.rpm) ? d.rpm / 1000 : 0);
 /* The readings put where the time and outside temperature were, with the car's own bottom strip (which shows
  * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the xDrive split. */
 const stripInfoA = (o) => (o.vehicle === 'ice' || engineFocus(o)
@@ -249,5 +252,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_SCALE, powerMeter, tachDyn, tachValue, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_SCALE, KW_MIN, powerMeter, tachDyn, tachValue, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
 };
