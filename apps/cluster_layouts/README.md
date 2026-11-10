@@ -28,7 +28,8 @@ slim display between them with the digital speed, large, and the battery's power
 electric mode the rev counter reads the battery's power (Digital round and Retro likewise): 0 a quarter of the way
 round, the power drawn above it and regeneration below it in green, each to the battery's own limit as eDrive Live
 reads it (100 and 35 kW without eDrive Live); in the hybrid, sport and battery control modes it is the rev counter
-with a small power gauge inside.
+with a small power gauge inside, on the same scale (its 0 a quarter along the arc). Every power gauge in every layout
+works this way.
 
 ![Analog sport](../../docs/analog_sport.png)
 
@@ -55,11 +56,11 @@ No round dials: segmented arcs frame the cluster, a hairline outside each. With 
 default) it is laid out like a new car's: the speed large in the middle over the road ahead (its lane line runs
 toward you with the car, the dashes 3 m in 12 as painted, moved by the distance actually driven each frame), the
 battery's temperature and the engine speed in the top corners, a glass card on the left with the battery's power, a
-centre-zero bar (regenerating left, drawing right) and its trend, and one on the right with oil, coolant, the
+power bar (0 a quarter along: regenerating left, drawing right, each to the battery's limit) and its trend, and one on the right with oil, coolant, the
 charge and the xDrive split, each with its icon, over a softly lit, finely dotted background. Its colours follow
 the drive mode. On a plug-in hybrid the right arc
-turns into the battery's power gauge (0-100 kW) while the engine is off, and is the tach again, with a small power
-gauge inside it, as soon as the engine runs.
+turns into the battery's power gauge (0 a quarter up, regeneration green below it) while the engine is off, and is
+the tach again, with a small power gauge inside it, as soon as the engine runs.
 
 The road shows what the car's driving assistant sees, from the same feeds as BMW's assisted driving view: your car
 from behind (every car is a 3D model of our own, rendered once by `tools/render_cars.py` with soft lighting and
@@ -111,7 +112,7 @@ FREEDOM banner, a gold-edged plaque of readings along the bottom, and the xDrive
 A tribute to the round-dial clusters of the 1980s and 90s: matte black faces with a thin dark rim, numerals
 and ticks lit orange the way those clusters glowed at night, long slim red-orange needles over black hub caps.
 A fuel gauge is set into the speedometer (the reserve in red), an economy gauge into the tach (the battery's
-power on a plug-in hybrid, recuperation left of the top; boost with Vehicle: ICE), a small coolant gauge sits
+power on a plug-in hybrid, 0 a quarter round, recuperation below it in green; boost with Vehicle: ICE), a small coolant gauge sits
 between the dials over an amber LCD with the speed. With the engine off the tach's legend reads the battery's power. Comfort colours
 are the classic orange, Sport a deeper red-orange, Efficient white daytime markings. An original design: no
 maker's marks or names.
@@ -217,8 +218,9 @@ The round dials of BMW's M cars of the late 2000s, drawn after a photo of an E92
 a ring of cool white-blue light round each scale (open across the bottom), white bars, dots and numerals (one scale:
 mph or km/h, as set), thin glowing red needles over dark hubs, the fuel gauge across the speedometer's foot
 and the oil temperature across the tach's, and the amber display between them with the battery's power, the speed
-and the charge (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). An
-original drawing.
+and the charge (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). In
+an electric drive the tach reads the battery's power in kW: 0 a quarter round, the ring green below it for
+regeneration. An original drawing.
 
 ![Classic M](../../docs/classic.png)
 

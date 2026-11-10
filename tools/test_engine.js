@@ -208,6 +208,21 @@ check('electric tach: the battery\'s power reaches the needle (past the rev scal
     s.stop();
 });
 
+check('electric: Classic M\'s tach and Retro\'s economy gauge read the battery\'s power to its limits', () => {
+    const d = { speed: 40, rpm: 0, stage: 'D', driveMode: 'ELECTRIC', engineOn: false, kw: 55, kwOut: 120, kwIn: 50 };
+    const c = makeScene({ layout: 'classic', data: d });
+    drive(c, 3, () => d);
+    assert(Math.abs(c.engine._pieces().find((p) => p.key === 'rpm').value - 55) < 0.5);
+    drive(c, 3, () => Object.assign({}, d, { kw: -30 }));
+    assert(Math.abs(c.engine._pieces().find((p) => p.key === 'rpm').value + 30) < 0.5);
+    c.stop();
+    const h = Object.assign({}, d, { driveMode: 'HYBRID', engineOn: true, rpm: 1500, kw: -30 });
+    const r = makeScene({ layout: 'retro', data: h });
+    drive(r, 3, () => h);
+    assert(Math.abs(r.engine._pieces().find((p) => p.key === 'econDial').value + 30) < 0.5);
+    r.stop();
+});
+
 check('settle: shown only once wanted for a moment without a break (no flashing while the car comes up)', () => {
     let live = true;
     const s = makeScene({ data: { speed: 10 }, live: () => live, settleMs: 1200 });

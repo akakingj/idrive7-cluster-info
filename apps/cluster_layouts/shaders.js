@@ -259,6 +259,8 @@ void main() {
  *   u_span    start and end angle, segments (0: solid), gap (of a segment)
  *   u_marks   major marks (0: none), numeral step (the value at each mark), numeral height px (0: none),
  *             numeral distance px from the band's centre line (- inside, + outside)
+ *   u_zero    (an arc) where the fill starts, 0..1 (0 unless set): a power gauge's 0, lit from it to u_value either
+ *             way, below it in u_neg (regeneration); its marks counted from it, one more at the start
  */
 const BAND_FS = `#version 100
 ${HIGHP}${COMMON}${GLYPH}
@@ -269,7 +271,9 @@ uniform vec4 u_marks;
 uniform float u_value;
 uniform float u_red;
 uniform float u_soft;              /* 0: glows as drawn, 1: none (a quieter look) */
+uniform float u_zero;
 uniform float u_digit_adv;
+uniform vec3 u_neg;
 uniform vec3 u_track;
 uniform vec3 u_fill0;
 uniform vec3 u_fill1;
@@ -327,14 +331,18 @@ void main() {
     float t = da / sweep;
     float lenPx = abs(sweep) * DEG * r;
     vec4 acc = vec4(0.0);
+    /* lit from the zero (the start unless u_zero) to the value; below the zero in u_neg */
+    float z = u_zero, lo = min(z, u_value), hi = max(z, u_value), on = abs(u_value - z) > 0.003 ? 1.0 : 0.0;
+    float litT = clamp((hi - t) * lenPx + 0.5, 0.0, 1.0) * clamp((t - lo) * lenPx + 0.5, 0.0, 1.0);
+    vec3 fillT = t < z ? u_neg : mix(u_fill0, u_fill1, clamp((t - z) / max(u_value - z, 0.001), 0.0, 1.0));
 
     float inBand = span(r, R - T * 0.5, R + T * 0.5) * span(t * lenPx, 0.0, lenPx);
     {
         /* a soft glow round the lit part, under the band */
         float outside = abs(r - R) - T * 0.5;
-        vec3 hc = t >= u_red ? u_redc : mix(u_fill0, u_fill1, clamp(t / max(u_value, 0.001), 0.0, 1.0));
+        vec3 hc = t >= u_red ? u_redc : fillT;
         float halo = outside > 0.0 ? exp(-outside * outside / (T * T * 0.35)) : 0.0;
-        acc = over(acc, hc, halo * 0.32 * (1.0 - u_soft) * clamp((u_value - t) * lenPx + 0.5, 0.0, 1.0) * span(t * lenPx, 0.0, lenPx) * (u_value > 0.003 ? 1.0 : 0.0));
+        acc = over(acc, hc, halo * 0.32 * (1.0 - u_soft) * litT * span(t * lenPx, 0.0, lenPx) * on);
     }
     if (inBand > 0.0) {
         float seg = 1.0;
@@ -342,8 +350,8 @@ void main() {
             float sl = lenPx / u_span.z, sx = fract(t * u_span.z) * sl, g = sl * u_span.w * 0.5;
             seg = span(sx, g, sl - g);
         }
-        float lit = clamp((u_value - t) * lenPx + 0.5, 0.0, 1.0);
-        vec3 fc = mix(u_fill0, u_fill1, clamp(t / max(u_value, 0.001), 0.0, 1.0));
+        float lit = litT * (z > 0.0 ? on : 1.0);
+        vec3 fc = fillT;
         if (t >= u_red) fc = u_redc;
         /* across the band: brighter at its middle */
         float across = 1.0 - abs(r - R) / (T * 0.5);
@@ -355,13 +363,14 @@ void main() {
         float ta = (a0 + sweep * clamp(u_value, 0.0, 1.0)) * DEG;
         vec2 tp = u_geo.xy + vec2(sin(ta), -cos(ta)) * R;
         float dist = length(p - tp);
-        float g = exp(-dist * dist / (T * T * 0.9)) * (u_value > 0.003 ? 1.0 : 0.0);
+        float g = exp(-dist * dist / (T * T * 0.9)) * on;
         acc = over(acc, u_tip, g * 0.85 * (1.0 - u_soft * 0.8));
     }
     /* major marks outside the band, numerals beside them */
     if (u_marks.x > 0.0) {
-        float m = floor(clamp(t, 0.0, 1.0) * u_marks.x + 0.5);
-        float tm = m / u_marks.x;
+        float st = (1.0 - z) / u_marks.x;
+        float m = floor((clamp(t, 0.0, 1.0) - z) / st + 0.5);
+        float tm = max(z + m * st, 0.0);                  /* (below the zero: one mark, at the start) */
         float off = abs(t - tm) * lenPx;
         float r0 = R + T * 0.5 + 4.0, r1 = R + T * 0.5 + 14.0;
         if (u_marks.w < 0.0) { r0 = R - T * 0.5 - 14.0; r1 = R - T * 0.5 - 4.0; }
@@ -375,7 +384,7 @@ void main() {
             vec2 q = (p - pc) / h;
             float x = q.x + n * adv * 0.5;
             float i = floor(x / adv);
-            if (i >= 0.0 && i < n) {
+            if (i >= 0.0 && i < n && m >= 0.0) {
                 float s = sdf(digitOf(vk, i, n), vec2(x - (i + 0.5) * adv, q.y + 0.5));
                 acc = over(acc, tm >= u_red ? u_redc : u_num, smoothstep(0.5 - 2.0 / h, 0.5 + 2.0 / h, s));
             }
@@ -1491,14 +1500,16 @@ void main() {
 /**
  * A classic M dial (Classic M, layout_classic.js), drawn after a photo of an E92 M3's cluster at night: a black face,
  * a ring of cool white-blue light round the scale's sweep (none across the bottom, where the small gauge is) inside a
- * dark bezel, white bars and dots round the edge, white numerals inside them, an optional second scale of small
- * numerals further in (km/h inside mph), the red zone in orange-red along the ring, a thin glowing red needle over a
+ * dark bezel, white bars and dots round the edge, white numerals inside them, the red zone in orange-red along the
+ * ring, a thin glowing red needle over a
  * dark hub, and a small gauge across the bottom (the fuel, the oil temperature) with its own needle pivoting below the
  * centre. Sizes in the dial's radius R (the layer's half side).
  *   u_scale   max, numeral step, bar step, dot step
  *   u_arc     start and end angle (degrees clockwise from 12), the red zone's start (>= max: none), numeral size (of R)
  *   u_sub     the small gauge: start and end angle round its pivot, its marks (bars) and dots between
  *   u_subv    its reading 0..1 (dyn)
+ *   u_min     the scale's start (0 unless set; below 0: a power gauge's regeneration, from u_zero of the sweep down
+ *             to the start, its ring green (u_regen), bars at its half, dots at its quarters, no numerals)
  *   u_value   the reading on the scale (eased)
  */
 const E9X_FS = `#version 100
@@ -1508,6 +1519,9 @@ uniform vec4 u_scale;
 uniform vec4 u_arc;
 uniform vec4 u_sub;
 uniform float u_subv;
+uniform float u_min;
+uniform float u_zero;
+uniform vec3 u_regen;
 uniform float u_value;
 uniform float u_digit_adv;
 uniform vec3 u_face;
@@ -1522,6 +1536,9 @@ float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clam
 /* an angle (degrees clockwise from 12) of d, within half a turn of am (the sweep's middle) */
 float angOf(vec2 d, float am) { float a = atan(d.x, -d.y) / DEG; if (a < am - 180.0) a += 360.0; if (a > am + 180.0) a -= 360.0; return a; }
 vec2 dirOf(float a) { return vec2(sin(a * DEG), -cos(a * DEG)); }
+float zeroAt() { return u_min < 0.0 ? clamp(u_zero, 0.05, 0.95) : 0.0; }
+/* the place along the sweep (0..1) of value v: 0 at zeroAt(), the scale's end at 1, its start (u_min) at 0 */
+float fracOf(float v) { float z = zeroAt(); return v >= 0.0 ? z + (1.0 - z) * v / u_scale.x : z * (1.0 - v / u_min); }
 /* a number of up to 3 figures centred at c, h high: its coverage */
 float numeral(vec2 p, vec2 c, float h, float v) {
     float n = v >= 99.5 ? 3.0 : v >= 9.5 ? 2.0 : 1.0, adv = u_digit_adv;
@@ -1558,22 +1575,29 @@ void main() {
     float inArc = smoothstep(-0.015, 0.0, t) * smoothstep(1.015, 1.0, t);
     float rr = (r - 0.89) / 0.06;                                    /* 0 at its inner edge, 1 at its outer */
     vec3 rc = mix(vec3(1.0), mix(u_ring, u_ring2, clamp(rr, 0.0, 1.0)), smoothstep(0.0, 0.45, rr));
-    float red = u_arc.z < mx ? step((u_arc.z / mx), t) : 0.0;
+    float red = u_arc.z < mx ? step(fracOf(u_arc.z), t) : 0.0;
     rc = mix(rc, mix(u_red, vec3(1.0, 0.7, 0.5), 0.3 * (1.0 - clamp(rr * 2.0, 0.0, 1.0))), red);
+    float z = zeroAt(), regen = z > 0.0 ? 1.0 - step(z, t) : 0.0;              /* the regeneration's part of the ring */
+    rc = mix(rc, mix(u_regen, vec3(1.0), 0.3 * (1.0 - clamp(rr * 2.0, 0.0, 1.0))), regen);
     acc = over(acc, rc, span(r / px, 0.89 / px, 0.95 / px) * inArc);
     float gi = 0.89 - r;
-    acc = over(acc, mix(u_ring, u_red, red), exp(-max(gi, 0.0) * max(gi, 0.0) / 0.0009) * step(0.0, gi) * 0.55 * inArc);
+    acc = over(acc, mix(mix(u_ring, u_red, red), u_regen, regen), exp(-max(gi, 0.0) * max(gi, 0.0) / 0.0009) * step(0.0, gi) * 0.55 * inArc);
     /* the bars and dots inside the ring, the numerals inside them */
     if (t > -0.08 && t < 1.08) {
-        float v = t * mx;
-        float kb = floor(v / u_scale.z + 0.5) * u_scale.z, kd = floor(v / u_scale.w + 0.5) * u_scale.w;
-        float ob = abs(v - kb) / mx * sw * DEG * r * R, od = abs(v - kd) / mx * sw * DEG * r * R;
+        /* (no regeneration: the scale runs on past its ends, as drawn before) */
+        bool neg = z > 0.0 && t < z;
+        float v = neg ? u_min * (1.0 - t / z) : (t - z) / (1.0 - z) * mx;
+        float sc = neg ? -u_min / z : mx / (1.0 - z);                                 /* the scale's units a sweep, here */
+        float sb = neg ? -u_min / 2.0 : u_scale.z, sd = neg ? -u_min / 4.0 : u_scale.w;   /* (below 0: halves, quarters) */
+        float lo = min(u_min, 0.0);
+        float kb = floor(v / sb + 0.5) * sb, kd = floor(v / sd + 0.5) * sd;
+        float ob = abs(v - kb) / sc * sw * DEG * r * R, od = abs(v - kd) / sc * sw * DEG * r * R;
         float hot = u_arc.z < mx && kb >= u_arc.z ? 1.0 : 0.0;
-        if (kb >= 0.0 && kb <= mx + 0.001 && t > -0.02 && t < 1.02) acc = over(acc, mix(u_tick, u_red, hot), clamp(R * 0.011 - ob + 0.5, 0.0, 1.0) * span(r / px, 0.775 / px, 0.885 / px));
-        if (kd >= 0.0 && kd <= mx + 0.001 && t > -0.02 && t < 1.02 && abs(mod(kd + 0.001, u_scale.z)) > 0.01) acc = over(acc, u_tick, clamp(R * 0.014 - length(vec2(od, (r - 0.855) * R)) + 0.5, 0.0, 1.0));
+        if (kb >= lo - 0.001 && kb <= mx + 0.001 && t > -0.02 && t < 1.02) acc = over(acc, mix(u_tick, u_red, hot), clamp(R * 0.011 - ob + 0.5, 0.0, 1.0) * span(r / px, 0.775 / px, 0.885 / px));
+        if (kd >= lo - 0.001 && kd <= mx + 0.001 && t > -0.02 && t < 1.02 && abs(mod(kd + 0.001, sb)) > 0.01) acc = over(acc, u_tick, clamp(R * 0.014 - length(vec2(od, (r - 0.855) * R)) + 0.5, 0.0, 1.0));
         float kn = clamp(floor(v / u_scale.y + 0.5) * u_scale.y, 0.0, floor(mx / u_scale.y + 0.001) * u_scale.y);
-        if (kn >= 0.0 && kn <= mx + 0.001) {
-            float an = a0 + sw * kn / mx, h = u_arc.w * R;
+        if (kn >= 0.0 && kn <= mx + 0.001 && v > -0.5 * u_scale.y) {
+            float an = a0 + sw * fracOf(kn), h = u_arc.w * R;
             vec2 cn = c + dirOf(an) * R * (0.725 - u_arc.w * 0.45);
             acc = over(acc, kn >= u_arc.z && u_arc.z < mx ? u_red : u_tick, numeral(p, cn, h, kn));
         }
@@ -1596,7 +1620,7 @@ void main() {
     }
     /* the main needle over a dark hub */
     acc = over(acc, u_face * 1.8 + vec3(0.02), clamp((0.16 - r) / px + 0.5, 0.0, 1.0) * 0.9);
-    acc = needle(acc, p, c, a0 + sw * clamp(u_value / mx, 0.0, 1.02), R * 0.86, R * 0.16, R * 0.026);
+    acc = needle(acc, p, c, a0 + sw * clamp(fracOf(u_value), 0.0, 1.02), R * 0.86, R * 0.16, R * 0.026);
     acc = over(acc, vec3(0.03), clamp((0.07 - r) / px + 0.5, 0.0, 1.0));
     gl_FragColor = acc;
 }`;

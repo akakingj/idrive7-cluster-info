@@ -57,7 +57,8 @@ const hbar = (key, x, y, w, h, value, colours, fromRight, segments) => ({ key, k
     params: { u_geo: [Math.max(6, h / 2), h / 2, 0, Math.max(4, h * 0.6)], u_span: [fromRight ? -1 : 0, 0, segments || 0, 0.25], u_marks: [0, 0, 0, 0], u_red: [2] },
     colors: colours, value, max: 1, sweep: true });
 const kwOf = (d) => (C.isNum(d.kw) ? d.kw : 0);
-const KW_MAX = 100;
+/** The battery's power on the tach's arc: its top rounded up to 30 kW, so its three marks above the 0 are round. */
+const kwN = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 30) * 30, in: r.in }; };
 /* the driving assistant's state as the road shader's uniforms: a distance d metres ahead at depth 1/(1 + d/16) */
 const depth = (x) => (typeof x === 'number' && x > 0 ? 1 / (1 + x / 16) : 0);
 function roadState(D) {
@@ -132,13 +133,14 @@ function newCar(o, arcs, gearC, rpmTxt) {
         C.text('kwNow', L.x + 18, L.y + 40, L.w - 36, 58, C.focus.power(o),
             engine ? txt : (t, d) => ({ color: [kwOf(d) < -0.3 ? t.regen : t.text, 1], glow: [kwOf(d) < -0.3 ? t.regen : t.glow, 0.3] }), { align: 0 }),
     ], engine ? [hbar('pwrBar', L.x + 20, L.y + 112, L.w - 40, 14, C.focus.torqueFrac, (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 24)] : [
-        // regenerating fills left from the middle (to 60 kW), drawing fills right (to 100 kW)
-        hbar('regenBar', L.x + 20, L.y + 112, (L.w - 44) / 2, 14, (d) => Math.max(0, Math.min(1, -kwOf(d) / 60)), (t) => ({ track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.dim, num: t.num }), true, 10),
-        hbar('drawBar', L.x + 24 + (L.w - 44) / 2, L.y + 112, (L.w - 44) / 2, 14, (d) => Math.max(0, Math.min(1, kwOf(d) / 100)), (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 10),
-        C.flat('pwrZero', L.x + L.w / 2 - 1, L.y + 106, 2, 26, 'tip'),
+        // as the other power gauges: 0 a quarter along, regenerating fills left of it, drawing right, each to the
+        // battery's limit (eDrive Live's: layout_common.kwRange)
+        hbar('regenBar', L.x + 20, L.y + 112, (L.w - 44) / 4, 14, (d) => Math.max(0, Math.min(1, -kwOf(d) / C.kwRange(d).in)), (t) => ({ track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.dim, num: t.num }), true, 4),
+        hbar('drawBar', L.x + 24 + (L.w - 44) / 4, L.y + 112, (L.w - 44) * 3 / 4, 14, (d) => Math.max(0, Math.min(1, kwOf(d) / C.kwRange(d).out)), (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 15),
+        C.flat('pwrZero', L.x + 21 + (L.w - 44) / 4, L.y + 106, 2, 26, 'tip'),
     ], [
         { key: 'pwrTrend', kind: 'spark', x: L.x + 16, y: L.y + 146, w: L.w - 32, h: 96, every: 2000,
-            sample: engine ? (d) => (C.isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : -1) : (d) => (C.isNum(d.kw) ? Math.max(0, Math.min(1, 0.375 + d.kw / 160)) : -1),
+            sample: engine ? (d) => (C.isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : -1) : (d) => (C.isNum(d.kw) ? C.kwFrac(d.kw, C.kwRange(d)) : -1),
             colors: (t) => ({ line: t.fill1, fill: t.fill0 }) },
         // right card: oil, coolant, the charge (or boost) and the xDrive split
         card('infoCard', R.x, R.y, R.w, R.h),
@@ -175,22 +177,24 @@ module.exports = {
             },
             {
                 // engine speed up the right; on a plug-in hybrid with the engine off, the battery's power instead
-                // (0-100 kW, its numerals and colour changed by dyn), the engine speed back as soon as it runs
+                // as the other power gauges (0 a quarter up, regeneration below it in green, each side to the
+                // battery's limit: kwRange; its numerals and colour changed by dyn), the engine speed back as soon
+                // as it runs
                 key: 'rpmArc', kind: 'band', x: R_LAYER.x, y: R_LAYER.y, w: R_LAYER.w, h: R_LAYER.h,
-                params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R, T], u_span: [lo, 62, 44, 0.3], u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max] },
-                colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.road, fill1: t.ev, tip: t.tip }) : bandColours(t)),
-                value: (d) => (evOff(d) ? Math.max(0, Math.min(1, kwOf(d) / KW_MAX)) : C.isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true,
-                dyn: (d) => (evOff(d) ? { u_marks: [4, KW_MAX / 4, 22, 44], u_red: [2] } : { u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max] }),
+                params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R, T], u_span: [lo, 62, 44, 0.3], u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max], u_zero: [0] },
+                colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.road, fill1: t.ev, tip: kwOf(d) < -0.3 ? t.regen : t.tip, neg: t.regen }) : Object.assign(bandColours(t), { neg: t.regen })),
+                value: (d) => (evOff(d) ? C.kwFrac(d.kw, kwN(d)) : C.isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true,
+                dyn: (d) => (evOff(d) ? { u_marks: [3, kwN(d).out / 3, 22, 44], u_red: [2], u_zero: [C.KW_ZERO] } : { u_marks: [r.max, 1, 22, 44], u_red: [r.red / r.max], u_zero: [0] }),
             },
         ];
-        // inside the tach, a small power gauge: the battery's draw while the engine runs; with the engine off
-        // (the tach then reads the draw) the recuperation, in green
+        // inside the tach, a small power gauge while the engine runs (the battery's draw, and its recuperation in
+        // green); gone with the engine off, the tach itself then reading the power
         if (ev && strip) arcs.push({   // (full screen it would reach into the KOMBI's gear box)
             key: 'pwrArc', kind: 'band', x: R_LAYER.x, y: R_LAYER.y, w: R_LAYER.w, h: R_LAYER.h,
-            params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R - 52, 10], u_span: [lo, 62, 30, 0.3], u_marks: [0, 0, 0, 0], u_red: [2] },
-            colors: (t, d) => (evOff(d) ? { track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.tick, num: t.num }
-                : { track: t.track, fill0: t.road, fill1: t.ev, redc: t.red, tip: t.tip, tick: t.tick, num: t.num }),
-            value: (d) => Math.max(0, Math.min(1, kwOf(d) / KW_MAX)), max: 1, sweep: true,
+            // (as the other power gauges: 0 a quarter up, regeneration below it in green)
+            params: { u_geo: [RCX - R_LAYER.x, cy - R_LAYER.y, R - 52, 10], u_span: [lo, 62, 30, 0.3], u_marks: [0, 0, 0, 0], u_red: [2], u_zero: [C.KW_ZERO] },
+            colors: (t, d) => ({ track: t.track, fill0: t.road, fill1: t.ev, redc: t.red, tip: kwOf(d) < -0.3 ? t.regen : t.tip, tick: t.tick, num: t.num, neg: t.regen }),
+            value: (d) => C.kwFrac(d.kw, C.kwRange(d)), max: 1, sweep: true,
             visible: (d) => !evOff(d),   // (gone while the arc itself reads the battery's power)
         });
         const gearC = (t, d) => ({ color: [C.gearText(d) === 'R' ? '#ff3b30' : t.text, 1], glow: [t.glow, 0.45] });

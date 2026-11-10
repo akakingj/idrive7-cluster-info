@@ -52,12 +52,18 @@ function small(key, cx, cy, size, scale, arc, value, z) {
 
 /*
  * The economy gauge in the tach (after the fuel-consumption gauges of the era): on a plug-in hybrid the
- * battery's power, recuperation left of the top, power drawn right of it (-60 to +100 kW, one tick every 10);
- * with Vehicle: ICE the boost (0 to 1.6 bar).
+ * battery's power as the other power gauges, 0 a quarter round, recuperation below it (green) and the power drawn
+ * above it, each to the battery's limit (eDrive Live's: layout_common.kwRange; a tick every 20 kW drawn); with
+ * Vehicle: ICE the boost (0 to 1.6 bar).
  */
-const econValue = (o) => (C.engineFocus(o) ? (d) => C.boostFrac(d) * 100
-    : (d) => Math.max(0, Math.min(160, (C.isNum(d.kw) ? d.kw : 0) + 60)));
-const econScale = (o) => (C.engineFocus(o) ? [100, 25, 12.5, 101] : [160, 20, 10, 161]);
+function econDial(o, key, cx, cy, size) {
+    if (C.engineFocus(o)) return small(key, cx, cy, size, [100, 25, 12.5, 101], [-110, 110], (d) => C.boostFrac(d) * 100);
+    const outN = (d) => Math.ceil(C.kwRange(d).out / 20) * 20;
+    return Object.assign(small(key, cx, cy, size, [100, 20, 20, 101], [-110, 110], (d) => (C.isNum(d.kw) ? Math.max(-C.kwRange(d).in, Math.min(outN(d), d.kw)) : 0)), {
+        dyn: (d) => ({ u_scale: [outN(d), 20, 20, outN(d) + 1], u_min: [-C.kwRange(d).in], u_zero: [C.KW_ZERO], u_regen: C.REGEN_RGB }),
+        range: (d) => [-C.kwRange(d).in, outN(d)],
+    });
+}
 
 /** The speedometer (with the fuel gauge) or the tach (with the economy gauge), `size` across, centred at cx, cy. */
 function dialSet(o, which, cx, size, cy) {
@@ -69,7 +75,7 @@ function dialSet(o, which, cx, size, cy) {
     const subPiece = which === 'speed'
         // fuel: full at the right, empty at the left, the reserve (the last eighth) red; read as 100 - level
         ? small('fuelDial', cx, subY, sub, [100, 25, 12.5, 87.5], [110, -110], (d) => (C.isNum(d.fuelPct) ? 100 - d.fuelPct : 100))
-        : small('econDial', cx, subY, sub, econScale(o), [-110, 110], econValue(o));
+        : econDial(o, 'econDial', cx, subY, sub);
     const subLbl = which === 'speed' ? 'FUEL' : C.engineFocus(o) ? 'BOOST' : 'kW';
     const engineOffKw = (d) => C.electric(o, d);   // the tach reads kW (its unit says so)
     return [

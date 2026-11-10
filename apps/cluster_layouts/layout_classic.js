@@ -4,7 +4,9 @@
  * M3's cluster at night (E9X_FS): black faces, a ring of cool white-blue light round each scale (open across the
  * bottom), white bars, dots and numerals, thin glowing red needles over dark
  * hubs, the fuel gauge across the speedometer's foot and the oil temperature across the tach's, and the amber
- * display between them. An original drawing, every piece a shader on the cluster's own GPU.
+ * display between them. In an electric drive the tach reads the battery's power in kW, regeneration in green below
+ * its 0 (a quarter round), as the other layouts' power gauges. An original drawing, every piece a shader on the
+ * cluster's own GPU.
  *
  * Nothing shows the time, the outside temperature or the fuel range (the car's own bottom strip does): the amber
  * display shows the battery's power (boost on a petrol or diesel car, or with Show: Engine), the gear and the speed,
@@ -33,16 +35,27 @@ function dial(o, which, cx, cy, size) {
     const speed = which === 'speed';
     const sc = speed ? (kmh ? [330, 30, 10, 5] : [200, 20, 10, 5]) : [rs.max, 1, 1, 0.5];
     const red = speed ? sc[0] + 1 : rs.red;
+    /* the tach in an electric drive (layout_common.electric): the battery's power, as the other layouts' power gauges:
+     * 0 a quarter round, regeneration below it (the ring green) to the battery's limit, the power drawn above it to
+     * its limit, numbered in round steps (eDrive Live's ends: kwRange, kwDialScale) */
+    const elec = (d) => !speed && C.electric(o, d);
+    const kwS = (d) => C.kwDialScale(C.kwRange(d).out);
+    const subv = (d) => (speed ? [isNum(d.fuelPct) ? Math.round(Math.max(0, Math.min(1, d.fuelPct / 100)) * 200) / 200 : 0]
+        : [isNum(d.oil) ? Math.round(Math.max(0, Math.min(1, (d.oil - 50) / 100)) * 200) / 200 : 0]);
     const out = [{
         key: which, kind: 'e9x', x: cx - R, y: cy - R, w: size, h: size,
         params: {
             u_scale: sc, u_arc: [A0, A1, red, speed ? 0.095 : 0.14],
-            u_sub: [SUB[0], SUB[1], 2, 2],
+            u_sub: [SUB[0], SUB[1], 2, 2], u_min: [0], u_zero: [0], u_regen: C.REGEN_RGB,
         },
         colors: (t) => ({ face: t.face, ring: t.ring, ring2: t.ring2, bezel: t.bezel, tick: t.tick, needle: t.needle, red: t.red }),
-        value: speed ? (d) => (isNum(d.speed) ? C.speedIn(o, d.speed) : 0) : (d) => (isNum(d.rpm) ? d.rpm / 1000 : 0), max: sc[0], sweep: true,
-        dyn: speed ? (d) => ({ u_subv: [isNum(d.fuelPct) ? Math.round(Math.max(0, Math.min(1, d.fuelPct / 100)) * 200) / 200 : 0] })
-            : (d) => ({ u_subv: [isNum(d.oil) ? Math.round(Math.max(0, Math.min(1, (d.oil - 50) / 100)) * 200) / 200 : 0] }),
+        value: speed ? (d) => (isNum(d.speed) ? C.speedIn(o, d.speed) : 0)
+            : (d) => (elec(d) ? (isNum(d.kw) ? Math.max(-C.kwRange(d).in, Math.min(kwS(d).max, d.kw)) : 0) : isNum(d.rpm) ? d.rpm / 1000 : 0),
+        max: sc[0], sweep: true,
+        range: speed ? undefined : (d) => (elec(d) ? [-C.kwRange(d).in, kwS(d).max] : [0, sc[0]]),
+        dyn: speed ? (d) => ({ u_subv: subv(d) })
+            : (d) => (elec(d) ? { u_subv: subv(d), u_scale: [kwS(d).max, kwS(d).major, kwS(d).major, kwS(d).major / 2], u_arc: [A0, A1, kwS(d).max + 1, 0.14], u_min: [-C.kwRange(d).in], u_zero: [C.KW_ZERO] }
+                : { u_subv: subv(d), u_scale: sc, u_arc: [A0, A1, red, 0.14], u_min: [0], u_zero: [0] }),
     }];
     // the small gauge's labels round its pivot (0.42 R below the centre): either end and the middle
     const pv = [cx, cy + 0.42 * R], lr = 0.47 * R, h = Math.round(30 * k);
@@ -58,7 +71,7 @@ function dial(o, which, cx, cy, size) {
     } else {
         out.push(B.icon('oilIcon', Math.round(cx - 34 * k), Math.round(pv[1] + 0.12 * R), Math.round(34 * k), Math.round(24 * k), 'oilcan', 'dim'),
             C.text('oilUnit', Math.round(cx + 2 * k), Math.round(pv[1] + 0.12 * R), Math.round(40 * k), Math.round(22 * k), '°' + (o.tempUnit === 'c' ? 'C' : 'F'), white, { align: 0 }),
-            C.text('rpmUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), '1/min x 1000', white));
+            C.text('rpmUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), (d) => (elec(d) ? 'kW' : '1/min x 1000'), white));
     }
     return out;
 }
