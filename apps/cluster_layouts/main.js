@@ -8,7 +8,7 @@
  * on top.
  *
  * Readings (data.js, shared with Cluster Centre): speed, engine speed, gear, oil and coolant, torque and g
- * from the car (kit/car.js); the selector's S / M programme, outside, gearbox oil, the xDrive split, the
+ * from the car (kit/car.js); the selector's S / M programme, outside, gearbox oil, the
  * battery's temperature and the power distribution from the car's services; intake air, boost and fuel
  * pressures from the engine unit over UDS (only while a layout that shows them is up); the battery's charge
  * and power from eDrive Live; ranges from any app that shares them, until the car's own range signals are
@@ -260,7 +260,7 @@ mgu.run({
                     + '   ·   gear ' + layout.gearText(d) + '   ·   oil ' + tmp(d.oil) + '   ·   coolant ' + tmp(d.coolant) + '   ·   outside ' + tmp(d.outside)],
                 ['Shared by apps', D.status().providers + '   ·   diagnostic link ' + D.status().diag + '   ·   charge ' + (isNum(d.soc) ? Math.round(d.soc) + '%' : '--') + '   ·   power ' + (isNum(d.kw) ? d.kw.toFixed(1) + ' kW' : '--')],
                 ['Drive mode (car)', (d.driveMode || '-') + '   ·   raw: ' + rawOf('statusFESVehicleDynamicSwitchHMI') + '  ' + rawOf('statusSwitchDriveDynamicSport2')],
-                ['Range (car)', 'fuel ' + (isNum(d.frange) ? Math.round(d.frange) : '--') + '  electric ' + (isNum(d.erange) ? Math.round(d.erange) : '--') + '  xDrive ' + (isNum(d.splitRear) ? Math.round(d.splitRear) + '% rear' : '--') + '   ·   raw: ' + rawOf('statusRangeTankStatus')],
+                ['Range (car)', 'fuel ' + (isNum(d.frange) ? Math.round(d.frange) : '--') + '  electric ' + (isNum(d.erange) ? Math.round(d.erange) : '--') + '   ·   raw: ' + rawOf('statusRangeTankStatus')],
             ];
             cv.text('Cluster Layouts ' + ((ctx.spec && ctx.spec.version) || ''), 48, 80, 44, t.text, { font: 'bold', literal: true });
             lines.forEach(([k, v], i) => {

@@ -162,10 +162,10 @@ const tachValue = (o) => (d) => {
 };
 const tachRange = (o, s) => (d) => (electric(o, d) ? [-kwRange(d).in, kwDialScale(kwRange(d).out).max] : [0, s.max]);
 /* The readings put where the time and outside temperature were, with the car's own bottom strip (which shows
- * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the xDrive split. */
+ * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the gearbox oil's. */
 const stripInfoA = (o) => (o.vehicle === 'ice' || engineFocus(o)
     ? (d) => 'INTAKE ' + tempText(o, d.iat) : (d) => 'BATT ' + tempText(o, d.battTemp));
-const stripInfoB = (d) => (isNum(d.splitRear) ? 'F' + Math.round(100 - d.splitRear) + ' R' + Math.round(d.splitRear) : 'XDRIVE --');
+const stripInfoB = (o) => (d) => 'GEARBOX ' + tempText(o, d.gearbox);
 
 /*
  * A tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, 0 a quarter
@@ -215,9 +215,6 @@ const inCorner = (x, y) => y < 217 - 0.55 * Math.min(x, 1920 - x);
 const distText = (o, km) => (isNum(km) ? Math.round(o.speedUnit === 'kmh' ? km : km / KMH_PER_MPH) + (o.speedUnit === 'kmh' ? ' km' : ' mi') : '--');
 /** The electric range: '~31 MI' when it is the estimate from the charge (data.js), else as distText. */
 const erangeText = (o, d) => (isNum(d.erange) && d.erangeEst ? '~' : '') + distText(o, d.erange);
-/** The xDrive split: 'F 38   R 62', 'FRONT 140 NM' (the transfer case's front torque, data.js), or 'XDRIVE --'. */
-const splitText = (d) => (isNum(d.splitRear) ? 'F ' + Math.round(100 - d.splitRear) + '   R ' + Math.round(d.splitRear)
-    : isNum(d.splitFrontNm) ? 'FRONT ' + d.splitFrontNm + ' Nm' : 'XDRIVE --');
 /*
  * Settings > Vehicle: a plug-in hybrid (o.vehicle 'phev', the eDrive readings) or a petrol or diesel car
  * ('ice'). With ICE the layouts trade their eDrive readings for the engine's: battery power -> engine torque, charge -> ignition timing, electric range -> boost, the charge bar
@@ -283,5 +280,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, splitText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
 };

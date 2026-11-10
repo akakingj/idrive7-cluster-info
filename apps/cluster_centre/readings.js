@@ -22,8 +22,6 @@ const READINGS = {
     rpm: { title: 'Engine speed', short: 'RPM', icon: 13, kind: 'rpm', min: 0, max: 7000 },
     speed: { title: 'Speed', short: 'SPEED', icon: 13, kind: 'speed', min: 0, max: 250 },
     torque: { title: 'Engine torque', short: 'TORQUE', icon: 11, kind: 'nm', min: 0, max: 600 },
-    splitRear: { title: 'xDrive: rear share', short: 'REAR', icon: 10, kind: 'pct', min: 0, max: 100 },
-    splitFront: { title: 'xDrive: front share', short: 'FRONT', icon: 10, kind: 'pct', min: 0, max: 100 },
     gLat: { title: 'Lateral g', short: 'LAT G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     gLong: { title: 'Longitudinal g', short: 'LONG G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     soc: { title: 'Battery charge', short: 'CHARGE', icon: 6, kind: 'pct', min: 0, max: 100, warnLow: 10 },

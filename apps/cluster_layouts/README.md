@@ -10,7 +10,7 @@ programme, or chosen), each with three centres: the **readings**, **Waze** or th
 With the car's own bottom strip (the default) the strip shows the gear, the drive mode, the ranges, the time and the
 outside temperature, so no layout shows them a second time (M, Sport and Classic M never show the time, the outside
 temperature or the fuel range at all): the places the time and temperature had show the
-battery's temperature (intake air on a petrol or diesel car) and the xDrive split, and where a layout had its gear
+battery's temperature (intake air on a petrol or diesel car) and the gearbox oil's, and where a layout had its gear
 it now has the digital speed or another reading. With **Waze** in the centre, Waze on cluster (0.9.107 or later,
 [eroobeeroo/idrive-apps](https://github.com/eroobeeroo/idrive-apps)) draws the map in the layout's own panel,
 above it, filling the window exactly; under the layout the cluster drew its own map screen (its speed, edge shading)
@@ -57,7 +57,7 @@ default) it is laid out like a new car's: the speed large in the middle over the
 toward you with the car, the dashes 3 m in 12 as painted, moved by the distance actually driven each frame), the
 battery's temperature and the engine speed in the top corners, a glass card on the left with the battery's power, a
 power bar (0 a quarter along: regenerating left, drawing right, each to the battery's limit) and its trend, and one on the right with oil, coolant, the
-charge and the xDrive split, each with its icon, over a softly lit, finely dotted background. Its colours follow
+charge and the gearbox oil, each with its icon, over a softly lit, finely dotted background. Its colours follow
 the drive mode. On a plug-in hybrid the right arc
 turns into the battery's power gauge (0 a quarter up, regeneration green below it) while the engine is off, and is
 the tach again, with a small power gauge inside it, as soon as the engine runs.
@@ -80,8 +80,8 @@ object's position is lives in config.dap.posScale, to be set from a drive's log.
 ### Digital dash
 
 No dials at all, as much as the car tells: the engine speed as a long segmented bar under the camera's cowl,
-the speed and battery power (charging or drawing) on the left, the charge large on the right with the xDrive
-split under it, and six tiles in
+the speed and battery power (charging or drawing) on the left, the charge large on the right with the gearbox
+oil under it, and six tiles in
 the middle (oil, coolant, gearbox oil, intake air, the battery's temperature, boost; boost reads `--` with
 the engine off), each with a trend line of its last two minutes and a bar that turns red where it is too
 hot. With the map in the centre the tiles become a strip under it. 60 pieces: within the 64 layers the renderer gives an app.
@@ -103,7 +103,7 @@ Over the top and American: the stars and stripes wave behind everything, bald ea
 fireworks go off in red, white and blue, all drawn and moved by the cluster itself (`shaders.js`: `FLAG_FS`,
 `EAGLE_FS`, `FIREWORKS_FS`, on the renderer's clock, so nothing is sent to animate them). Over it: a huge speed
 inside a red-to-blue tach arc, the battery's power large on the left (the gear there without the car's own strip), a
-FREEDOM banner, a gold-edged plaque of readings along the bottom, and the xDrive split on the right.
+FREEDOM banner, a gold-edged plaque of readings along the bottom, and the gearbox oil on the right.
 
 ![Freedom](../../docs/freedom.png)
 
@@ -143,7 +143,7 @@ the drive) and the drive's peak power (or boost), and the ranges and charge righ
 Made for the car's own bottom strip, in large type: the speed large in the middle with the battery's power and the
 engine speed either side of it at the same height, one long segmented bar under all three for the engine speed,
 nearly the panel's width, red from the red line, and one row along the bottom: oil, coolant, the charge, the
-battery's temperature and the xDrive split. Its colours follow the drive mode. With Waze in the centre the speed
+battery's temperature and the gearbox oil. Its colours follow the drive mode. With Waze in the centre the speed
 sits beside it and the rpm bar runs under it.
 
 ![Pulse](../../docs/pulse.png)
@@ -233,7 +233,7 @@ regeneration. An original drawing.
 | speed, engine speed, gear, oil, coolant | the car's signals (`kit/car.js`); both apps read through `shared/data.js` |
 | S / M programme (the gear's letter, the Auto colours) | `MDrive.dataDisplayGearbox` |
 | outside temperature | `EnvironmentalInformation.ExteriorTemperature` |
-| gearbox oil, the xDrive split | `BasicDataSet.basicDataSet` (the split from the transfer case when the car sends none) |
+| gearbox oil | `BasicDataSet.basicDataSet` |
 | battery temperature, where the power goes | `Efficiencytainment2.statusBatteryTemperature`, `KombiIF.statusDisplayElectricalPowerDistribution` |
 | intake air, boost | the engine unit over UDS, as M Vitals reads it (only while a layout that shows them is up) |
 | battery charge and power | eDrive Live, through the shared folder `/dev/shm/cluster-info` (asked for while the layout shows, as Cluster Info does) |
@@ -417,7 +417,7 @@ Check it before the car:
 ```sh
 node tools/preview.js --layout my_layout --look sport --centre map --out preview.png   # WebGL, the cluster's shader language
 node tools/test_engine.js && node tools/test_app.js && node tools/test_finder.js && node tools/test_centre.js && node tools/test_shared.js
-node tools/preview_centre.js --page xdrive --accent orange --out page.png                # a Cluster Centre page
+node tools/preview_centre.js --page edrive --accent orange --out page.png                # a Cluster Centre page
 python3 kit/tools/build.py cluster_layouts     # needs an oap-sdk/ folder (a stub is enough to check the build)
 ```
 

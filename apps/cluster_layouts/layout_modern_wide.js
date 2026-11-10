@@ -48,7 +48,7 @@ const bg = (key, x, y, w, h) => ({ key, kind: 'panel', x, y, w, h, params: { u_b
  * in the middle with the road ahead under it (its lane line running with the speed, on the cluster's clock);
  * the drive selector and mode on a chip left of the speed, the gear and engine speed on one right of it; a glass
  * card left with the battery's power, a centre-zero bar (regenerating left, drawing right) and its trend, and one
- * right with oil, coolant, the charge and the xDrive split, each with its icon. */
+ * right with oil, coolant, the charge and the gearbox oil, each with its icon. */
 const ICON = { thermo: 0, oil: 1, turbo: 5, battery: 6, car: 10 };
 const card = (key, x, y, w, h) => ({ key, kind: 'panel', x, y, w, h, params: { u_box: [22, 1.5, 0.7, 0.92] }, colors: (t) => ({ top: t.cardTop, bottom: t.cardBottom, border: t.cardEdge }) });
 const icon = (key, x, y, size, id, colour) => ({ key, kind: 'icon', x, y, w: size, h: size, params: { u_icon: [id], u_line: [0] }, colors: (t, d) => ({ color: [typeof colour === 'function' ? colour(t, d) : t[colour], 1] }) });
@@ -142,7 +142,7 @@ function newCar(o, arcs, gearC, rpmTxt) {
         { key: 'pwrTrend', kind: 'spark', x: L.x + 16, y: L.y + 146, w: L.w - 32, h: 96, every: 2000,
             sample: engine ? (d) => (C.isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : -1) : (d) => (C.isNum(d.kw) ? C.kwFrac(d.kw, C.kwRange(d)) : -1),
             colors: (t) => ({ line: t.fill1, fill: t.fill0 }) },
-        // right card: oil, coolant, the charge (or boost) and the xDrive split
+        // right card: oil, coolant, the charge (or boost) and the gearbox oil
         card('infoCard', R.x, R.y, R.w, R.h),
         C.flat('infoRuleV', R.x + R.w / 2, R.y + 18, 1, R.h - 36, 'cardEdge'),
         C.flat('infoRuleH', R.x + 18, R.y + R.h / 2, R.w - 36, 1, 'cardEdge'),
@@ -150,7 +150,7 @@ function newCar(o, arcs, gearC, rpmTxt) {
     cell(0, 'oil', ICON.oil, (d) => C.tempText(o, d.oil), 'OIL'),
     cell(1, 'coolant', ICON.thermo, (d) => C.tempText(o, d.coolant), 'COOLANT'),
     cell(2, 'soc', engine ? ICON.turbo : ICON.battery, C.focus.charge(o), C.focus.chargeLabel(o), engine ? txt : evTxt),
-    cell(3, 'split', ICON.car, (d) => (C.isNum(d.splitRear) ? Math.round(100 - d.splitRear) + '/' + Math.round(d.splitRear) : '--'), 'XDRIVE F/R'));
+    cell(3, 'gbox', ICON.thermo, (d) => C.tempText(o, d.gearbox), 'GEARBOX'));
 }
 
 module.exports = {

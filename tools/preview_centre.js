@@ -29,7 +29,7 @@ function sample(a) {
     return {
         speed: 97, rpm: a.rpm, gear: 4, stage: 'D', oil: 104, coolant: 92, gearbox: 81, iat: 39, outside: 9, iatRise: 30, hpfp: 182, lpfp: 5.3,
         timing: 14.5, boostTarget: 0.92, boostActual: 0.88, torque: 380, gLat: 0.34, gLong: 0.1, soc: 64, kw: 18.6, battTemp: 27, battMin: 25, battMax: 29,
-        pdDrive: 62, pdClimate: 26, pdSeats: 12, erange: 29, frange: 520, splitRear: 61, splitFront: 39, splitFrom: 'car', engineOn: true,
+        pdDrive: 62, pdClimate: 26, pdSeats: 12, erange: 29, frange: 520, engineOn: true,
         warm: Object.assign(w.state({ oil: 68 })), cool: cool.state(),
         perf: { mode: 'done', last: { sixty: 4.82, quarter: 13.21, trap: 166 }, best: { sixty: 4.71, quarter: 13.05 } },
         eng: { onMs: 14 * 60000, share: 38, starts: 5, why: null },
@@ -43,7 +43,7 @@ if (require.main === module) {
     const client = new FakeClient();
     const units = a.units === 'metric' ? { temp: 'c', press: 'bar', speed: 'kmh', torque: 'nm' } : { temp: 'f', press: 'psi', speed: 'mph', torque: 'lbft' };
     const o = { look: a.look, fit: a.fit, pages: [a.page], style: a.style, accent: a.accent, size: 'normal', units, warn: {}, shift: { on: true, from: 4000, at: 6200 }, badge: true,
-        custom: [{ style: 'bar', slots: ['oil', 'coolant', 'gearbox', 'iat'] }, { style: 'arc', slots: ['soc', 'kw', 'splitRear', 'boostActual'] }] };
+        custom: [{ style: 'bar', slots: ['oil', 'coolant', 'gearbox', 'iat'] }, { style: 'arc', slots: ['soc', 'kw', 'gearbox', 'boostActual'] }] };
     const d = sample(a);
     const e = startCluster({ client, log: { info() {}, warn: (m) => console.error(m) }, target: 'map', contend: true,
         settleMs: 0, layout: () => ({ id: 'centre', pieces }), options: () => o,
@@ -57,7 +57,7 @@ if (require.main === module) {
         const f = i / 132, wob = (a, b) => a + b * Math.sin(i / 7) + b * 0.5 * Math.sin(i / 2.3);
         Object.assign(d, { oil: base.oil - 14 * (1 - f) + wob(0, 1.2), coolant: base.coolant - 6 * (1 - f) + wob(0, 0.8), gearbox: base.gearbox - 10 * (1 - f) + wob(0, 1),
             iat: wob(base.iat, 4), iatRise: wob(base.iatRise, 4), outside: base.outside, hpfp: wob(base.hpfp, 40), lpfp: wob(base.lpfp, 0.3), boostActual: Math.max(0, wob(0.6, 0.35)),
-            timing: wob(base.timing, 4), rpm: wob(3200, 1300), splitRear: wob(base.splitRear, 14), kw: wob(10, 25), gLat: wob(0, 0.35), soc: base.soc + 4 * (1 - f) });
+            timing: wob(base.timing, 4), rpm: wob(3200, 1300), kw: wob(10, 25), gLat: wob(0, 0.35), soc: base.soc + 4 * (1 - f) });
         e._tick();
     }
     Object.assign(d, base, { rpm: a.rpm });

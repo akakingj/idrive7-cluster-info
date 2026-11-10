@@ -48,10 +48,10 @@ module.exports = {
         const centre = o.centre || 'info';
         const gearC = (t, d) => ({ color: [C.gearText(d) === 'R' ? t.red : t.white, 1], glow: [C.gearText(d) === 'R' ? t.white : t.red, 0.6] });
         const powerTxt = (t, d) => (engine ? txt(t) : { color: [C.isNum(d.kw) && d.kw < -0.3 ? '#3ddc84' : t.ev, 1], glow: [t.ev, 0.2] });
-        // right of the KOMBI's gear bracket: the power (or torque), the xDrive split
+        // right of the KOMBI's gear bracket: the power (or torque), the gearbox oil
         const rightColumn = (y0) => [
             ...C.reading('power', 1676, y0, 214, 46, C.focus.power(o), C.focus.powerLabel(o, true), powerTxt, lbl),
-            ...C.reading('split', 1676, y0 + 92, 214, 32, C.splitText, 'XDRIVE', txt, lbl),
+            ...C.reading('gbox', 1676, y0 + 92, 214, 32, (d) => C.tempText(o, d.gearbox), 'GEARBOX', txt, lbl),
         ];
 
         if (centre === 'map') {
@@ -117,12 +117,12 @@ module.exports = {
             ],
             // the car's own bottom strip shows the ranges (its fuel and charge gauges sit above them in the
             // corners): the plaque centred under the tach with the temperatures and the charge, the power
-            // and xDrive higher on the right, across from the gear
+            // and the gearbox oil higher on the right, across from the gear
             C.strip(o) ? [].concat(
                 C.reading('oil', 420, 500, 340, 50, (d) => C.tempText(o, d.oil), 'OIL', txt, lbl),
                 C.reading('coolant', 790, 500, 340, 50, (d) => C.tempText(o, d.coolant), 'COOLANT', txt, lbl),
                 C.reading('soc', 1160, 500, 340, 50, C.focus.charge(o), C.focus.chargeLabel(o), txt, lbl),
-                C.reading('split', 1676, 290, 214, 40, C.splitText, 'XDRIVE', txt, lbl)) : [].concat(
+                C.reading('gbox', 1676, 290, 214, 40, (d) => C.tempText(o, d.gearbox), 'GEARBOX', txt, lbl)) : [].concat(
             C.reading('oil', 140, 508, 220, 50, (d) => C.tempText(o, d.oil), 'OIL', txt, lbl),
             C.reading('coolant', 390, 508, 220, 50, (d) => C.tempText(o, d.coolant), 'COOLANT', txt, lbl),
             C.reading('fuel', 640, 508, 230, 50, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, lbl),

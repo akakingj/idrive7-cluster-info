@@ -6,12 +6,13 @@
  *   car signals (kit/car.js): speed, rpm, gear, stage, oil, coolant, torque, g (long / lat)
  *   MDrive.dataDisplayGearbox: the S / M programme
  *   EnvironmentalInformation.ExteriorTemperature: outside
- *   BasicDataSet.basicDataSet: gearbox oil, the xDrive split (rear %, when the car fills it)
+ *   BasicDataSet.basicDataSet: gearbox oil
  *   Efficiencytainment2.statusBatteryTemperature: the battery's temperature (avg / min / max)
  *   KombiIF.statusDisplayElectricalPowerDistribution: the car's power distribution figures
  *   the engine unit over UDS (config.dme, as M Vitals reads it): intake air, fuel pressures (high, low), boost
- *     target and actual, ignition timing; the gearbox unit: its oil temperature; the transfer case (config.xdrive):
- *     front axle torque, for the split when the car's own signal has none
+ *     target and actual, ignition timing; the gearbox unit: its oil temperature
+ * (No xDrive split: neither the car's split signal nor the transfer case's front torque gave usable readings on the
+ * car, Nov 9 2026: removed.)
  *   eDrive Live, through the shared folder: battery charge and power
  *
  * The diagnostic reads are the slow part: only the values the page on screen needs are read, about twice a
@@ -25,8 +26,7 @@ const { startProviders } = require('./providers');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
-const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs', 'lmv'];
-const SPLIT_OK = (q) => q === undefined || q === null || q === 2 || q === 10 || q === 'SIGNALWERT_IST_GUELTIG' || q === 'SIGNALWERT_IST_GUELTIG__REKALIBRIERUNGSBEDARF';
+const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs'];
 
 /*
  * The driving mode, as the car's FES service sends it: BMW's FES mode table (TAB_FES_MODUS_ARG in the G05's
@@ -199,8 +199,6 @@ function startData(ctx, opts) {
         basicDataSet: (v) => {
             const g = sc('gearboxTemp', v.valueTemperatureTransmissionOil);
             if (isNum(g) && g > -40 && g < 160) put('gearbox', g);
-            const q = v.qualifierValueDistributionLongitudinalTorqueRearAxisFrontAxis, split = SPLIT_OK(q) ? sc('torqueSplitRear', v.valueDistributionLongitudinalTorqueRearAxisFrontAxis) : null;
-            if (isNum(split) && split > 0 && split <= 100) put('splitRear', split);
         },
     }, 'basic data set');
     watch('de.bmw.infotainment.drivingexcitement.Efficiencytainment2', {
@@ -296,7 +294,7 @@ function startData(ctx, opts) {
     }, 'power distribution', { pollMs: 15000 });
 
     /* ---------- the engine unit, the gearbox unit and the transfer case over UDS ---------- */
-    const dme = Object.assign({ ecu: 18 }, cfg.dme || {}), xcfg = Object.assign({ front: [], gearRatios: [] }, cfg.xdrive || {});
+    const dme = Object.assign({ ecu: 18 }, cfg.dme || {});
     const link = new Diag(ctx.signals, log);
     link.quiet = true;
     link.init();
@@ -313,7 +311,6 @@ function startData(ctx, opts) {
             if (ac !== null) put('boostActual', (ac - baro) / 100);
             return tg;
         }
-        if (k === 'lmv') { const v = await rd.value('lmvFront', xcfg.front); if (v !== null) put('lmvFront', v); return v; }
         // (the high-voltage battery is eDrive Live's alone: its charge and power come from its shared file, below.
         // Two apps asking the battery unit in turn left both without answers, eDrive Live showing 'NO REPLY'.)
         const v = await rd.value(k, dme[k]);
@@ -329,7 +326,7 @@ function startData(ctx, opts) {
     async function poll() {
         const on = !opts || !opts.shown || opts.shown();
         const now = Date.now(), wantedNow = on && now - wantedT < 3000;
-        const usable = (k) => (k === 'lmv' ? xcfg.front.length : k === 'boostCtl' ? (dme.boostTarget || []).length
+        const usable = (k) => (k === 'boostCtl' ? (dme.boostTarget || []).length
             : (dme[k] || []).length);
         const ready = (k) => !((fail[k] || 0) >= 3 && Date.now() - (tried[k] || 0) < 30000);
         if (!queue.length && on) {
@@ -337,7 +334,7 @@ function startData(ctx, opts) {
              * Each read is a request through the car's gateway, the one eDrive Live's battery reads go through. */
             const engineOff = car.data().engineOn === false;
             queue = wantedNow && !engineOff ? wanted.filter((k) => DME_KEYS.indexOf(k) >= 0) : [];
-            if (wantedNow && now - slowAt > 10000) { slowAt = now; DME_KEYS.forEach((k) => { if (k !== 'lmv' && queue.indexOf(k) < 0) queue.push(k); }); }
+            if (wantedNow && now - slowAt > 10000) { slowAt = now; DME_KEYS.forEach((k) => { if (queue.indexOf(k) < 0) queue.push(k); }); }
             queue = queue.filter(usable);
         }
         const turn = on && queue.length ? [queue.shift()] : [];
@@ -387,32 +384,6 @@ function startData(ctx, opts) {
     // while shown, ask eDrive Live to share; otherwise let go at once (providers.js: Cluster Info's file)
     const wantTimer = setInterval(() => { if (opts && opts.shown && opts.shown()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
 
-    /** The xDrive split: { rear %, from } from the car's own signal, else the transfer case's front torque
-     * against the gearbox output (engine torque x the gear's ratio), else none. */
-    /*
-     * The xDrive split: { rear %, frontNm, from }. From the car's own split signal when it has one; else the
-     * transfer case's front torque over UDS: clutch open (5 Nm or less) is all rear; engaged, the front axle's
-     * torque in Nm. (A percentage from it needs the whole drive torque, and on a plug-in hybrid the electric
-     * motor's share isn't read: the engine-only estimate gave false splits.) The front torque is smoothed, and
-     * the last reading held for HOLD_MS through a late read, so it doesn't flicker to '--'.
-     */
-    const HOLD_MS = 6000;
-    let lastSplit = null, frontAvg = null;
-    function split(d) {
-        if (d.demo) return { rear: d.splitRear, from: 'demo' };
-        let now = null;
-        if (fresh('splitRear', 10000)) now = { rear: x.splitRear, from: 'car' };
-        else if (fresh('lmvFront', 4000)) {
-            frontAvg = frontAvg === null ? x.lmvFront : frontAvg + (x.lmvFront - frontAvg) * 0.35;
-            now = frontAvg <= 5 ? { rear: 100, frontNm: 0, from: 'transfer case: clutch open' }
-                : { rear: null, frontNm: Math.round(frontAvg), from: 'transfer case: front torque' };
-        }
-        if (now) { lastSplit = { v: now, t: Date.now() }; return now; }
-        if (lastSplit && Date.now() - lastSplit.t < HOLD_MS) return lastSplit.v;
-        frontAvg = null;
-        return { rear: null, from: null };
-    }
-
     return {
         car,
         /** Everything now, in base units. */
@@ -435,8 +406,6 @@ function startData(ctx, opts) {
             if (d.demo) Object.assign(o, demo(d));
             if (isNum(o.iat) && isNum(o.outside)) o.iatRise = o.iat - o.outside;
             if (isNum(o.battTemp) === false && p.battery !== undefined) o.battTemp = p.battery;
-            const sp = split(o);
-            o.splitRear = sp.rear; o.splitFrom = sp.from; o.splitFront = isNum(sp.rear) ? 100 - sp.rear : undefined; o.splitFrontNm = sp.frontNm;
             o.engineOn = isNum(o.rpm) ? o.rpm > 300 : undefined;
             // no electric range from the car or an app yet: an estimate from the charge and the range a full battery
             // gives (Settings > Electric range when full, miles), shown with '~'
@@ -452,7 +421,7 @@ function startData(ctx, opts) {
             return o;
         },
         /** The page on screen needs these (data keys): read them fast. */
-        want(keys) { wanted = keys.map((k) => (k === 'boostTarget' || k === 'boostActual' ? 'boostCtl' : k === 'gearbox' ? 'egs' : k === 'splitRear' ? 'lmv' : k)); wantedT = Date.now(); },
+        want(keys) { wanted = keys.map((k) => (k === 'boostTarget' || k === 'boostActual' ? 'boostCtl' : k === 'gearbox' ? 'egs' : k)); wantedT = Date.now(); },
         status: () => Object.assign({ diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw }, status),
         /** The vehicle in use: { vehicle 'phev' | 'ice', how: 'set' | 'found' | 'assumed', why }. */
         vehicle: () => ({ vehicle: vehicleNow(), how: setting('vehicle') === 'ice' || setting('vehicle') === 'phev' ? 'set' : detected.vehicle ? 'found' : 'assumed', why: detected.why }),
@@ -469,7 +438,7 @@ function demo(d) {
         outside: 9, gearbox: 72 + 4 * Math.sin(t / 50), iat: 34 + 6 * Math.sin(t / 20), hpfp: 50 + rpm / 40, lpfp: 5.2 + 0.2 * Math.sin(t),
         timing: 18 - rpm / 800, boostTarget: Math.max(0, (rpm - 1500) / 4000), boostActual: Math.max(0, (rpm - 1600) / 4100),
         battTemp: 27, battMin: 25, battMax: 29, soc: 64, kw: -12 + 25 * Math.sin(t / 7), pdDrive: 60, pdClimate: 25, pdSeats: 15,
-        splitRear: 62 + 25 * Math.sin(t / 3), erange: 29, frange: 520, fuelLevel: 38,
+        erange: 29, frange: 520, fuelLevel: 38,
         tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } },
     };
 }

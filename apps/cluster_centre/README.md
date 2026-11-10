@@ -19,9 +19,7 @@ speed and its line on the left, the efficiency gauge and the range on the right,
 By default the pages are made smaller and sit between them (about x 290 to 850 of the 1088); **The whole
 middle** draws them at full size, under those readouts at its edges.
 
-Both have an icon by every reading, a trend line of its last two minutes, a mark where it turns too hot, and
-the top-down xDrive car whose axles light up with their share while the torque flows to them (animated by the
-cluster, nothing sent to move it).
+Both have an icon by every reading, a trend line of its last two minutes and a mark where it turns too hot.
 
 ![Temperatures](../../docs/centre/temps.png)
 
@@ -38,20 +36,19 @@ while it runs.
 | Fuel and boost | high and low pressure fuel, boost (with its target), ignition timing | the engine unit (UDS) |
 | Warm-up | oil temperature, minutes and the time until it is warm (from how fast it is warming), the rev limit for now (rising from the cold limit to the redline as the oil warms), coolant | the car's signals |
 | Turbo cool-down | the countdown after hard driving (30 s to 3 min, from how long it was hard), counting down below 3000 rpm and at idle | the car's signals |
-| xDrive | front / rear torque split, the car from above with its axles lit by their share | the car's split signal; the transfer case when the car sends none |
 | eDrive | battery charge and electric range, battery power (charging / drawing, either side of zero), battery temperature and its cells' spread, where the power goes (driving, climate, seats), fuel range | the car (battery temperature, power distribution); eDrive Live (charge, power) |
 | Engine | engine on or off (electric), engine speed, minutes the engine ran this drive and the share of it, starts this drive, why it started (when the car's signal is found) | the car's signals |
 | Steering | steering angle and yaw rate (when the car's signals are found), lateral g | the car's signals |
 | 0-60 and quarter mile | arm with **Arm 0-60 timer**, stop, go: the time to 60 mph (100 km/h), the quarter mile and its trap speed, the last run and the best | the car's speed |
-| Custom 1 and 2 | 1, 2, 3, 4 or 6 slots, each any of 23 readings, as numbers, bars or arc gauges | as the readings |
+| Custom 1 and 2 | 1, 2, 3, 4 or 6 slots, each any of 21 readings, as numbers, bars or arc gauges | as the readings |
 
 | Fuel and boost | Warm-up |
 |---|---|
 | ![](../../docs/centre/fuel.png) | ![](../../docs/centre/warmup.png) |
-| **xDrive** | **eDrive** |
-| ![](../../docs/centre/xdrive.png) | ![](../../docs/centre/edrive.png) |
-| **Turbo cool-down** | **0-60 and quarter mile** |
-| ![](../../docs/centre/cooldown.png) | ![](../../docs/centre/timer.png) |
+| **eDrive** | **Turbo cool-down** |
+| ![](../../docs/centre/edrive.png) | ![](../../docs/centre/cooldown.png) |
+| **0-60 and quarter mile** | |
+| ![](../../docs/centre/timer.png) | |
 | **Engine** | **Custom page, arc gauges** |
 | ![](../../docs/centre/engine.png) | ![](../../docs/centre/custom2.png) |
 | **Steering** | **Arc gauges, orange, metric** |
@@ -59,11 +56,11 @@ while it runs.
 
 ### Modern look
 
-| Temperatures | xDrive |
+| Temperatures | eDrive |
 |---|---|
-| ![](../../docs/centre/modern/temps.png) | ![](../../docs/centre/modern/xdrive.png) |
-| **eDrive** | **Warm-up** |
-| ![](../../docs/centre/modern/edrive.png) | ![](../../docs/centre/modern/warmup.png) |
+| ![](../../docs/centre/modern/temps.png) | ![](../../docs/centre/modern/edrive.png) |
+| **Warm-up** | |
+| ![](../../docs/centre/modern/warmup.png) | |
 
 ## The app
 

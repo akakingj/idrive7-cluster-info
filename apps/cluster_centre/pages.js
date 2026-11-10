@@ -7,7 +7,7 @@
  *
  * The look: a dark background with a soft glow of the accent colour and a fine dot grid, glass cards, an icon
  * by every reading, a trend line of its last two minutes, glowing bars and arcs with a mark where a reading
- * turns too hot, a round-light shift light and an animated xDrive car. Everything sits in the middle (BOX):
+ * turns too hot and a round-light shift light. Everything sits in the middle (BOX):
  * the stock dials' edges and their own figures overlap the map area's sides.
  * o: { look ('native' | 'modern'), pages, style, accent, size ('normal' | 'large'), units, warn,
  *      shift: { on, from, at }, badge, custom, warmTarget, redline }.
@@ -188,29 +188,6 @@ const PAGES = {
                 text(g + '.h2', g, BODY.x + 22, BODY.y + 40, 200, 14, 'BELOW 3000 RPM', plain('text'), { align: 0, tracking: 0.12 }),
                 label(g + '.h3', g, BODY.x + BODY.w - 222, BODY.y + 20, 200, 'BUILT UP BY', { align: 1 }),
                 text(g + '.h4', g, BODY.x + BODY.w - 222, BODY.y + 40, 200, 14, 'HARD DRIVING', plain('text'), { align: 1, tracking: 0.12 })];
-        },
-    },
-    xdrive: {
-        title: 'XDRIVE', needs: ['splitRear'],
-        build: (o, g) => {
-            const pct = (k) => (d) => (isNum(d[k]) ? Math.round(d[k]) + '%' : '--');
-            const share = (k) => (d) => (isNum(d[k]) ? d[k] / 100 : 0);
-            const R = { x: BODY.x + 360, w: BODY.w - 360 };
-            return [
-                { key: g + '.car', group: g, kind: 'car', x: BODY.x + 20, y: BODY.y, w: 320, h: BODY.h, value: share('splitRear'), max: 1, sweep: false,
-                    dyn: (d) => ({ u_valid: [isNum(d.splitRear) ? 1 : 0] }), colors: (t) => ({ body: t.body, edge: mix(t.edge, '#ffffff', 0.15), accent: t.accent, wheel: t.wheel }) },
-                card(g + '.c', g, R.x, BODY.y, R.w, BODY.h),
-                label(g + '.fl', g, R.x + 20, BODY.y + 18, 120, 'FRONT'),
-                text(g + '.f', g, R.x + 20, BODY.y + 40, 200, 58, (d) => (!isNum(d.splitFront) && isNum(d.splitFrontNm) ? d.splitFrontNm + ' Nm' : pct('splitFront')(d)), glowing('text', 0.35), { align: 0 }),
-                label(g + '.rl', g, R.x + R.w - 140, BODY.y + 18, 120, 'REAR', { align: 1 }),
-                text(g + '.r', g, R.x + R.w - 180, BODY.y + 40, 160, 58, (d) => (!isNum(d.splitRear) && isNum(d.splitFrontNm) ? 'ON' : pct('splitRear')(d)), glowing('text', 0.35), { align: 1 }),
-                // one bar: the front's share from the left, the rear's from the right
-                bar(g + '.fb', g, R.x + 14, BODY.y + 112, (R.w - 28) / 2, 18, share('splitFront'), barColours('accent'), { fromRight: true }),
-                bar(g + '.rb', g, R.x + 14 + (R.w - 28) / 2, BODY.y + 112, (R.w - 28) / 2, 18, share('splitRear'), barColours('accent')),
-                label(g + '.tl', g, R.x + 20, BODY.y + 150, 300, 'REAR SHARE, LAST 2 MIN'),
-                spark(g + '.sp', g, R.x + 12, BODY.y + 170, R.w - 24, 110, (d) => (isNum(d.splitRear) ? d.splitRear / 100 : null), 'accent'),
-                text(g + '.src', g, R.x + 20, BODY.y + BODY.h - 28, R.w - 40, 13, (d) => (d.splitFrom === 'car' ? 'FROM THE CAR' : d.splitFrom ? 'FROM THE TRANSFER CASE' : 'NO SPLIT DATA YET'), plain('dim'), { align: 0, tracking: 0.12 }),
-            ];
         },
     },
     edrive: {

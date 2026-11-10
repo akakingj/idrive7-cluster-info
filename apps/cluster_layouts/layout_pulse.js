@@ -122,7 +122,7 @@ module.exports = {
                 up('soc', 964, 526, 236, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
                 C.engineFocus(o) || o.vehicle === 'ice' ? up('iat', 1202, 526, 236, 64, (d) => C.tempText(o, d.iat), 'INTAKE', txt, 24)
                     : up('battT', 1202, 526, 236, 64, (d) => C.tempText(o, d.battTemp), 'BATTERY', eTxt, 24),
-                up('split', 1440, 526, 236, 64, (d) => (C.isNum(d.splitRear) ? Math.round(100 - d.splitRear) + ' : ' + Math.round(d.splitRear) : '--'), 'XDRIVE F : R', txt, 24));
+                up('gbox', 1440, 526, 236, 64, (d) => C.tempText(o, d.gearbox), 'GEARBOX', txt, 24));
         }
         return [bg('bg', 0, 0, 1920, 720),
             // the time and outside temperature in the top corners, inside the glass's slant

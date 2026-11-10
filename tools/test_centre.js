@@ -107,10 +107,10 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
         assert(e._pieces().length > 3 && e._pieces().every((p) => !p.group || p.group === g), g);
         console.log('     ' + g + ': ' + e._pieces().length + ' pieces, ' + peak + ' layers at most during the switch, ' + (client.bytes / 1024).toFixed(1) + ' KB');
     });
-    e.setGroup('xdrive');
+    e.setGroup('edrive');
     client.reset();
-    for (let i = 0; i < 25 * 30; i++) { d.rpm = 2500 + 2000 * Math.sin(i / 20); d.splitRear = 60 + 20 * Math.sin(i / 30); e._tick(); }
-    console.log('     driving on the xDrive page: ' + (client.bytes / 30 / 1024).toFixed(1) + ' KB/s');
+    for (let i = 0; i < 25 * 30; i++) { d.rpm = 2500 + 2000 * Math.sin(i / 20); d.kw = 20 * Math.sin(i / 30); e._tick(); }
+    console.log('     driving on the eDrive page: ' + (client.bytes / 30 / 1024).toFixed(1) + ' KB/s');
     assert(client.bytes / 30 < 12 * 1024);
     e.stop();
 });
