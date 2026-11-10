@@ -45,7 +45,8 @@ const BLADE = { x0: 515, w: 196, y: 36, h: 558, y0: 566, y8: 66, ym: 303, xm: 52
  * The gauges, as the M8's coolant and boost bars: an icon over the left end, the unit over the right, the bar
  * (MBAR_FS: a thin track, a thicker fill, red zones, a red start tick), the scale's labels under it. Each one
  * { icon, unit, labels: [[at 0..1 (-1: none), text] x3], value(d) 0..1, zero (where the fill starts), lo / hi (red
- * to, from), neg (the fill's colour below the zero), nums(d) (the labels' numbers now, if they move) }.
+ * to, from), neg (the fill's colour below the zero), nums(d) (the labels' numbers now, if they move), read(d) (the
+ * reading in figures, beside the icon: red in the hot zone) }.
  */
 const KW_ZERO = C.KW_ZERO;   // the power: its first quarter regeneration (to the battery's limit), then to its top
 /** The power bar's top: eDrive Live's (layout_common.kwRange) up to 20 kW, so its middle label is a round number. */
@@ -57,8 +58,10 @@ function gauges(o, engine) {
     const tl = (c) => String(Math.round(C.tempIn(o, c) / 10) * 10), tu = '°' + (isF ? 'F' : 'C');
     const f01 = (v, a, b) => (isNum(v) ? Math.max(0, Math.min(1, (v - a) / (b - a))) : 0);
     // the engine's temperatures: the coolant (70-130 C, hot from 118) and the oil (50-150 C, hot from 135)
-    const left = [{ icon: 'therm', unit: tu, labels: [[0, tl(70)], [0.5, tl(100)], [1, tl(130)]], value: (d) => f01(d.coolant, 70, 130), zero: 0, lo: -1, hi: 0.8 },
-        { icon: 'oilcan', unit: tu, labels: [[0, tl(50)], [0.5, tl(100)], [1, tl(150)]], value: (d) => f01(d.oil, 50, 150), zero: 0, lo: -1, hi: 0.85 }];
+    // (each temperature's reading in figures beside its icon: rd)
+    const rd = (k) => (d) => (isNum(d[k]) ? String(Math.round(C.tempIn(o, d[k]))) : '--');
+    const left = [{ icon: 'therm', unit: tu, read: rd('coolant'), labels: [[0, tl(70)], [0.5, tl(100)], [1, tl(130)]], value: (d) => f01(d.coolant, 70, 130), zero: 0, lo: -1, hi: 0.8 },
+        { icon: 'oilcan', unit: tu, read: rd('oil'), labels: [[0, tl(50)], [0.5, tl(100)], [1, tl(150)]], value: (d) => f01(d.oil, 50, 150), zero: 0, lo: -1, hi: 0.85 }];
     // along the bottom: the fuel (red under an eighth) and, on a plug-in hybrid, the charge (red under 10%)
     const fuel = { icon: 'fuel', unit: '', labels: [[0, '0'], [-1, '0'], [1, '1']], value: (d) => (isNum(d.fuelPct) ? clamp01(d.fuelPct / 100) : 0), zero: 0, lo: 0.125, hi: 2 };
     const charge = { icon: 'battery', unit: '%', labels: [[0, '0'], [0.5, '50'], [1, '100']], value: (d) => f01(d.soc, 0, 100), zero: 0, lo: 0.1, hi: 2 };
@@ -79,7 +82,7 @@ function gauges(o, engine) {
         // temperature (0-50 C, hot from 45)
         right: [{ icon: 'bolt', unit: 'kW', labels: [[KW_ZERO, '0'], [KW_ZERO + (1 - KW_ZERO) / 2, '50'], [1, '100']], value: (d) => C.kwFrac(d.kw, barRange(d)),
             nums: (d) => [0, barRange(d).out / 2, barRange(d).out], zero: KW_ZERO, lo: -1, hi: 2, neg: 'regen' },
-            { icon: 'batteryTemp', unit: tu, labels: [[0, tl(0)], [0.5, tl(25)], [1, tl(50)]], value: (d) => f01(d.battTemp, 0, 50), zero: 0, lo: -1, hi: 0.9 }],
+            { icon: 'batteryTemp', unit: tu, read: rd('battTemp'), labels: [[0, tl(0)], [0.5, tl(25)], [1, tl(50)]], value: (d) => f01(d.battTemp, 0, 50), zero: 0, lo: -1, hi: 0.9 }],
         bottom: [fuel, charge],
     };
 }
@@ -88,7 +91,9 @@ function gauges(o, engine) {
 function gauge(T, key, x, y, w, g) {
     const fg = B.role('fg'), sg = B.smallGlyphs('orb', 'm_scale');
     const nums = g.labels.map((l) => Number(l[1])), dec = g.labels.some((l) => /\./.test(l[1])) ? 1 : 0;
-    return [B.icon(key + 'Icon', x - 4, y - 6, 38, 36, g.icon, 'fg')].concat(g.unit ? [T(key + 'Unit', [x + w - 90, y - 4, 90, 32], 'm_unit', g.unit, fg, 'right')] : [], [
+    const readC = (t, d) => ({ color: [g.hi < 1 && g.value(d) >= g.hi ? t.red : t.fg, 1], glow: [t.fg, 0] });
+    return [B.icon(key + 'Icon', x - 4, y - 6, 38, 36, g.icon, 'fg')].concat(g.read ? [T(key + 'Read', [x + 46, y - 4, 100, 32], 'm_unit', g.read, readC, 'left')] : [],
+        g.unit ? [T(key + 'Unit', [x + w - 90, y - 4, 90, 32], 'm_unit', g.unit, fg, 'right')] : [], [
         { key, kind: 'mbar', x: x - 6, y: y + 30, w: w + 10, h: 34 + sg.h + 2,
             params: { u_zero: [g.zero], u_zones: [g.lo, g.hi, 0, 0], u_marks: g.labels.map((l) => l[0]).concat([-1]).slice(0, 4),
                 u_lab: nums.concat([dec]), u_glyph: sg.glyph, u_glyph2: sg.glyph2, u_labH: [sg.h] },
