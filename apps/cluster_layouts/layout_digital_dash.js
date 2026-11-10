@@ -65,7 +65,6 @@ const fillC = (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.
 
 /* ---------- the readings ---------- */
 const frac = (v, lo, hi) => (isNum(v) ? Math.max(0, Math.min(1, (v - lo) / (hi - lo))) : null);
-const boostIn = (o, bar0) => (o.speedUnit === 'kmh' ? bar0 : bar0 * 14.5038);
 /** id: { title, icon, value(d), text(o, d), unit(o), lo, hi (base units), hot (base units, or null) } */
 const READ = {
     oil: { title: 'OIL', icon: 1, value: (d) => d.oil, lo: 40, hi: 150, hot: 130 },
@@ -81,11 +80,10 @@ function readText(o, r, d) {
     const v = r.value(d);
     if ((r.boost || r.rail) && d.engineOn === false) return 'OFF';
     if (!isNum(v)) return '--';
-    if (r.boost) { const b = boostIn(o, v); return o.speedUnit === 'kmh' ? b.toFixed(2) : b.toFixed(1); }
-    if (r.rail) return String(Math.round(o.speedUnit === 'kmh' ? v : v * 14.5038));
+    if (r.boost || r.rail) return C.pressNum(o, v);
     return String(Math.round(C.tempIn(o, v)));
 }
-const readUnit = (o, r) => (r.boost || r.rail ? (o.speedUnit === 'kmh' ? 'BAR' : 'PSI') : o.tempUnit === 'c' ? '°C' : '°F');
+const readUnit = (o, r) => (r.boost || r.rail ? C.pressLabel(o).toUpperCase() : o.tempUnit === 'c' ? '°C' : '°F');
 const hot = (r, d) => r.hot !== null && isNum(r.value(d)) && r.value(d) >= r.hot;
 
 /** A tile: card, icon and title, unit, value, trend line and bar with its red mark. */

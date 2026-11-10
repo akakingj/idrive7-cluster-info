@@ -323,6 +323,34 @@
         [
           "kgm",
           "kgm"
+        ],
+        [
+          "lbft",
+          "lb-ft"
+        ]
+      ]
+    },
+    {
+      "key": "pressUnit",
+      "label": "Pressure unit",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "With the temperature unit (psi / bar)"
+        ],
+        [
+          "psi",
+          "psi"
+        ],
+        [
+          "bar",
+          "bar"
+        ],
+        [
+          "kpa",
+          "kPa"
         ]
       ]
     },

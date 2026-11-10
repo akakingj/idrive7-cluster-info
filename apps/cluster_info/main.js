@@ -133,20 +133,24 @@ mgu.run({
         /** A value now, in deg C: the car's own (oil, coolant) first, else a provider's; { c, src } or null. */
         function valueNow(name) {
             const d = car.data();
-            // the engine's (car signals): text in the panel's units (psi with °F, bar with °C)
+            // the engine's (car signals): text in the panel's units. Pressure: Settings > Pressure unit, or with
+            // the temperature unit (psi with °F, bar with °C)
             if (VALUES[name] && VALUES[name].engine) {
-                const metric = settings.get('tempUnit') === 'c';
                 if (name === 'boost') {
                     if (!G.isNum(live.boost) || Date.now() - (live.boostT || 0) > 5000) return null;
-                    return { text: metric ? live.boost.toFixed(2) : (live.boost * 14.5038).toFixed(1), label: metric ? 'BOOST bar' : 'BOOST psi', src: 'car signal (sport display)' };
+                    const pu = ['psi', 'bar', 'kpa'].indexOf(settings.get('pressUnit')) >= 0 ? settings.get('pressUnit')
+                        : settings.get('tempUnit') === 'c' ? 'bar' : 'psi';
+                    const text = pu === 'bar' ? live.boost.toFixed(2) : pu === 'kpa' ? String(Math.round(live.boost * 100)) : (live.boost * 14.5038).toFixed(1);
+                    return { text, label: 'BOOST ' + (pu === 'kpa' ? 'kPa' : pu), src: 'car signal (sport display)' };
                 }
                 if (name === 'rpm') return G.isNum(d.rpm) && !d.demo ? { text: String(Math.round(d.rpm / 50) * 50), src: 'car signal' } : null;
                 if (name === 'torque') {
                     if (!G.isNum(d.torque) || d.demo) return null;
-                    // Settings > Torque unit: Nm, or kgm (to a tenth)
-                    return settings.get('torqueUnit') === 'kgm'
-                        ? { text: (d.torque / 9.80665).toFixed(1), label: 'KGM', src: 'car signal' }
-                        : { text: String(Math.round(d.torque)), src: 'car signal' };
+                    // Settings > Torque unit: Nm, kgm (to a tenth) or lb-ft
+                    const tu = settings.get('torqueUnit');
+                    if (tu === 'kgm') return { text: (d.torque / 9.80665).toFixed(1), label: 'KGM', src: 'car signal' };
+                    if (tu === 'lbft') return { text: String(Math.round(d.torque * 0.737562)), label: 'LB-FT', src: 'car signal' };
+                    return { text: String(Math.round(d.torque)), src: 'car signal' };
                 }
             }
             if ((name === 'oil' || name === 'coolant') && !d.demo && G.isNum(d[name])) return { c: d[name], src: 'car signal' };

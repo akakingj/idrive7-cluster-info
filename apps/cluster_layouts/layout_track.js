@@ -49,7 +49,7 @@ const bestText = (o) => (d) => { track(o, d); return run.best !== null ? 'BEST '
 const zeroLabel = (o) => (o.speedUnit === 'kmh' ? '0-100 KM/H' : '0-60 MPH');
 const peakText = (o) => (d) => {
     track(o, d);
-    if (C.engineFocus(o)) return run.peakBoost === null ? '--' : o.speedUnit === 'kmh' ? run.peakBoost.toFixed(2) + ' bar' : (run.peakBoost * 14.5038).toFixed(1) + ' psi';
+    if (C.engineFocus(o)) return run.peakBoost === null ? '--' : C.pressNum(o, run.peakBoost);   // (its unit in the label, like the other tiles)
     return run.peakKw === null ? '--' : Math.round(run.peakKw) + ' kW';
 };
 
@@ -90,7 +90,7 @@ const boostNum = (o) => (d) => {
     if (C.engineFocus(o)) return C.timingText(d);
     if (d.engineOn === false) return 'OFF';
     if (!C.isNum(d.boostActual)) return '--';
-    return o.speedUnit === 'kmh' ? d.boostActual.toFixed(2) : (d.boostActual * 14.5038).toFixed(1);
+    return C.pressNum(o, d.boostActual);
 };
 const powerNum = (o) => (d) => {
     if (C.engineFocus(o)) return C.torqueNum(o, d.torque);
@@ -106,7 +106,7 @@ module.exports = {
 
     pieces(o) {
         const engine = C.engineFocus(o);
-        const boostLbl = engine ? 'TIMING' : o.speedUnit === 'kmh' ? 'BOOST BAR' : 'BOOST PSI', powerLbl = engine ? 'TORQUE ' + C.torqueUnit(o).toUpperCase() : 'POWER KW';
+        const boostLbl = engine ? 'TIMING' : 'BOOST ' + C.pressLabel(o).toUpperCase(), powerLbl = engine ? 'TORQUE ' + C.torqueUnit(o).toUpperCase() : 'POWER KW';
         const right = () => [
             ...C.reading('fuel', 1672, 292, 216, 44, (d) => C.distText(o, d.frange), 'FUEL RANGE', white, lbl),
             ...C.reading('elec', 1672, 400, 216, 44, C.focus.range(o), C.focus.rangeLabel(o), engine ? white : (t) => ({ color: [t.ev, 1], glow: [t.ev, 0.2] }), lbl),
@@ -142,7 +142,7 @@ module.exports = {
                     C.text('speedUnit', 330, 356, 210, 26, C.speedUnit(o), lbl),
                 ],
                 tile('zero', 60, 480, 230, 120, zeroLabel(o), zeroText(o), acc),
-                tile('peak', 310, 480, 230, 120, engine ? 'PEAK BOOST' : 'PEAK POWER', peakText(o)),
+                tile('peak', 310, 480, 230, 120, engine ? 'PEAK BOOST ' + C.pressLabel(o).toUpperCase() : 'PEAK POWER', peakText(o)),
                 tile('oil', 1120, 200, 136, 110, 'OIL', (d) => C.tempText(o, d.oil)),
                 tile('coolant', 1268, 200, 136, 110, 'COOLANT', (d) => C.tempText(o, d.coolant)),
                 tile('boost', 1120, 470, 136, 110, boostLbl, boostNum(o)),
@@ -170,7 +170,7 @@ module.exports = {
                 ],
                 tile('zero', 1400, 262, 220, 200, zeroLabel(o), zeroText(o), acc, 96),
                 [C.text('zeroBest', 1414, 418, 192, 24, bestText(o), lbl, { align: 0, tracking: 0.06 })],
-                tile('peak', 1640, 262, 220, 200, engine ? 'PEAK BOOST' : 'PEAK POWER', peakText(o), white, 96),
+                tile('peak', 1640, 262, 220, 200, engine ? 'PEAK BOOST ' + C.pressLabel(o).toUpperCase() : 'PEAK POWER', peakText(o), white, 96),
                 [C.text('peakLbl2', 1654, 418, 192, 24, 'THIS DRIVE', lbl, { align: 0, tracking: 0.06 })],
                 tile('oil', X0, 262, 164, 135, 'OIL', (d) => C.tempText(o, d.oil)),
                 tile('coolant', X0, 417, 164, 135, 'COOLANT', (d) => C.tempText(o, d.coolant)),
@@ -193,7 +193,7 @@ module.exports = {
             ],
             tile('zero', 60, 420, 220, 200, zeroLabel(o), zeroText(o), acc, 96),
             [C.text('zeroBest', 74, 576, 192, 24, bestText(o), lbl, { align: 0, tracking: 0.06 })],
-            tile('peak', 300, 420, 220, 200, engine ? 'PEAK BOOST' : 'PEAK POWER', peakText(o), white, 96),
+            tile('peak', 300, 420, 220, 200, engine ? 'PEAK BOOST ' + C.pressLabel(o).toUpperCase() : 'PEAK POWER', peakText(o), white, 96),
             [C.text('peakLbl2', 314, 576, 192, 24, 'THIS DRIVE', lbl, { align: 0, tracking: 0.06 })],
             tile('oil', X0, 262, 164, 135, 'OIL', (d) => C.tempText(o, d.oil)),
             tile('coolant', X0, 417, 164, 135, 'COOLANT', (d) => C.tempText(o, d.coolant)),

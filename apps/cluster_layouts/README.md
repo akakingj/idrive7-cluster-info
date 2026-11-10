@@ -274,7 +274,7 @@ the KOMBI carries about 11.5 MB/s for everything, including the HMI's own conten
 2. In the Store, add the GitHub repository `eroobeeroo/idrive7-cluster-info` as a source. The head unit builds
    the apps from source; no token is needed.
 3. Open **Cluster Layouts** and press **Show on the cluster**. Settings: layout, colours (Auto follows S / M),
-   centre (readings, map or stock), mph / km/h, °F / °C, Nm / kgm, red zone, rev scale, the needle sweep at start.
+   centre (readings, map or stock), mph / km/h, °F / °C, Nm / kgm / lb-ft, psi / bar / kPa (or with the speed unit), red zone, rev scale, the needle sweep at start.
 
 ## Safety
 
