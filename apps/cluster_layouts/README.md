@@ -175,10 +175,12 @@ The M8's M view: the backdrop and the two bowed glass rev blades from bimmer-lab
 scale 0-8 with the numerals every 2000, the gear's number with the shift programme's stack beside it, the speed under
 the line, and the M8's flat gauges in its own manner (an icon over the bar, the unit at the right, a white fill over a
 thin track with its red zones, the scale's numbers under it; each temperature's reading in figures beside its icon,
-red when hot): in the cards the coolant and oil temperatures on the
+red when hot): in the cards the coolant and oil temperatures (the gearbox oil's in place of the oil on a petrol
+or diesel car) on the
 left, and on the right the battery's power (its first quarter, left of the 0, regeneration in green) and
 temperature on a plug-in hybrid, the boost and torque on a petrol or diesel car; along the bottom, as the M8's fuel
-gauge, long flat bars for the fuel level (left) and the charge (right), so the strip's own bars aren't added. In an
+gauge, long flat bars for the fuel level (left) and the charge with its percentage (right; the oil temperature on a
+petrol or diesel car), so the strip's own bars aren't added. In an
 electric drive the blades read the battery's power in kW: 0 at the 2000 mark, regeneration below it in green to the
 battery's limit, the power drawn above it to the blades' top. Its colours follow the drive mode as the M8's: silver
 glass in comfort, lit red in a sport mode, blue in ECO PRO and on electricity alone. With the Waze map the map goes

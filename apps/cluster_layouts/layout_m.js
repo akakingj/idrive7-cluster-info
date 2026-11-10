@@ -12,10 +12,11 @@
  * an M car (its KOMBI's two boxes in the middle) the gear and speed in those places too. Full screen without the
  * car's strip the right-hand setup rows stand clear of the KOMBI's own gear box (above and below it).
  *
- * The gauges are the M8's flat bars: in the cards the engine's temperatures on the left (coolant, oil), on the right
- * the battery's power (its first quarter regeneration, green) and temperature on a plug-in hybrid, the boost and
- * torque on a petrol or diesel car (or with Show: Engine); along the bottom, as the M8's fuel gauge, the fuel level
- * left and the charge right.
+ * The gauges are the M8's flat bars, each temperature and the charge in figures too: in the cards the engine's
+ * temperatures on the left (coolant, oil; the gearbox's oil on a petrol or diesel car), on the right the battery's
+ * power (its first quarter regeneration, green) and temperature on a plug-in hybrid, the boost and torque on a petrol
+ * or diesel car (or with Show: Engine); along the bottom, as the M8's fuel gauge, the fuel level left and the charge
+ * right (the oil on a petrol or diesel car).
  */
 const C = require('./layout_common');
 const B = require('./bimmer');
@@ -46,7 +47,7 @@ const BLADE = { x0: 515, w: 196, y: 36, h: 558, y0: 566, y8: 66, ym: 303, xm: 52
  * (MBAR_FS: a thin track, a thicker fill, red zones, a red start tick), the scale's labels under it. Each one
  * { icon, unit, labels: [[at 0..1 (-1: none), text] x3], value(d) 0..1, zero (where the fill starts), lo / hi (red
  * to, from), neg (the fill's colour below the zero), nums(d) (the labels' numbers now, if they move), read(d) (the
- * reading in figures, beside the icon: red in the hot zone) }.
+ * reading in figures, beside the icon: red in a red zone) }.
  */
 const KW_ZERO = C.KW_ZERO;   // the power: its first quarter regeneration (to the battery's limit), then to its top
 /** The power bar's top: eDrive Live's (layout_common.kwRange) up to 20 kW, so its middle label is a round number. */
@@ -57,14 +58,18 @@ function gauges(o, engine) {
     const isF = o.tempUnit !== 'c', us = o.speedUnit !== 'kmh';
     const tl = (c) => String(Math.round(C.tempIn(o, c) / 10) * 10), tu = '°' + (isF ? 'F' : 'C');
     const f01 = (v, a, b) => (isNum(v) ? Math.max(0, Math.min(1, (v - a) / (b - a))) : 0);
-    // the engine's temperatures: the coolant (70-130 C, hot from 118) and the oil (50-150 C, hot from 135)
-    // (each temperature's reading in figures beside its icon: rd)
+    // the engine's temperatures: the coolant (70-130 C, hot from 118), the oil (50-150 C, hot from 135), the
+    // gearbox oil (40-140 C, hot from 126); each one's reading in figures beside its icon (rd)
     const rd = (k) => (d) => (isNum(d[k]) ? String(Math.round(C.tempIn(o, d[k]))) : '--');
-    const left = [{ icon: 'therm', unit: tu, read: rd('coolant'), labels: [[0, tl(70)], [0.5, tl(100)], [1, tl(130)]], value: (d) => f01(d.coolant, 70, 130), zero: 0, lo: -1, hi: 0.8 },
-        { icon: 'oilcan', unit: tu, read: rd('oil'), labels: [[0, tl(50)], [0.5, tl(100)], [1, tl(150)]], value: (d) => f01(d.oil, 50, 150), zero: 0, lo: -1, hi: 0.85 }];
-    // along the bottom: the fuel (red under an eighth) and, on a plug-in hybrid, the charge (red under 10%)
+    const coolant = { icon: 'therm', unit: tu, read: rd('coolant'), labels: [[0, tl(70)], [0.5, tl(100)], [1, tl(130)]], value: (d) => f01(d.coolant, 70, 130), zero: 0, lo: -1, hi: 0.8 };
+    const oil = { icon: 'oilcan', unit: tu, read: rd('oil'), labels: [[0, tl(50)], [0.5, tl(100)], [1, tl(150)]], value: (d) => f01(d.oil, 50, 150), zero: 0, lo: -1, hi: 0.85 };
+    const gearbox = { icon: 'cog', unit: tu, read: rd('gearbox'), labels: [[0, tl(40)], [0.5, tl(90)], [1, tl(140)]], value: (d) => f01(d.gearbox, 40, 140), zero: 0, lo: -1, hi: 0.86 };
+    // along the bottom: the fuel (red under an eighth) and the charge in figures too (red under 10%); on a petrol or
+    // diesel car the oil there instead, and the gearbox's oil in the card in its place
+    const ice = o.vehicle === 'ice';
     const fuel = { icon: 'fuel', unit: '', labels: [[0, '0'], [-1, '0'], [1, '1']], value: (d) => (isNum(d.fuelPct) ? clamp01(d.fuelPct / 100) : 0), zero: 0, lo: 0.125, hi: 2 };
-    const charge = { icon: 'battery', unit: '%', labels: [[0, '0'], [0.5, '50'], [1, '100']], value: (d) => f01(d.soc, 0, 100), zero: 0, lo: 0.1, hi: 2 };
+    const charge = { icon: 'battery', unit: '%', read: (d) => (isNum(d.soc) ? String(Math.round(d.soc)) : '--'), labels: [[0, '0'], [0.5, '50'], [1, '100']], value: (d) => f01(d.soc, 0, 100), zero: 0, lo: 0.1, hi: 2 };
+    const left = ice ? [coolant, gearbox] : [coolant, oil];
     if (engine) {
         const nm = C.torqueUnit(o) === 'kgm';
         return {
@@ -72,7 +77,7 @@ function gauges(o, engine) {
             right: [{ icon: 'turbo', unit: us ? 'psi' : 'bar', labels: us ? [[0, '0'], [0.5, '20'], [1, '40']] : [[0, '0.0'], [0.5, '1.5'], [1, '3.0']],
                 value: (d) => (d.engineOn === false || !isNum(d.boostActual) ? 0 : us ? f01(d.boostActual * 14.5038, 0, 40) : f01(d.boostActual, 0, 3)), zero: 0, lo: -1, hi: 2 },
             { icon: 'torque', unit: nm ? 'kgm' : 'Nm', labels: nm ? [[0, '0'], [0.5, '25'], [1, '50']] : [[0, '0'], [0.5, '250'], [1, '500']], value: (d) => f01(d.torque, 0, 500), zero: 0, lo: -1, hi: 2 }],
-            bottom: [fuel].concat(o.vehicle === 'ice' ? [] : [charge]),
+            bottom: [fuel, ice ? oil : charge],
         };
     }
     return {
@@ -91,7 +96,7 @@ function gauges(o, engine) {
 function gauge(T, key, x, y, w, g) {
     const fg = B.role('fg'), sg = B.smallGlyphs('orb', 'm_scale');
     const nums = g.labels.map((l) => Number(l[1])), dec = g.labels.some((l) => /\./.test(l[1])) ? 1 : 0;
-    const readC = (t, d) => ({ color: [g.hi < 1 && g.value(d) >= g.hi ? t.red : t.fg, 1], glow: [t.fg, 0] });
+    const readC = (t, d) => ({ color: [(g.hi < 1 && g.value(d) >= g.hi) || (g.lo > 0 && g.value(d) <= g.lo) ? t.red : t.fg, 1], glow: [t.fg, 0] });
     return [B.icon(key + 'Icon', x - 4, y - 6, 38, 36, g.icon, 'fg')].concat(g.read ? [T(key + 'Read', [x + 46, y - 4, 100, 32], 'm_unit', g.read, readC, 'left')] : [],
         g.unit ? [T(key + 'Unit', [x + w - 90, y - 4, 90, 32], 'm_unit', g.unit, fg, 'right')] : [], [
         { key, kind: 'mbar', x: x - 6, y: y + 30, w: w + 10, h: 34 + sg.h + 2,
