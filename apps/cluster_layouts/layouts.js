@@ -3,7 +3,7 @@
  * layouts.js - the layouts this app offers, by id. A layout is one file, layout_<id>.js, next to this one
  * (the build ships only top-level .js files); list it here and in app.json's "layout" setting (README.md).
  */
-const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse'), require('./layout_gt3')];
+const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse'), require('./layout_gt3'), require('./layout_m'), require('./layout_sport'), require('./layout_classic')];
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
@@ -18,7 +18,7 @@ const { boxBezel, MAP, mCar } = C0;
  * (slim tiles, layout_digital_dash.js). The big rev counters of the dial layouts can't move out of the middle:
  * the boxes sit on their faces (tools/clearance.js lists them; test_engine.js allows only those, M_ON_DIAL).
  */
-const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl'];
+const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl', 'revR', 'revREdge', 'rpmRim'];
 const shiftAll = (keys, dy) => keys.reduce((m, k) => { m[k] = { dy }; return m; }, {});
 const M_MOVES = {
     pulse: {
@@ -52,6 +52,7 @@ const M_MOVES = {
     },
     // the display between the dials narrowed clear of the left box
     analog_sport: { info: { lcd: { squeeze: [584, 186] } } },
+    classic: { info: { lcd: { squeeze: [584, 186] } } },
     digital_round: { info: { card: { squeeze: [584, 186] } } },
     retro: { info: { coolantDial: { dx: -32 } } },
 };

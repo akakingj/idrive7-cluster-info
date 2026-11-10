@@ -5,7 +5,7 @@
  * so one small atlas draws a 40 px numeral and a 200 px gear alike. It is the only picture a layout sends
  * to the cluster, once (CELL_W x CELL_H a glyph, 32 to a row: about 200 KB).
  *
- * Baked from Barlow Semi Condensed (SIL OFL 1.1: NOTICE) by tools/bake_font.py into font_<family>.wad and font_baked.js,
+ * Baked from Barlow Semi Condensed (and, for 'wide', Michroma; SIL OFL 1.1: NOTICE) by tools/bake_font.py into font_<family>.wad and font_baked.js,
  * with upper and lower case. Without those files it is made at start from the kit's own font as before (drawn
  * large, then a Euclidean distance transform), upper case only.
  */
@@ -13,11 +13,11 @@ const fs = require('fs');
 const path = require('path');
 const { Canvas } = require('./kit/canvas');
 
-/* the baked atlases (font_bold / font_light), when present */
+/* the baked atlases (font_bold / font_light / font_wide), when present */
 const BAKED = {};
 let bakedMeta = {};
 try { bakedMeta = require('./font_baked'); } catch (e) { /* not baked */ }
-['bold', 'light'].forEach((f) => {
+['bold', 'light', 'wide'].forEach((f) => {
     try {
         const meta = bakedMeta[f];
         const px = fs.readFileSync(path.join(__dirname, 'font_' + f + '.wad'));
@@ -33,8 +33,8 @@ const SPREAD = 8;                   // the distance shown, in atlas pixels each 
 const SIZE = CELL_H * 0.98;          // the font size a glyph is drawn at, in atlas pixels
 /* digits and their signs from the kit's numeric face, letters from its bold one (the numeric face has none) */
 /* the kit's faces for digits and signs, and for letters, per family: 'bold' (strong numerals, bold capitals) or
- * 'light' (thin numerals, regular capitals) */
-const FAMILIES = { bold: { digits: 'num', letters: 'bold' }, light: { digits: 'light', letters: 'label' } };
+ * 'light' (thin numerals, regular capitals); 'wide' (Michroma, baked only: without its atlas, the bold faces) */
+const FAMILIES = { bold: { digits: 'num', letters: 'bold' }, light: { digits: 'light', letters: 'label' }, wide: { digits: 'num', letters: 'bold' } };
 const fontOf = (ch, fam) => { const f = FAMILIES[fam] || FAMILIES.bold; return /[0-9\-°.:\/ %+,]/.test(ch) && !(fam === 'light' && /[,]/.test(ch)) ? f.digits : f.letters; };
 
 /** Squared distance transform of one line (Felzenszwalb & Huttenlocher). f: 0 on a feature, big off it. */
@@ -89,7 +89,7 @@ function cell(ch, fam) {
 }
 
 const built = {};
-/** The atlas of a family ('bold' default, 'light'): { w, h, px (Buffer, one byte a pixel), cells, cols, rows, aspect, code(ch), adv }. */
+/** The atlas of a family ('bold' default, 'light', 'wide'): { w, h, px (Buffer, one byte a pixel), cells, cols, rows, aspect, code(ch), adv }. */
 function atlas(fam) {
     fam = FAMILIES[fam] ? fam : 'bold';
     if (built[fam]) return built[fam];

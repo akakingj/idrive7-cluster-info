@@ -4,11 +4,12 @@
 
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
 itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro, Track and
-Pulse) and GT3 (after bimmer-lab's), each in comfort, sport and efficient colours (following the selector's S / M
+Pulse), Classic M, and GT3, M and Sport (after bimmer-lab's), each in comfort, sport and efficient colours (following the selector's S / M
 programme, or chosen), each with three centres: the **readings**, **Waze** or the **stock** centre content.
 
 With the car's own bottom strip (the default) the strip shows the gear, the drive mode, the ranges, the time and the
-outside temperature, so no layout shows them a second time: the places the time and temperature had show the
+outside temperature, so no layout shows them a second time (M, Sport and Classic M never show the time, the outside
+temperature or the fuel range at all): the places the time and temperature had show the
 battery's temperature (intake air on a petrol or diesel car) and the xDrive split, and where a layout had its gear
 it now has the digital speed or another reading. With **Waze** in the centre, Waze on cluster (0.9.107 or later,
 [eroobeeroo/idrive-apps](https://github.com/eroobeeroo/idrive-apps)) draws the map in the layout's own panel,
@@ -164,6 +165,47 @@ or with Show: Engine, boost and the shift point take the battery's places.
 | Sport colours at the shift point |
 |---|
 | ![](../../docs/gt3_sport.png) |
+
+### M
+
+The M display, after bimmer-lab's M theme for Cluster Themes ([bimmer-lab/apps](https://github.com/bimmer-lab/apps),
+MIT): its arrangement and its look, in its wide face (Michroma, thickened, with Barlow for the units), redrawn with
+this app's engine and fitted to the G05 and a plug-in hybrid. Two bowed glass rev blades either side of the centre
+fill with the engine speed under a red marker (in an electric drive they read the battery's power, 0-100 kW); between
+them the gear, large, a rule and the speed, with the M stripes above. On the left the tyres (pressure and temperature
+at each corner) and the fuel in the corner; on the right the drive mode, the battery's power and the charge, each with
+a bar (boost and the coolant on a petrol or diesel car), and the oil temperature in the corner. Over the car's own
+bottom strip the mode's row is left out (the strip shows it) and the charge's row reads the battery's temperature.
+
+![M](../../docs/m.png)
+
+### Sport
+
+The sport display, after bimmer-lab's Sport theme ([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT), drawn
+as close to it as the glass allows, in the same wide face: a blue chevron on the left filling with the speed (0-100 in
+20s, then in 40s), a red one on the right with the engine speed (the battery's power in an electric drive), each with
+a white marker at the reading, a glowing outer line, a thin inner line and short yellow dashes in the shift zone; lines
+along the top and bottom join them. Between them the speed and the gear; inside the chevrons' feet the fuel and the oil
+temperature on slanted bars; under the bottom line a bar in two halves, the battery's power on blue and the battery's
+temperature on red (boost and the coolant on a petrol or diesel car). The chevrons are their own shader
+(`CHEVRON_FS`). Full screen, without the car's strip, the right chevron's top stands steeper in the gap between the
+KOMBI's dark box and its eDrive box, its numerals left out.
+
+![Sport](../../docs/sport.png)
+
+| Map in the centre |
+|---|
+| ![](../../docs/sport_map.png) |
+
+### Classic M
+
+Two round dials in the manner of BMW's M cars of the late 2000s at night: black faces, white numerals and ticks, a ring
+of cool white-blue light round each and red needles; a second scale inside the speedometer (km/h with mph, mph with
+km/h), the fuel in a small dial at its foot and the oil temperature in one at the tach's, and a narrow amber display
+between them with the speed and the battery's power (and the gear, full screen). An original drawing; in an electric
+drive the tach reads the battery's power.
+
+![Classic M](../../docs/classic.png)
 
 *(Drawn by `tools/preview.js` from the same shaders the cluster runs; the map is a stand-in for the real one.)*
 
@@ -326,6 +368,7 @@ dynamic text's `chars` sets how many glyphs it can show):
 | `panel` | a rounded card: gradient, top light, border | `params.u_box` (radius, border, light, opacity) |
 | `dial` | a round dial with its needle: face, metal bezel, ticks, red zone, numerals, backlight, value arc, shadow, hub, glass | `params.u_scale`, `u_arc`, `u_needle_dim`, `u_look`, `u_look2`; `value(d)`, `max` |
 | `band` | a gauge along an arc (or a straight bar): segments, gradient fill, red zone, glowing tip, marks, numerals | `params.u_geo`, `u_span`, `u_marks`, `u_red`; `value(d)` 0..1 |
+| `chevron` | a gauge along two straight segments (A, the corner B, C): track, gradient fill, white marker, glowing outer line, inner line, shift dashes, ticks, numerals beside it | `params.u_ab`, `u_c`, `u_lines`, `u_marks`, `u_nums`, `u_red`; `value(d)` 0..1 |
 | `text` | a line of glyphs with an optional glow | `text` (fixed, or `(d, t) => string`), `align`, `tracking` |
 
 ```js
@@ -345,7 +388,8 @@ module.exports = {
 
 `o` holds the options (units, red zone, rev scale, centre: `info`, `map` or `stock`); `d` the car's data
 (`speed` km/h, `rpm`, `gear`, `stage`, `mode`, `oil`, `coolant`, `outside` °C, `soc` %, `kw`, `erange` and
-`frange` km); `t` the layout's palette for the look now. Texts use the glyphs in `font.js`; add more there.
+`frange` km); `t` the layout's palette for the look now. Texts use the glyphs in `font.js`; add more there. A layout's
+`font` picks its face for every text and numeral: `'bold'` (the default), `'light'`, or `'wide'` (Michroma, M and Sport).
 
 Check it before the car:
 

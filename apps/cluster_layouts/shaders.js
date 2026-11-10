@@ -13,8 +13,8 @@
  * distance fields (0.5 at the outline), so numerals stay sharp at any size and can glow.
  *
  * Kinds (engine.js makes the layers): FLAT a colour; PANEL a rounded card with a gradient and an edge; DIAL a
- * round dial with its needle; BAND a gauge along an arc of a circle (segmented or solid); TEXT a line of
- * glyphs.
+ * round dial with its needle; BAND a gauge along an arc of a circle (segmented or solid); CHEVRON a gauge along
+ * two straight segments; TEXT a line of glyphs.
  */
 
 const HIGHP = '#ifdef GL_FRAGMENT_PRECISION_HIGH\nprecision highp float;\n#else\nprecision mediump float;\n#endif\n';
@@ -874,4 +874,122 @@ void main() {
     gl_FragColor = acc;
 }`;
 
-module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS, ROAD_FS };
+/**
+ * A chevron gauge (Sport, layout_sport.js): a band along two straight segments, A (the bottom, 0) to the corner B to
+ * C (the top, 1), the corner pointing away from the screen's middle (rounded outside, sharp inside). The band
+ * filled from A to u_value in a gradient over its track, a white marker across it at the value, a bright line along
+ * its outer edge with a glow, a thin line inside it past a gap, short dashes in u_redc along its inner edge from
+ * u_red (the shift zone), ticks and numerals
+ * outside it. Transparent elsewhere.
+ *   u_ab      A and B (px in this layer)
+ *   u_c       C, the band's thickness, the outer line's glow 0..1
+ *   u_lines   the outer line's width, the gap to the inner line, the inner line's width, where the scale ends
+ *             (0..1 of the path: its marks spread to there; the value and u_red are of the whole path)
+ *   u_marks   marks (0: none), numeral height px (0: none), numeral distance px from the centre line (outwards),
+ *             tick length px
+ *   u_nums    the numerals: marks 0..x at y apart, then z apart (200 at 120, 160, 200 over 0-100 in 20s); w: the
+ *             highest a numeral's centre may sit (px in the layer: clear of the glass's slanted corners)
+ */
+const CHEVRON_FS = `#version 100
+${HIGHP}${COMMON}${GLYPH}
+uniform vec2 u_size;
+uniform vec4 u_ab;
+uniform vec4 u_c;
+uniform vec4 u_lines;
+uniform vec4 u_marks;
+uniform vec4 u_nums;
+uniform float u_value;
+uniform float u_red;
+uniform float u_digit_adv;
+uniform vec3 u_track;
+uniform vec3 u_fill0;
+uniform vec3 u_fill1;
+uniform vec3 u_tip;
+uniform vec3 u_line;
+uniform vec3 u_redc;
+uniform vec3 u_num;
+varying vec2 v_uv;
+/* the outward normal of P0->P1 (away from m, the chevron's inside) */
+vec2 outward(vec2 p0, vec2 p1, vec2 m) {
+    vec2 u = normalize(p1 - p0), n = vec2(-u.y, u.x);
+    return dot(n, m - p0) > 0.0 ? -n : n;
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    vec2 A = u_ab.xy, B = u_ab.zw, Cp = u_c.xy;
+    float T = u_c.z, hw = T * 0.5;
+    vec2 mid = (A + Cp) * 0.5;
+    float L1 = length(B - A), L2 = length(Cp - B), L = L1 + L2;
+    vec2 u1 = (B - A) / L1, u2 = (Cp - B) / L2;
+    vec2 n1 = outward(A, B, mid), n2 = outward(B, Cp, mid);
+    float h1 = dot(p - A, u1), h2 = dot(p - B, u2);
+    vec2 q1 = A + u1 * clamp(h1, 0.0, L1), q2 = B + u2 * clamp(h2, 0.0, L2);
+    float d1 = length(p - q1), d2 = length(p - q2);
+    bool first = d1 <= d2;
+    float sd = first ? sign(dot(p - A, n1) + 0.0001) * d1 : sign(dot(p - B, n2) + 0.0001) * d2;   /* + outside */
+    float t = first ? clamp(h1, 0.0, L1) / L : (L1 + clamp(h2, 0.0, L2)) / L;
+    /* past either end (square ends): nothing of the band or its lines */
+    float beyond = first ? -h1 : h2 - L2;
+    float ends = clamp(0.5 - beyond, 0.0, 1.0), scaleEnd = u_lines.w > 0.0 ? u_lines.w : 1.0;
+    float v = clamp(u_value, 0.0, 1.0);
+    vec4 acc = vec4(0.0);
+    float ow = u_lines.x, oc = hw + ow * 0.5;
+    /* the outer line's glow, under everything */
+    float go = sd - oc;
+    acc = over(acc, u_line, exp(-go * go / (T * T * 0.18)) * u_c.w * 0.55 * ends);
+    /* the band: the track, the fill to the value, brighter across its middle */
+    float body = span(sd, -hw, hw) * ends;
+    float lit = clamp((v - t) * L + 0.5, 0.0, 1.0) * (v > 0.003 ? 1.0 : 0.0);
+    float across = 1.0 - abs(sd) / hw;
+    vec3 fc = mix(u_fill0, u_fill1, clamp(t / max(v, 0.001), 0.0, 1.0));
+    acc = over(acc, mix(u_track * (0.8 + 0.3 * (1.0 - across)), fc * (0.85 + 0.25 * across), lit), body);
+    /* the outer line and the inner one (dashed from u_red) */
+    acc = over(acc, u_line, span(sd, hw, hw + ow) * ends);
+    float i0 = -hw - u_lines.y - u_lines.z, i1 = -hw - u_lines.y;
+    bool hot = t >= u_red;
+    float dash = hot ? step(0.45, fract(t * L / 12.0)) : 1.0;
+    acc = over(acc, u_line, span(sd, i0, i1) * ends);
+    /* the shift zone: short dashes along the band's inner edge */
+    if (hot) acc = over(acc, u_redc, span(sd, -hw + 3.0, -hw + 7.0) * dash * 0.9 * ends);
+    /* the marker at the value */
+    float off = abs(t - v) * L;
+    acc = over(acc, u_tip, clamp(2.0 - off + 0.5, 0.0, 1.0) * span(sd, -hw, hw + ow) * (v > 0.003 ? 1.0 : 0.0));
+    /* ticks and numerals outside */
+    if (u_marks.x > 0.0) {
+        float m = floor(clamp(t / scaleEnd, 0.0, 1.0) * u_marks.x + 0.5), tm = m / u_marks.x * scaleEnd;
+        float r0 = hw + ow + 6.0;
+        /* (not round the corner's outside, where every point is nearest the corner itself) */
+        float inSeg = first ? step(h1, L1) : step(0.0, h2);
+        acc = over(acc, u_num, clamp(1.4 - abs(t - tm) * L + 0.5, 0.0, 1.0) * span(sd, r0, r0 + u_marks.w) * ends * inSeg);
+        if (u_marks.y > 0.0) {
+            /* the numerals stand out sideways from their marks, so a pixel's own mark is found by its height (the
+             * path climbs all the way: A at the bottom, C at the top), then that mark and its neighbours tried */
+            float sy = p.y >= B.y ? L1 * (A.y - p.y) / max(A.y - B.y, 0.001) : L1 + L2 * (B.y - p.y) / max(B.y - Cp.y, 0.001);
+            float m0 = floor(clamp(sy / L / scaleEnd, 0.0, 1.0) * u_marks.x + 0.5);
+            float side = n1.x + n2.x >= 0.0 ? 1.0 : -1.0;
+            float h = u_marks.y, adv = u_digit_adv;
+            for (int k = -1; k <= 1; k++) {
+                float mk = m0 + float(k);
+                if (mk < 0.0 || mk > u_marks.x) continue;
+                float tk = mk / u_marks.x * scaleEnd, sm = tk * L;
+                vec2 pm = sm <= L1 ? A + u1 * sm : B + u2 * (sm - L1);
+                /* (straight out sideways, as on a dial's edge; none above u_nums.w: the glass's slanted corners) */
+                vec2 pc = pm + vec2(side, 0.0) * u_marks.z;
+                pc.y = max(pc.y, u_nums.w);
+                float vk = mk <= u_nums.x ? mk * u_nums.y : u_nums.x * u_nums.y + (mk - u_nums.x) * u_nums.z;
+                float n = vk >= 99.5 ? 3.0 : vk >= 9.5 ? 2.0 : 1.0;
+                vec2 g = (p - pc) / h;
+                float x = g.x + n * adv * 0.5;
+                float i = floor(x / adv);
+                if (i >= 0.0 && i < n && abs(g.y) < 0.5) {
+                    float sd2 = sdf(digitOf(vk, i, n), vec2(x - (i + 0.5) * adv, g.y + 0.5));
+                    vec3 nc = abs(tk - v) < 0.5 * scaleEnd / u_marks.x ? u_tip : u_num;
+                    acc = over(acc, nc, smoothstep(0.5 - 2.0 / h, 0.5 + 2.0 / h, sd2));
+                }
+            }
+        }
+    }
+    gl_FragColor = acc;
+}`;
+
+module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS, ROAD_FS, CHEVRON_FS };

@@ -99,6 +99,8 @@ mgu.run({
         const start = () => startCluster({
             client: new ClusterRender('cluster_layouts'),
             layout: () => layout,
+            // (the glyphs: the layout's own family, M and Sport's wide one, else the bold)
+            font: () => layout.font || 'bold',
             options, log, live, data,
             theme: () => themeNow(),
             enabled: showing,

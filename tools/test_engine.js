@@ -64,7 +64,8 @@ LAYOUTS.forEach((L) => {
         const t = textsOf(s);
         ['D3', '50'].forEach((x) => assert(t.indexOf(x) >= 0, x + ' in ' + JSON.stringify(t)));
         const vals = s.engine._pieces().filter((p) => p.value !== null).map((p) => p.value);
-        assert(vals.some((v) => Math.abs(v - 50) < 0.3 || Math.abs(v - 50 / 160) < 0.003), 'speed ' + vals);
+        // (on the scale's 160 mph, or a layout's own scale: L._speedFrac)
+        assert(vals.some((v) => Math.abs(v - 50) < 0.3 || Math.abs(v - 50 / 160) < 0.003 || (L._speedFrac && Math.abs(v - L._speedFrac(50)) < 0.003)), 'speed ' + vals);
         s.stop();
     });
     check(id + ': S on the selector shows S3', () => {
@@ -84,8 +85,11 @@ LAYOUTS.forEach((L) => {
         const s = makeScene({ layout: id, options: { centre: 'map' }, data: { speed: 0 } });
         s.engine._tick();
         const over = s.engine._pieces().filter((l) => C.overMap(l));
-        // a band's rectangle may reach into the window as long as what it draws stays out: only bands may overlap
-        assert(over.every((l) => l.geo && l.geo[2] > 0), 'over the map: ' + over.map((l) => l.key).join(' '));
+        // a band's or a chevron's rectangle may reach into the window as long as what it draws stays out (a
+        // chevron's ink: clearance.js): only those may overlap
+        const { clashes } = require('./clearance');
+        const o = { speedUnit: 'mph', tempUnit: 'f', centre: 'map', redline: 7000, rpmMax: 8000 };
+        assert(over.every((l) => (l.geo && l.geo[2] > 0) || (l.kind === 'chevron' && clashes(l, o).indexOf('over the map') < 0)), 'over the map: ' + over.map((l) => l.key).join(' '));
         s.stop();
     });
     ['comfort', 'sport', 'efficient'].forEach((look) => check(id + ': ' + look + ' palette has every colour its pieces use', () => {
@@ -146,7 +150,7 @@ LAYOUTS.forEach((L) => ['phev', 'ice'].forEach((vehicle) => check(L.id + ' (' + 
     const o = { speedUnit: 'mph', tempUnit: 'f', centre: 'info', redline: 7000, rpmMax: 8000, vehicle, cluster: 'standard', bottomStrip: 'stock' };
     const ps = L.pieces(o), keys = ps.map((p) => p.key);
     assert(!keys.some((k) => /^(fuel|elec|frange|erange)(Lbl|L)?$/.test(k)), 'range numbers: ' + keys.filter((k) => /fuel|elec|range/.test(k)).join(' '));
-    assert.strictEqual(keys.indexOf('stripFuel') >= 0, L.id !== 'retro', 'fuel gauge');
+    assert.strictEqual(keys.indexOf('stripFuel') >= 0, L.stripFuel !== false, 'fuel gauge');   // (Retro and Sport: their own)
     assert.strictEqual(keys.indexOf('stripSoc') >= 0, vehicle !== 'ice', 'charge gauge');
     assert(ps.length <= 60, ps.length + ' pieces');
     const dials = ps.filter((p) => (p.key === 'speed' || p.key === 'rpm') && p.kind === 'dial');

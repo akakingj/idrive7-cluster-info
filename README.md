@@ -103,6 +103,6 @@ the parts below, which keep their own licenses.
   was written there; versions of it published in eroobeeroo/idrive7-apps before this repository remain under the MIT
   license they were published with.
 - The cluster renderer's Node client (`cluster_render_client.js`) is by Robert Nisipeanu, MPL-2.0, as its header says.
-- Fonts: the cluster apps' Barlow Semi Condensed atlases and the bundled Noto Sans SC glyphs are under the SIL Open
+- Fonts: the cluster apps' Barlow Semi Condensed and Michroma atlases and the bundled Noto Sans SC glyphs are under the SIL Open
   Font License 1.1 (`shared/NOTICE`, `kit/runtime/fonts/OFL-NotoSansSC.txt`).
 - The Chinese translation's credit is in [NOTICE.zh-CN.md](NOTICE.zh-CN.md). More in [NOTICE.md](NOTICE.md).
