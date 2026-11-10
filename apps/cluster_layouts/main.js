@@ -179,6 +179,10 @@ mgu.run({
                 // the car's own names for these (its service catalog): what to declare for the electric range
                 // and the local time
                 ['range and charge signals', sigList(found, n(40, 400))],
+                // the battery's power as the car itself sends it (the head unit's live consumption and energy flow
+                // come from somewhere): every power, current, consumption and energy-flow field the catalog has, to pick
+                // one that updates without being asked (eDrive Live's diagnostic reads are a few a second)
+                ['power and consumption signals', sigList(findSignals({ match: /power|leistung|current|strom|ampere|voltage|spannung|consum|verbrauch|efficien|energ|flow|momentan|instant|eboost|traction|antrieb|hvs|highvoltage|electricmachine|emachine/i }), n(150, 1500))],
                 // the cruise control's: the driving assistant's view services send nothing on this car (Nov 9 2026,
                 // "seen" empty), so the catalog's other candidates, to pick from
                 ['cruise control signals', sigList(findSignals({ match: /cruise|tempomat|geschwindigkeitsregel|wunschgeschw|speed.?limit|limiter|set.?speed|target.?speed|abstand|distance.?control|longitudinal.?(control|guid|function|assist)|\bacc\b|acc[A-Z_]|ACC|DCC|FGR/ }), n(30, 300))],
