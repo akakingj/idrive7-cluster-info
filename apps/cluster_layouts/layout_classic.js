@@ -17,7 +17,7 @@ const B = require('./bimmer');
 
 const PAL = {
     bg: '#000000', face: '#050506', ring: '#b9c4ff', ring2: '#5d63c8', bezel: '#2a2a2f', tick: '#f2f2f2', needle: '#ff3a1c', red: '#ff3a12',
-    text: '#f2f2f2', dim: '#9a9aa4', amber: '#ff6a1a', amberDim: '#c0501a', lcd0: '#3c1406', lcd1: '#260b03', lcdEdge: '#120604', regen: '#3ddc84', glow: '#ff6a1a',
+    text: '#f2f2f2', dim: '#9a9aa4', amber: '#ff6a1a', amberDim: '#c0501a', lcd0: '#2c0e04', lcd1: '#160602', lcdEdge: '#6a2a0e', lcdRule: '#5a2410', regen: '#3ddc84', glow: '#ff6a1a',
 };
 const pal = () => Object.assign({}, PAL);
 const isNum = C.isNum;
@@ -45,7 +45,7 @@ function dial(o, which, cx, cy, size) {
     const out = [{
         key: which, kind: 'e9x', x: cx - R, y: cy - R, w: size, h: size,
         params: {
-            u_scale: sc, u_arc: [A0, A1, red, speed ? 0.095 : 0.14],
+            u_scale: sc, u_arc: [A0, A1, red, speed ? (kmh ? 0.105 : 0.122) : 0.14],
             u_sub: [SUB[0], SUB[1], 2, 2], u_min: [0], u_zero: [0], u_regen: C.REGEN_RGB,
         },
         colors: (t) => ({ face: t.face, ring: t.ring, ring2: t.ring2, bezel: t.bezel, tick: t.tick, needle: t.needle, red: t.red }),
@@ -76,26 +76,30 @@ function dial(o, which, cx, cy, size) {
     return out;
 }
 
-/** The amber display between the dials: the battery's power (boost) above; the gear and the speed below, the charge
- * (the coolant) under them. gear: show the gear (not over the car's own strip, which shows it). */
-function display(o, X, Y, W, gear) {
+/**
+ * The amber display between the dials, one LCD as the E9x's: along the top the battery's power (the boost) with its
+ * label, and the gear at the right (gear: not over the car's own strip, which shows it); the speed large in the
+ * middle with its unit; the charge (the coolant) along the bottom; thin amber rules between. The M tricolour over it.
+ * X, Y, W, H: the LCD's box.
+ */
+function display(o, X, Y, W, H, gear) {
     const engine = C.engineFocus(o) || o.vehicle === 'ice';
-    const powerC = amber;   // (all amber, as the car's display)
-    const box = (key, x, y, w, h) => ({ key, kind: 'panel', x, y, w, h, params: { u_box: [8, 3, 0.1, 1] }, colors: (t) => ({ top: t.lcd0, bottom: t.lcd1, border: t.lcdEdge }) });
-    const uw = W - 40, ux = X + 20;
+    const k = H / 372;                                   // (laid out for 372 high)
+    const at = (y) => Y + Math.round(y * k), hh = (h) => Math.round(h * k);
+    const hS = Math.min(hh(150), Math.round(W * 0.46));   // the speed's height: as large as the width takes 3 figures
     const out = [
-        box('lcdTop', ux, Y, uw, 92),
-        C.text('kwNow', ux + 12, Y + 14, uw - 24, 44, C.focus.power(o), powerC),
-        C.text('kwNowLbl', ux + 12, Y + 62, uw - 24, 18, C.focus.powerLabel(o, true), amberDim, { tracking: 0.08 }),
-        box('lcd', X, Y + 110, W, 170),
+        // the M tricolour over the display, as on the E9x M3's dials
+        { key: 'mStripes', kind: 'mdash', x: X + W / 2 - 40, y: Y - 44, w: 84, h: 34, z: -90, params: { u_part: [4], u_off: [X + W / 2 - 40, Y - 44], u_mark: [X + W / 2 - 34, Y - 40, 1.2] }, colors: (t) => ({ red: t.red }) },
+        { key: 'lcd', kind: 'panel', x: X, y: Y, w: W, h: H, params: { u_box: [16, 3, 0.12, 1] }, colors: (t) => ({ top: t.lcd0, bottom: t.lcd1, border: t.lcdEdge }) },
+        C.text('kwNow', X + 18, at(16), gear ? W - 110 : W - 36, hh(44), C.focus.power(o), amber, { align: gear ? 0 : 0.5 }),
+        C.text('kwNowLbl', X + 18, at(64), W - 36, hh(17), C.focus.powerLabel(o, true), amberDim, { align: gear ? 0 : 0.5, tracking: 0.1 }),
+        Object.assign(C.flat('lcdRule0', X + 16, at(96), W - 32, 2, 'lcdRule'), { z: 1 }),
+        C.text('speedDigits', X + 10, at(102) + Math.round((hh(150) - hS) / 2), W - 20, hS, (d) => C.speedText(o, d), amber),
+        C.text('speedDigitsUnit', X + 10, at(252), W - 20, hh(24), C.speedUnit(o), amberDim, { tracking: 0.2 }),
+        Object.assign(C.flat('lcdRule1', X + 16, at(290), W - 32, 2, 'lcdRule'), { z: 1 }),
+        C.text('socTxt', X + 14, at(302), W - 28, hh(46), engine ? (d) => 'COOLANT ' + C.tempText(o, d.coolant) : (d) => 'CHARGE ' + C.socText(d), amber),
     ];
-    // the gear (left) and the speed with its unit under it
-    const gw = gear ? Math.round(W * 0.32) : 0;
-    if (gear) out.push(C.text('gear', X + 12, Y + 132, gw, 56, C.gearText, (t, d) => (C.gearText(d) === 'R' ? { color: [t.red, 1], glow: [t.red, 0.3] } : amber(t)), { align: 0 }));
-    out.push(C.text('speedDigits', X + gw + 16, Y + 122, W - gw - 32, 62, (d) => C.speedText(o, d), amber, { align: 1 }),
-        C.text('speedDigitsUnit', X + W - 76, Y + 186, 60, 20, C.speedUnit(o), amberDim, { align: 1 }),
-        C.flat('lcdRule', X + 14, Y + 212, W - 28, 2, 'amberDim'),
-        C.text('socTxt', X + 14, Y + 224, W - 28, 40, engine ? (d) => 'COOLANT ' + C.tempText(o, d.coolant) : (d) => 'CHARGE ' + C.socText(d), amber, { align: 0.5 }));
+    if (gear) out.push(C.text('gear', X + W - 92, at(14), 74, hh(66), C.gearText, (t, d) => (C.gearText(d) === 'R' ? { color: [t.red, 1], glow: [t.red, 0.3] } : amber(t)), { align: 1 }));
     return out;
 }
 
@@ -117,7 +121,7 @@ module.exports = {
         }
         if (strip && o.centre !== 'stock') {
             // the car's own bottom strip (the default): the two dials either side of the amber display, above the strip
-            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dial(o, 'speed', 468, 326, 600), dial(o, 'rpm', 1452, 326, 600), display(o, 820, 300, 280, false));
+            return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(dial(o, 'speed', 468, 326, 600), dial(o, 'rpm', 1452, 326, 600), display(o, 796, 236, 328, 380, false));
         }
         // full screen: the speedometer left, the tach left of the KOMBI's dark box (with the stock centre: small,
         // between them), the display between; right of the box the electric range and the charge
@@ -129,6 +133,6 @@ module.exports = {
             C.text('socRight', RX, 446, RW, 44, C.focus.charge(o), elec));
         if (stock) return list;
         // (an M car's KOMBI leaves a box at x 778-1054 from y 274: the display narrower, left of it)
-        return list.concat(C.mCar(o) ? display(o, 584, 230, 186, true) : display(o, 576, 230, 274, true));
+        return list.concat(C.mCar(o) ? display(o, 584, 214, 186, 420, true) : display(o, 574, 214, 278, 420, true));
     },
 };

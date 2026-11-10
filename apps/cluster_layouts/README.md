@@ -217,8 +217,8 @@ goes in the window between the brackets.
 The round dials of BMW's M cars of the late 2000s, drawn after a photo of an E92 M3's cluster at night: black faces,
 a ring of cool white-blue light round each scale (open across the bottom), white bars, dots and numerals (one scale:
 mph or km/h, as set), thin glowing red needles over dark hubs, the fuel gauge across the speedometer's foot
-and the oil temperature across the tach's, and the amber display between them with the battery's power, the speed
-and the charge (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). In
+and the oil temperature across the tach's, and one amber LCD between them under the M tricolour: the battery's
+power along the top, the speed in large figures in the middle, the charge along the bottom (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). In
 an electric drive the tach reads the battery's power in kW: 0 a quarter round, the ring green below it for
 regeneration. An original drawing.
 
