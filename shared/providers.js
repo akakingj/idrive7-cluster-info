@@ -88,7 +88,8 @@ function startProviders(log, opts) {
     return {
         /** { kw, soc, erange, frange, battery (°C) } (each undefined when no app shares it). */
         readings: () => ({
-            kw: first((e) => e.power && !e.power.old && e.power.kw),
+            // (its last reading too while a read or two missed, power.old: the gauge holds it, not dropping to 0)
+            kw: first((e) => e.power && e.power.kw),
             soc: first((e) => e.values && e.values.soc && e.values.soc.pct),
             erange: first((e) => e.values && e.values.erange && e.values.erange.km),
             frange: first((e) => e.values && e.values.frange && e.values.frange.km),
@@ -97,6 +98,9 @@ function startProviders(log, opts) {
         want,
         release,
         list: () => Object.keys(entries).map((id) => entries[id].app || id),
+        /** True while an app shares the battery's power at all (its file fresh), even when its last read missed
+         * (power.old): that app holds the battery unit, and another asking it as well only makes both miss. */
+        powerShared: () => Object.keys(entries).some((id) => !!entries[id].power),
         stop: () => { clearInterval(timer); if (watcher) { watcher.close(); watcher = null; } release(); },
     };
 }

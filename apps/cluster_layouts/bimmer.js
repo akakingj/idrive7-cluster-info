@@ -63,4 +63,13 @@ const ICON = { gauge: 0, shock: 1, wheel: 2, cog: 3, stack: 4, therm: 5, fuel: 6
 const icon = (key, x, y, w, h, name, colour) => ({ key, kind: 'licon', x, y, w, h, params: { u_icon: [ICON[name]] },
     colors: (t) => ({ color: [t[colour], 1] }) });
 
-module.exports = { FONTS, text, role, SPEED_SCALE, scaleFrac, redMarks, shiftNow, icon };
+/** A family's small-print glyphs for a shader's own numbers: [the figure 0's code, '-', '.', a figure's advance],
+ * ['-' advance, '.' advance] (glyph heights), and the glyph height px for one of bimmer-lab's fonts. */
+function smallGlyphs(fam, font) {
+    const m = BAKED[fam] || {}, chars = m.chars || '', adv = m.adv || [];
+    const at = (ch) => chars.indexOf(smallPrint(ch));
+    const f = FONTS[font] || [25];
+    return { glyph: [at('0'), at('-'), at('.'), adv[at('0')] || 0.5], glyph2: [adv[at('-')] || 0.3, adv[at('.')] || 0.2], h: Math.round(f[0] / (m.emLower || 0.92)) };
+}
+
+module.exports = { FONTS, text, smallGlyphs, role, SPEED_SCALE, scaleFrac, redMarks, shiftNow, icon };

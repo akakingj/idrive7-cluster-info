@@ -195,6 +195,18 @@ check('start-up sweep: played by the cluster (one animation per needle and band)
     assert(s.client.log.filter((m) => m.op === 'stop').length >= 4);
 });
 
+check('settle: shown only once wanted for a moment without a break (no flashing while the car comes up)', () => {
+    let live = true;
+    const s = makeScene({ data: { speed: 10 }, live: () => live, settleMs: 1200 });
+    const now = Date.now, at = (ms) => { Date.now = () => now() + ms; s.engine._tick(); };
+    try {
+        at(0); assert(!s.engine.status().shown, 'not at once');
+        at(600); live = false; at(700); live = true; at(800);
+        at(1900); assert(!s.engine.status().shown, 'a break starts the wait again');
+        at(2100); assert(s.engine.status().shown, 'shown after 1.2 s wanted');
+    } finally { Date.now = now; s.stop(); }
+});
+
 check('fail-safe: hidden while the car data is not live, shown again when it is; off when disabled', () => {
     let live = true, on = true;
     const s = makeScene({ data: { speed: 10 }, live: () => live, enabled: () => on });

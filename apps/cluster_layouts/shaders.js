@@ -995,18 +995,16 @@ void main() {
 /*
  * The M and Sport layouts' shaders (layout_m.js, layout_sport.js): bimmer-lab's Cluster Themes shaders (shared/shaders.js
  * of github.com/bimmer-lab/apps; MIT, Copyright (c) 2026 bimmer-lab: NOTICE), as they wrote them, so the two look as
- * theirs do on the car. MDASH the M backdrop (the cards, the centre line, the tyre block, the side dials, the M
- * stripes, the setup bars), MTACH an M rev blade, SDASH the whole Sport view (its engine speed here u_value, eased
+ * theirs do on the car. MDASH the M backdrop (the cards, the centre line, the side dials, the M stripes; here each
+ * part in its own small layer, u_part: theirs in one full-screen layer restarted the cluster), MTACH an M rev blade, SDASH the Sport view (here likewise in three layers: each bracket, the bottom line and strip; its engine speed here u_value, eased
  * by the engine as every gauge's). Their uniforms are set from the layouts' pieces (bimmer-lab's layout JSON's
  * numbers), the readings through dyn (60 a second, when they change).
  */
-const MDASH_FS = `// The M theme's whole backdrop in one cluster-render "effect" layer (GLSL ES 1.00), traced off a photo of a current
-// M8's cluster (design/photos/ref-m8-cluster.png, warped to 1920x720): black, with a near-black card either side whose
-// inner edge follows the rev blade, whose top edge is the photo's curve and whose bottom outer corner is a big round;
-// the centre line with its bright end caps, the tyre block's car glyph and dividers (the eight values are text widgets),
-// the two side dials over the cards (the photo's thin glass bracket, hatched bezel, red streaks), the tricolour mark
-// and the four setup level bars (slanted segments, the one at the level red, the rest grey, as the M8 draws them).
-// Positions in target px from the layout (hud.js). v_uv (0,0) is the top-left.
+const MDASH_FS = `// The M theme's backdrop (GLSL ES 1.00), traced off a photo of a current M8's cluster (design/photos/ref-m8-cluster.png,
+// warped to 1920x720): a near-black card either side whose inner edge follows the rev blade, whose top edge is the
+// photo's curve and whose bottom outer corner is a big round; the centre line with its bright end caps, the two side
+// dials over the cards (the photo's thin glass bracket, hatched bezel, red streaks) and the tricolour mark. (Here each
+// part in its own small layer, u_part, u_off; their tyre block and setup bars left out.) v_uv (0,0) is the top-left.
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -1022,20 +1020,12 @@ uniform float u_cardFill; // the card's grey level 0..1 (0 = black, outline only
 uniform vec4 u_blade;     // the left rev blade's outer edge: x at the bend, y of the bend, x per y px above / below it
 uniform vec2 u_bladeB;    // the bend's roundness px, the card's gap from the blade px
 uniform vec4 u_line;      // centre line x0, y, x1, cap length
-uniform vec3 u_tyre;      // the tyre block's car glyph: centre x, y, scale (0 = none)
 uniform vec4 u_gaugeL;    // left gauge centre x, y, radius, value 0..1
 uniform vec4 u_gaugeR;    // right gauge
 uniform vec3 u_mark;      // tricolour mark x, y, scale (0 = none)
 uniform vec3 u_red;
-uniform vec4 u_seg0;      // setup level bars x, y, w, h (a height of 0: none)
-uniform vec4 u_seg1;
-uniform vec4 u_seg2;
-uniform vec4 u_seg3;
-uniform vec4 u_segLit;    // the level per bar (1-based; 0 = none lit)
-uniform vec4 u_segMax;    // segments per bar
-uniform float u_segSlant; // px each segment leans
-uniform vec4 u_hole;      // the map window x, y, w, h px, already inset (w 0 = none): cut see-through over the map
-uniform float u_holeR;    // its corner radius px
+uniform vec2 u_off;       // (here) the layer's place on the panel: the parts are drawn each in its own small layer
+uniform float u_part;     // (here) which part: 1 the cards, 2 the centre line, 3 the side dials, 4 the stripes
 
 const float PI = 3.14159265;
 
@@ -1047,11 +1037,6 @@ vec4 over(vec4 top, vec4 under) {
 }
 float segD(vec2 p, vec2 a, vec2 b) { vec2 pa = p - a, ba = b - a; float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0); return length(pa - ba * h); }
 
-float sdRoundBox(vec2 p, vec4 r, float rad) {
-    vec2 c = r.xy + r.zw * 0.5;
-    vec2 q = abs(p - c) - r.zw * 0.5 + rad;
-    return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - rad;
-}
 float angOf(vec2 d) { float a = atan(d.x, -d.y); return a < 0.0 ? a + 2.0 * PI : a; }
 // the left blade's outer edge x at y (mtach's curve)
 float bladeX(float y) {
@@ -1092,36 +1077,6 @@ vec4 card(vec2 p, vec2 dial, float right, vec4 c) {
     float hide = 1.0 - smoothstep(118.0 * kd, 130.0 * kd, length(p - dial));
     c = over(vec4(0.5, 0.53, 0.58, 0.3 * cov(abs(d + 1.2) - 0.9) * (1.0 - hide)), c);
     return c;
-}
-// the tyre block: the car seen from above (outline body, four wheels) between the four readouts,
-// a divider under each front pair, a tick above and below the car
-vec4 tyreBlock(vec2 p, vec4 c) {
-    if (u_tyre.z <= 0.0) return c;
-    vec2 q = (p - u_tyre.xy) / u_tyre.z;
-    if (abs(q.x) > 80.0 || abs(q.y) > 70.0) return c;
-    float body = abs(sdRoundBox(q, vec4(-11.0, -20.0, 22.0, 40.0), 7.0)) - 1.1;
-    vec2 a = vec2(abs(q.x) - 13.5, abs(q.y) - 11.0);
-    float wheel = max(abs(a.x) - 2.2, abs(a.y) - 4.5);
-    float hl = min(segD(q, vec2(-68.0, 0.0), vec2(-28.0, 0.0)), segD(q, vec2(28.0, 0.0), vec2(68.0, 0.0))) - 0.9;
-    float vt = min(segD(q, vec2(0.0, -62.0), vec2(0.0, -42.0)), segD(q, vec2(0.0, 42.0), vec2(0.0, 62.0))) - 0.9;
-    c = over(vec4(0.72, 0.76, 0.82, cov(min(body, min(hl, vt)) * u_tyre.z)), c);
-    c = over(vec4(0.36, 0.78, 0.42, cov(wheel * u_tyre.z)), c);
-    return c;
-}
-// a setup level bar: s.y segments slanted, number lit (1-based) red, the rest grey
-vec4 segbar(vec2 p, vec4 b, vec2 s, vec4 c) {
-    if (b.w <= 0.0 || p.y < b.y - 1.0 || p.y > b.y + b.w + 1.0 || p.x < b.x - 1.0 || p.x > b.x + b.z + 1.0) return c;
-    float fy = (p.y - b.y) / b.w;
-    float x = p.x - b.x - u_segSlant * (1.0 - fy);
-    float gap = 10.0;
-    float slot = (b.z - u_segSlant + gap) / s.y;
-    float i = floor(x / slot);
-    float fx = x - i * slot;
-    float a = clamp(fx + 0.5, 0.0, 1.0) * clamp(slot - gap - fx + 0.5, 0.0, 1.0) * clamp(p.y - b.y + 0.5, 0.0, 1.0) * clamp(b.y + b.w - p.y + 0.5, 0.0, 1.0);
-    if (i < 0.0 || i >= s.y || a <= 0.0) return c;
-    bool on = abs(i + 1.0 - s.x) < 0.5;
-    vec3 col = on ? u_red * mix(0.85, 1.0, fx / (slot - gap)) : vec3(0.5, 0.53, 0.58);
-    return over(vec4(col, (on ? 1.0 : 0.8) * a), c);
 }
 
 // a side dial as the M8 draws it, traced off the photo: not a round gauge but a tall thin bracket cut from big
@@ -1182,43 +1137,27 @@ vec4 gauge(vec2 p, vec4 g, float zones, vec4 c) {
 }
 
 void main() {
-    vec2 p = v_uv * u_size;
-    vec2 pm = vec2(u_size.x - p.x, p.y);        // the right half, mirrored into the left frame
-    vec4 c = vec4(0.0, 0.0, 0.0, 1.0);           // black, as the M8
-
-    // the two cards: the left one as laid out, the right one its mirror
-    c = card(p, u_gaugeL.xy, 0.0, c);
-    c = card(pm, vec2(u_size.x - u_gaugeR.x, u_gaugeR.y), 1.0, c);
-
-    // centre line, bright caps at both ends
-    if (abs(p.y - u_line.y) < 6.0) {
+    // (here) one part in its own small layer, over the panel's own background (a flat): the whole backdrop in one
+    // full-screen layer, as theirs, restarted the cluster on the car (twice, 2026-11-09)
+    vec2 p = v_uv * u_size + u_off;
+    vec2 pm = vec2(1920.0 - p.x, p.y);          // the right half, mirrored into the left frame
+    vec4 c = vec4(0.0);
+    if (u_part < 1.5) {
+        // the two cards: the left one as laid out, the right one its mirror
+        if (p.x < 960.0) c = card(p, u_gaugeL.xy, 0.0, c);
+        else c = card(pm, vec2(1920.0 - u_gaugeR.x, u_gaugeR.y), 1.0, c);
+    } else if (u_part < 2.5) {
+        // centre line, bright caps at both ends
         c = over(vec4(0.62, 0.66, 0.73, 0.8 * cov(segD(p, u_line.xy, u_line.zy) - 1.6)), c);
         float l = segD(p, u_line.xy + vec2(6.0, 0.0), u_line.xy + vec2(u_line.w, 0.0)) - 2.0 - 1.2 * clamp((p.x - u_line.x) / u_line.w, 0.0, 1.0);
         float r = segD(p, u_line.zy - vec2(u_line.w, 0.0), u_line.zy - vec2(6.0, 0.0)) - 2.0 - 1.2 * clamp((u_line.z - p.x) / u_line.w, 0.0, 1.0);
         c = over(vec4(0.95, 0.96, 0.98, cov(min(l, r))), c);
-    }
-
-    c = tyreBlock(p, c);
-
-    // the side dials, traced off the M8 photo: the glass crescent, the fuel one as laid out, the oil one its mirror
-    c = gauge(p, u_gaugeL, 0.0, c);
-    c = gauge(pm, vec4(u_size.x - u_gaugeR.x, u_gaugeR.yzw), 1.0, c);
-
-    c = segbar(p, u_seg0, vec2(u_segLit.x, u_segMax.x), c);
-    c = segbar(p, u_seg1, vec2(u_segLit.y, u_segMax.y), c);
-    c = segbar(p, u_seg2, vec2(u_segLit.z, u_segMax.z), c);
-    c = segbar(p, u_seg3, vec2(u_segLit.w, u_segMax.w), c);
-
-    // the map window between the rev blades ("Show Waze map inside the theme"): a rounded see-through hole
-    if (u_hole.z > 0.0) {
-        vec2 hs = u_hole.zw * 0.5;
-        vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
-        float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
-        c.a *= clamp(hd + 0.5, 0.0, 1.0);
-    }
-
-    // tricolour mark: three slanted bars
-    if (u_mark.z > 0.0) {
+    } else if (u_part < 3.5) {
+        // the side dials, traced off the M8 photo: the fuel one as laid out, the oil one its mirror
+        if (p.x < 960.0) c = gauge(p, u_gaugeL, 0.0, c);
+        else c = gauge(pm, vec4(1920.0 - u_gaugeR.x, u_gaugeR.yzw), 1.0, c);
+    } else {
+        // tricolour mark: three slanted bars
         vec2 m = (p - u_mark.xy) / u_mark.z;
         if (m.y > -1.0 && m.y < 21.0 && m.x > -2.0 && m.x < 60.0) {
             float lx = m.x - 7.0 * (1.0 - m.y / 20.0);
@@ -1342,6 +1281,8 @@ uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
 uniform float u_holeR;    // the hole's corner radius px
 uniform vec4 u_strip;     // bottom strip: left end x, top y, height, slant px
 uniform float u_topEnd;   // the top lines run from the bracket to this x (left; mirrored on the right)
+uniform vec2 u_off;       // (here) the layer's place on the panel
+uniform float u_part;     // (here) 1 the speed bracket (and the fuel bar), 2 the rev bracket (and the oil bar), 3 the bottom line and strip
 uniform vec2 u_stripFill; // (here) the bottom strip's halves as gauges: the left half lit from its left end to x, the right from the middle to y (0..1; negative: all lit)
 
 const vec3 BLUE_LINE = vec3(0.36, 0.62, 1.0);
@@ -1440,6 +1381,7 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
 // (here) a flare where a bracket's outer line bends, as BMW's own: a soft glow and a four-pointed star
 vec4 flare(vec2 q, vec2 c, vec3 col, float s, vec4 acc) {
     vec2 d = abs(q - c);
+    if (d.x > s * 14.0 || d.y > s * 9.0) return acc;     // (nothing to add this far out: no work)
     float star = exp(-d.x / (s * 2.6)) * exp(-d.y / (s * 0.07)) + exp(-d.y / (s * 1.6)) * exp(-d.x / (s * 0.07));
     float glow = exp(-dot(d, d) / (s * s * 0.5));
     acc = over(vec4(col, glow * 0.55), acc);
@@ -1447,48 +1389,52 @@ vec4 flare(vec2 q, vec2 c, vec3 col, float s, vec4 acc) {
 }
 
 void main() {
-    vec2 p = v_uv * u_size;
-    vec2 pm = vec2(u_size.x - p.x, p.y);
-    vec4 c = vec4(0.0, 0.0, 0.0, 1.0);
-
-    c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
-    c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, RED_BAND, RED_LIT, RED_IN, c);
-    // (here) the flares at each bracket's bend and at its foot, where it meets the bottom line
-    c = flare(p, vec2(u_geo.w - 1.0, u_geo.y), BLUE_LINE, 26.0, c);
-    c = flare(pm, vec2(u_geo.w - 1.0, u_geo.y), RED_LINE, 26.0, c);
-    c = flare(p, vec2(outerX(u_geo.z), u_geo.z), BLUE_LINE, 18.0, c);
-    c = flare(pm, vec2(outerX(u_geo.z), u_geo.z), RED_LINE, 18.0, c);
-    // the map window: a rounded hole cut out of the backdrop and brackets, so the map shows clean; the fuel and
-    // oil bars come off while it is open (they ran across the map, car photos Nov 7 2026), the bottom strip stays
+    // (here) one part in its own layer, over the panel's own background (a flat): the left bracket, the right one, the
+    // bottom line and strip; the whole view in one full-screen layer, as theirs, is what restarted the cluster for M
+    vec2 p = v_uv * u_size + u_off;
+    vec2 pm = vec2(1920.0 - p.x, p.y);
+    vec4 c = vec4(0.0);
+    float hole = 1.0;
     if (u_hole.z > 0.0) {
         vec2 hs = u_hole.zw * 0.5;
         vec2 q = abs(p - (u_hole.xy + hs)) - (hs - vec2(u_holeR));
-        float hd = length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR;
-        c.a *= clamp(hd + 0.5, 0.0, 1.0);
-    } else {
-        c = bar(p, u_fuelSeg, u_fuel, 0.0, c);
-        c = bar(p, u_oilSeg, u_oil, 1.0, c);
+        hole = clamp(length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - u_holeR + 0.5, 0.0, 1.0);
     }
-    // the bottom line between the brackets
-    if (abs(p.y - u_geo.z) < 3.0 && abs(p.x - u_size.x * 0.5) < u_size.x * 0.5 - outerX(u_geo.z))
-        c = over(vec4(mix(BLUE_LINE, RED_LINE, step(u_size.x * 0.5, p.x)) * 0.8, cov(abs(p.y - u_geo.z) - 1.2)), c);
-
-    // bottom strip: slanted ends, blue left of the middle, red right, thin dividers
-    float sy = p.y - u_strip.y;
-    if (sy > -2.0 && sy < u_strip.z + 2.0) {
-        float xl = u_strip.x + (u_strip.z - sy) / u_strip.z * u_strip.w;     // left end leans in at the top
-        float dx = abs(p.x - u_size.x * 0.5), xe = u_size.x * 0.5 - xl;
-        float inside = cov(dx - xe) * cov(-sy) * cov(sy - u_strip.z);
-        float f = dx / xe;
-        vec3 sc = p.x < u_size.x * 0.5 ? mix(vec3(0.06, 0.2, 0.62), vec3(0.15, 0.36, 0.92), f) : mix(vec3(0.4, 0.05, 0.1), vec3(0.85, 0.1, 0.16), f);
-        // (here) each half a gauge: lit to its reading, dim beyond
-        float fl = p.x < u_size.x * 0.5 ? (p.x - xl) / xe : (p.x - u_size.x * 0.5) / xe;
-        float lv = p.x < u_size.x * 0.5 ? u_stripFill.x : u_stripFill.y;
-        if (lv >= 0.0) sc *= mix(0.32, 1.0, clamp((lv - fl) * xe + 0.5, 0.0, 1.0));
-        c = over(vec4(sc, 0.95 * inside), c);
-        float div = cov(abs(mod(p.x - (u_strip.z - sy) * 0.45, 150.0) - 75.0) - 73.8);
-        c = over(vec4(0.02, 0.03, 0.08, 0.5 * inside * div), c);
-        c = over(vec4(1.0, 1.0, 1.0, 0.25 * inside * cov(abs(sy) - 1.0)), c);
+    if (u_part < 1.5) {
+        c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
+        // (here) the flares at the bracket's bend and at its foot, where it meets the bottom line
+        c = flare(p, vec2(u_geo.w - 1.0, u_geo.y), BLUE_LINE, 26.0, c);
+        c = flare(p, vec2(outerX(u_geo.z), u_geo.z), BLUE_LINE, 18.0, c);
+        // the map window: the fuel bar off while it is open (it ran across the map, car photos Nov 7 2026)
+        if (u_hole.z <= 0.0) c = bar(p, u_fuelSeg, u_fuel, 0.0, c);
+        c.a *= hole;
+    } else if (u_part < 2.5) {
+        c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, RED_BAND, RED_LIT, RED_IN, c);
+        c = flare(pm, vec2(u_geo.w - 1.0, u_geo.y), RED_LINE, 26.0, c);
+        c = flare(pm, vec2(outerX(u_geo.z), u_geo.z), RED_LINE, 18.0, c);
+        if (u_hole.z <= 0.0) c = bar(p, u_oilSeg, u_oil, 1.0, c);
+        c.a *= hole;
+    } else {
+        // the bottom line between the brackets
+        if (abs(p.y - u_geo.z) < 3.0 && abs(p.x - 960.0) < 960.0 - outerX(u_geo.z))
+            c = over(vec4(mix(BLUE_LINE, RED_LINE, step(960.0, p.x)) * 0.8, cov(abs(p.y - u_geo.z) - 1.2)), c);
+        // bottom strip: slanted ends, blue left of the middle, red right, thin dividers
+        float sy = p.y - u_strip.y;
+        if (sy > -2.0 && sy < u_strip.z + 2.0) {
+            float xl = u_strip.x + (u_strip.z - sy) / u_strip.z * u_strip.w;     // left end leans in at the top
+            float dx = abs(p.x - 960.0), xe = 960.0 - xl;
+            float inside = cov(dx - xe) * cov(-sy) * cov(sy - u_strip.z);
+            float f = dx / xe;
+            vec3 sc = p.x < 960.0 ? mix(vec3(0.06, 0.2, 0.62), vec3(0.15, 0.36, 0.92), f) : mix(vec3(0.4, 0.05, 0.1), vec3(0.85, 0.1, 0.16), f);
+            // (here) each half a gauge: lit to its reading, dim beyond
+            float fl = p.x < 960.0 ? (p.x - xl) / xe : (p.x - 960.0) / xe;
+            float lv = p.x < 960.0 ? u_stripFill.x : u_stripFill.y;
+            if (lv >= 0.0) sc *= mix(0.32, 1.0, clamp((lv - fl) * xe + 0.5, 0.0, 1.0));
+            c = over(vec4(sc, 0.95 * inside), c);
+            float div = cov(abs(mod(p.x - (u_strip.z - sy) * 0.45, 150.0) - 75.0) - 73.8);
+            c = over(vec4(0.02, 0.03, 0.08, 0.5 * inside * div), c);
+            c = over(vec4(1.0, 1.0, 1.0, 0.25 * inside * cov(abs(sy) - 1.0)), c);
+        }
     }
     gl_FragColor = c;
 }
@@ -1701,7 +1647,7 @@ void main() {
  *   u_value   the reading 0..1 (eased)   u_zero   where the fill starts 0..1   u_zones   red to x, red from y
  */
 const MBAR_FS = `#version 100
-${HIGHP}${COMMON}
+${HIGHP}${COMMON}${GLYPH}
 uniform vec2 u_size;
 uniform float u_value;
 uniform float u_zero;
@@ -1711,10 +1657,42 @@ uniform vec3 u_fill;
 uniform vec3 u_neg;
 uniform vec3 u_track;
 uniform vec3 u_redc;
+uniform vec4 u_lab;       /* the scale's three numbers (at u_marks.x, .y, .z: the first left-aligned at the start, the
+                           * last right-aligned at the end, the middle one centred), w: decimals */
+uniform vec4 u_glyph;     /* their glyphs: the figure 0's code, '-', '.', a figure's advance (glyph heights) */
+uniform vec2 u_glyph2;    /* '-' and '.' advances; */
+uniform float u_labH;     /* the numbers' glyph height px (0: none), their cells' top 34 px below the layer's top */
 varying vec2 v_uv;
+/* one of the scale's numbers: its coverage at p, the number v with dec decimals, its cell's top-left reference x
+ * (align 0 left, 0.5 centre, 1 right), y top */
+float label(vec2 p, float v, float dec, float x, float al, float y) {
+    float h = u_labH, neg = v < -0.0001 ? 1.0 : 0.0, av = abs(v);
+    float sc = dec > 0.5 ? (dec > 1.5 ? 100.0 : 10.0) : 1.0;
+    float iv = floor(av * sc + 0.5);
+    float ip = floor(iv / sc + 0.0001), fp = iv - ip * sc;
+    float ni = ip >= 99.5 ? 3.0 : ip >= 9.5 ? 2.0 : 1.0;
+    float w = neg * u_glyph2.x + ni * u_glyph.w + (dec > 0.5 ? u_glyph2.y + dec * u_glyph.w : 0.0);
+    float pen = x / h - w * al;
+    vec2 g = vec2(p.x / h, (p.y - y) / h);
+    if (g.y < 0.0 || g.y > 1.0 || g.x < pen - 0.2 || g.x > pen + w + 0.2) return 0.0;
+    float best = 0.0;
+    for (int k = 0; k < 7; k++) {
+        float fk = float(k), code = -1.0, adv = u_glyph.w;
+        float slot = fk - neg;
+        if (fk < neg) { code = u_glyph.y; adv = u_glyph2.x; }
+        else if (slot < ni) code = u_glyph.x + digitOf(ip, slot, ni);
+        else if (dec > 0.5 && slot < ni + 0.5) { code = u_glyph.z; adv = u_glyph2.y; }
+        else if (dec > 0.5 && slot < ni + 1.0 + dec) code = u_glyph.x + digitOf(fp, slot - ni - 1.0, dec);
+        else break;
+        float s = sdf(code, vec2(g.x - (pen + adv * 0.5), g.y));
+        best = max(best, s);
+        pen += adv;
+    }
+    return smoothstep(0.5 - 1.5 / h, 0.5 + 1.5 / h, best);
+}
 void main() {
     vec2 p = v_uv * u_size;
-    float x0 = 6.0, x1 = u_size.x - 4.0, L = x1 - x0, yc = u_size.y * 0.5 + 2.0;
+    float x0 = 6.0, x1 = u_size.x - 4.0, L = x1 - x0, yc = 13.0;
     float sl = 0.7;                                    /* the slant: x per y px (the top leans right) */
     float xs = p.x + (p.y - yc) * sl;                  /* x on the slant */
     float t = (xs - x0) / L;
@@ -1740,6 +1718,14 @@ void main() {
     /* the start tick: short, red, slanted the other way */
     float tx = p.x - x0 + (p.y - yc) * 0.75;
     acc = over(acc, u_redc, clamp(1.6 - abs(tx) + 0.5, 0.0, 1.0) * span(p.y, yc - 11.0, yc + 4.5));
+    /* the scale's numbers under it (one layer: not three text pieces each) */
+    if (u_labH > 0.0 && p.y > 30.0) {
+        float ly = 34.0, n = 0.0;
+        n = max(n, label(p, u_lab.x, u_lab.w, x0 + u_marks.x * L, u_marks.x <= 0.0 ? 0.0 : 0.5, ly));
+        if (u_marks.y >= 0.0) n = max(n, label(p, u_lab.y, u_lab.w, x0 + u_marks.y * L, u_marks.y >= 1.0 ? 1.0 : 0.5, ly));
+        if (u_marks.z >= 0.0) n = max(n, label(p, u_lab.z, u_lab.w, x0 + u_marks.z * L, u_marks.z >= 1.0 ? 1.0 : 0.5, ly));
+        acc = over(acc, u_fill, n);
+    }
     gl_FragColor = acc;
 }`;
 

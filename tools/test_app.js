@@ -21,7 +21,8 @@ Module._load = function (req, parent, isMain) {
 };
 process.env.SOMEIP_CATALOG = '/nonexistent/someip-interfaces.json';
 process.env.CLUSTER_INFO_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-'));
-process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
+process.env.CLUSTER_SETTLE_MS = '0';
+    process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
 const SPEC = JSON.parse(fs.readFileSync(path.join(APP, 'app.json'), 'utf8'));
 const themes = require(path.join(KIT, 'themes'));
 const { Recorder: Canvas } = require(path.join(KIT, 'record'));

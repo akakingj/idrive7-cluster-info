@@ -61,22 +61,20 @@ function sideGauges(o, engine) {
             { icon: 'battery', unit: '%', labels: [[0, '0'], [0.5, '50'], [1, '100']], value: (d) => f01(d.soc, 0, 100), zero: 0, lo: 0.1, hi: 2 }],
     };
 }
-/** One side gauge at (x, y), w wide: its pieces. */
+/** One side gauge at (x, y), w wide: its icon, its unit and its bar (MBAR_FS, which draws the scale's numbers too:
+ * one layer, not three text pieces). */
 function gauge(T, key, x, y, w, g) {
-    const fg = B.role('fg');
-    const out = [
+    const fg = B.role('fg'), sg = B.smallGlyphs('orb', 'm_scale');
+    const nums = g.labels.map((l) => Number(l[1])), dec = g.labels.some((l) => /\./.test(l[1])) ? 1 : 0;
+    return [
         B.icon(key + 'Icon', x - 4, y - 6, 38, 36, g.icon, 'fg'),
         T(key + 'Unit', [x + w - 90, y - 4, 90, 32], 'm_unit', g.unit, fg, 'right'),
-        { key, kind: 'mbar', x: x - 6, y: y + 30, w: w + 10, h: 26,
-            params: { u_zero: [g.zero], u_zones: [g.lo, g.hi, 0, 0], u_marks: g.labels.map((l) => l[0]).concat([-1]).slice(0, 4) },
+        { key, kind: 'mbar', x: x - 6, y: y + 30, w: w + 10, h: 34 + sg.h + 2,
+            params: { u_zero: [g.zero], u_zones: [g.lo, g.hi, 0, 0], u_marks: g.labels.map((l) => l[0]).concat([-1]).slice(0, 4),
+                u_lab: nums.concat([dec]), u_glyph: sg.glyph, u_glyph2: sg.glyph2, u_labH: [sg.h] },
             colors: (t) => ({ fill: t.fg, neg: t.ev, track: t.track, redc: t.red }),
             value: g.value, max: 1, sweep: true },
     ];
-    g.labels.forEach(([at, txt], i) => {
-        const lw = 70, lx = at <= 0 ? x : at >= 1 ? x + w - lw : x + at * w - lw / 2;
-        out.push(T(key + 'L' + i, [Math.round(lx), y + 56, lw, 26], 'm_scale', txt, fg, at <= 0 ? 'left' : at >= 1 ? 'right' : 'center'));
-    });
-    return out;
 }
 
 module.exports = {
@@ -100,24 +98,30 @@ module.exports = {
         const fg = B.role('fg'), dim = B.role('dim'), faint = B.role('faint');
         // the side gauges, as the M8's (its coolant and boost bars, left): engine left, eDrive right
         const G = sideGauges(o, engine);
-        const rows = strip ? [222, 324] : [110, 174];   // (the right ones; full screen above the KOMBI's gear box, from y 262)
-        const list = [{
-            key: 'backdrop', kind: 'mdash', x: 0, y: 0, w: 1920, h: strip ? C.STRIP_Y : 720,
-            params: {
-                u_card: [170, 536, 186, 48], u_cardTop: [0.00130995, -1.417868, 468.53], u_cardCutR: [700, 106.2, 565.9], u_cardFill: [0.055],
-                u_blade: [528, 303, 1.0684, 0.5434], u_bladeB: [135, 15], u_line: [742, 376, 1181, 55], u_tyre: [0, 0, 0],
-                // (the M stripes where the M8's badge is, below the camera's cowl)
-                u_mark: [926, 150, 1.2],
-                u_seg0: [0, 0, 0, 0], u_seg1: [0, 0, 0, 0], u_seg2: [0, 0, 0, 0], u_seg3: [0, 0, 0, 0], u_segMax: [1, 1, 1, 1], u_segSlant: [6],
-                u_hole: map ? [WINDOW.x, WINDOW.y, WINDOW.w, WINDOW.h] : stock ? [566, 0, 538, 720] : [0, 0, 0, 0], u_holeR: [map ? 24 : 0],
-            },
-            colors: (t) => ({ red: t.red }),
-            dyn: (d) => ({
-                u_gaugeL: [244, 430, 144, isNum(d.fuelPct) ? Math.round(clamp01(d.fuelPct / 100) * 200) / 200 : 0],
-                u_gaugeR: [1654, 430, 144, isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 200) / 200 : 0],
-                u_segLit: [0, 0, 0, 0],
-            }),
-        }];
+        const rows = strip ? [222, 324] : [104, 462];   // (the right ones; full screen above and below the KOMBI's gear box, y 262-454)
+        // the background: black (with the map, round its window; the stock centre, round its area)
+        const W2 = WINDOW, around = [{ x: 0, y: 0, w: 1920, h: W2.y }, { x: 0, y: W2.y + W2.h, w: 1920, h: 720 - W2.y - W2.h },
+            { x: 0, y: W2.y, w: W2.x, h: W2.h }, { x: W2.x + W2.w, y: W2.y, w: 1920 - W2.x - W2.w, h: W2.h }];
+        const list = map ? around.map((r, i) => C.flat('bg' + i, r.x, r.y, r.w, r.h, 'bg'))
+            : stock ? [C.flat('bgL', 0, 0, 566, 720, 'bg'), C.flat('bgR', 1104, 0, 816, 720, 'bg')] : [C.flat('bg', 0, 0, 1920, 720, 'bg')];
+        /*
+         * The backdrop's parts (MDASH_FS), each in its own small layer, never one over the whole panel: theirs in one
+         * full-screen layer restarted the cluster on the car (twice). The cards, the centre line, the side dials and
+         * the stripes; over the background (a flat, z -100), the dials over the cards.
+         */
+        const md = { u_card: [170, 536, 186, 48], u_cardTop: [0.00130995, -1.417868, 468.53], u_cardCutR: [700, 106.2, 565.9], u_cardFill: [0.055],
+            u_blade: [528, 303, 1.0684, 0.5434], u_bladeB: [135, 15], u_line: [742, 376, 1181, 55], u_mark: [926, 150, 1.2],
+            u_gaugeL: [244, 430, 144, 0], u_gaugeR: [1654, 430, 144, 0] };
+        const part = (key, n, x, y, w, h, extra) => Object.assign({ key, kind: 'mdash', x, y, w, h, z: -90, params: Object.assign({ u_part: [n], u_off: [x, y] }, md),
+            colors: (t) => ({ red: t.red }) }, extra || {});
+        const dials = (d) => ({
+            u_gaugeL: [244, 430, 144, isNum(d.fuelPct) ? Math.round(clamp01(d.fuelPct / 100) * 200) / 200 : 0],
+            u_gaugeR: [1654, 430, 144, isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 200) / 200 : 0],
+        });
+        list.push(part('cardL', 1, 160, 78, 492, 466), part('cardR', 1, 1268, 78, 492, 466),
+            part('fuelDial', 3, 58, 390, 284, 214, { z: -80, dyn: dials }), part('oilDial', 3, 1578, 390, 284, 214, { z: -80, dyn: dials }));
+        // (with the map the centre line and the stripes would be under its window: left out)
+        if (!map) list.push(part('centreLine', 2, 734, 366, 456, 22), part('mStripes', 4, 918, 144, 84, 36));
         // the rev blades: the engine speed, eased by the engine
         const blade = (key, right) => ({
             key, kind: 'mtach', x: right ? 1920 - BLADE.x0 - BLADE.w : BLADE.x0, y: BLADE.y, w: BLADE.w, h: BLADE.h,
@@ -135,7 +139,7 @@ module.exports = {
             const w = n === 8 ? 30 : 60;
             list.push(T('nl' + n, [cx - w / 2, y, w, 38], 'm_num', String(n), fg, 'center'), T('nr' + n, [1920 - cx - w / 2, y, w, 38], 'm_num', String(n), fg, 'center'));
         });
-        list.push(T('rpmUnit', [1342, 546, 228, 29], 'm_tiny', '1/min x1000', faint, 'left'));
+        list.push(T('rpmUnit', [1342, strip ? 546 : 590, 228, 29], 'm_tiny', '1/min x1000', faint, 'left'));   // (full screen under the lower right gauge)
         // the gear and the speed: in the middle, or (the map, an M car's boxes) their map-up places
         // the gear: its number (P, R, N as letters), the shift programme's stack beside it, as the M8's
         const gearNum = (d) => { const g = C.gearText(d); return /^[DSM]\d+$/.test(g) ? g.slice(1) : g; };
@@ -162,7 +166,7 @@ module.exports = {
             T('oilHi', [1670, 425, 103, 28], 'm_gl', tl(150), fg, 'right'), T('oilMid', [1630, 483, 103, 28], 'm_gl', tl(100), fg, 'right'),
             T('oilLo', [1558, 532, 103, 28], 'm_gl', tl(50), fg, 'right'), T('oilUnit', [1798, 514, 48, 29], 'm_tiny', '°' + (o.tempUnit === 'c' ? 'C' : 'F'), dim, 'left'),
             B.icon('oilIcon', 1784, 544, 38, 22, 'oilcan', 'dim'));
-        if (stock) return list.filter((p) => /^(mdash|mtach)$/.test(p.kind) || p.x + p.w <= 566 || p.x >= 1104);
+        if (stock) return list.filter((p) => p.kind === 'mtach' || /^card/.test(p.key) || p.x + p.w <= 566 || p.x >= 1104);
         return list;
     },
 };

@@ -53,6 +53,7 @@ function makeScene(opts) {
         client, log: opts.log || nullLog,
         layout: () => byId(opts.layout || 'analog_sport'),
         font: () => byId(opts.layout || 'analog_sport').font || 'bold',
+        settleMs: opts.settleMs || 0,
         options: () => o,
         theme: () => Object.assign({}, byId(opts.layout || 'analog_sport').palette(opts.look || 'comfort'),
             opts.black ? { bg: '#000000', bgTop: '#000000', bgBottom: '#000000', face0: '#000000', face1: '#000000' } : {}),

@@ -36,6 +36,16 @@ check('another app\'s wanted.json (Cluster Info\'s) is left alone', () => {
     fs.unlinkSync(W);
 });
 
+check('eDrive Live\'s power: its last reading held through a missed read (old), and the battery left to it', () => {
+    const f = path.join(dir, 'edrive2.json');
+    fs.writeFileSync(f, JSON.stringify({ v: 1, t: Date.now(), app: 'eDrive Live', power: { kw: 23.5, old: true }, values: {} }));
+    const p = startProviders(log, { dir, scanMs: 60000, watch: false });
+    try {
+        assert.strictEqual(p.readings().kw, 23.5);
+        assert.strictEqual(p.powerShared(), true);
+    } finally { p.stop(); fs.unlinkSync(f); }
+});
+
 check('a leftover of ours is removed at start', () => {
     fs.writeFileSync(W, JSON.stringify({ t: 1 }));
     const p = startProviders(log, { dir, scanMs: 60000 });

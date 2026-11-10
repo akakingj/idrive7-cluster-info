@@ -47,14 +47,16 @@ const MIN_GAP_MS = 4;        // a reading's update at most this soon after the l
 const EPS = 0.0015;          // a value moving less than this (of its max) is not sent
 const SWEEP_MS = 700;        // up, then as long back down
 const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, flag: SH.FLAG_FS, eagles: SH.EAGLE_FS, fireworks: SH.FIREWORKS_FS, road: SH.ROAD_FS, chevron: SH.CHEVRON_FS, mdash: SH.MDASH_FS, mtach: SH.MTACH_FS, sdash: SH.SDASH_FS, licon: SH.LICON_FS, e9x: SH.E9X_FS, mbar: SH.MBAR_FS };
-const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, chevron: 0, mdash: -150, sdash: -150, mtach: 0, e9x: 0, mbar: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20, licon: 20 };
+const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, chevron: 0, mdash: -90, sdash: -150, mtach: 0, e9x: 0, mbar: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20, licon: 20 };
 /* kinds that animate (u_time): their clock sent from the head unit every frame (values()) */
 const TIMED = { car: true, leds: true, flag: true, eagles: true, fireworks: true };
 const HIST = 64;
 /* the most layers up at once while one set replaces another (the service allows 64 an app) */
 const MAX_AT_ONCE = 60;
 /* car data gone for this long before the layout hides (a moment's gap would drop and resend every layer) */
-const LIVE_GRACE_MS = 1500;                 // a trend line's samples
+const LIVE_GRACE_MS = 1500;
+/* wanted this long without a break before the layers go up (a start, or after being hidden) */
+const SETTLE_MS = 1200;
 
 /**
  * startCluster(opts) -> { rebuild(), recolour(), stop(), status() }
@@ -63,6 +65,7 @@ const LIVE_GRACE_MS = 1500;                 // a trend line's samples
  *   opts.theme()  the colours now (the layout's palette for the look now)
  *   opts.data()   the car's data now ({ speed km/h, rpm, gear, stage, mode, oil, coolant, demo, ... })
  *   opts.live(), opts.enabled(), opts.sweep() (optional: the start-up sweep wanted), opts.log
+ *   opts.settleMs how long the layout must be wanted before it shows (SETTLE_MS; the tests: 0)
  *   opts.font() the glyph family ('bold' default, 'light'; font.js), opts.target ('panel' default, 'map', 'hud'), opts.contend (take the slot over from the stock HMI), opts.z
  *   (added to every layer's z: above another client's layers on the same target)
  */
@@ -148,7 +151,7 @@ function startCluster(opts) {
             if (!ref) { warnOnce('piece ' + s.key + ' refused here'); return; }
             const p = { ref, spec: s, colours: '', text: null, value: 0, sent: -1, anim: 0, dyn: '', histSent: -1, vis, clock: !!(s.time || TIMED[s.kind]) };
             if (s.kind !== 'flat') cr.uniform(ref, 'u_size', [s.w, s.h]);
-            if (s.kind === 'dial' || s.kind === 'band' || s.kind === 'chevron' || s.kind === 'e9x' || s.kind === 'text') {
+            if (s.kind === 'dial' || s.kind === 'band' || s.kind === 'chevron' || s.kind === 'e9x' || s.kind === 'mbar' || s.kind === 'text') {
                 cr.bind(ref, 'u_font', fontRef);
                 cr.uniform(ref, 'u_font_cells', fontCells());
                 cr.uniform(ref, 'u_digit_adv', [Math.round(font.digitAdvance(fam()) * 1000) / 1000]);
@@ -297,12 +300,20 @@ function startCluster(opts) {
     }
 
     let lastText = 0;
-    let notLiveAt = 0;
+    let notLiveAt = 0, wantSince = 0;
+    const settleMs = opts.settleMs !== undefined ? opts.settleMs : process.env.CLUSTER_SETTLE_MS !== undefined ? Number(process.env.CLUSTER_SETTLE_MS) : SETTLE_MS;   // (the variable: the app tests)
     function tick() {
         // off: at once; the car's data stale: after LIVE_GRACE_MS, so a gap does not drop and resend everything
         const on = !!opts.enabled(), live = !!opts.live(), now0 = Date.now();
         if (live) notLiveAt = 0; else if (!notLiveAt) notLiveAt = now0;
-        const want = on && (live || (shown && now0 - notLiveAt < LIVE_GRACE_MS)), was = shown;
+        let want = on && (live || (shown && now0 - notLiveAt < LIVE_GRACE_MS));
+        const was = shown;
+        // not shown yet: only once it has been wanted for SETTLE_MS without a break. At the head unit's start the
+        // car's services come up one by one and the other app's presence settles: showing at the first moment it
+        // was wanted put the layers up and took them down again a few times before they stayed (Cluster Centre
+        // flashing, 2026-11-09)
+        if (!want) wantSince = 0; else if (!wantSince) wantSince = now0;
+        if (want && !shown && now0 - wantSince < settleMs) want = false;
         setShown(want);
         if (want && !was) return;   // just built, with everything sent
         if (Date.now() - statusAt > 3000) { statusAt = Date.now(); try { cr.status(); } catch (e) { /* not connected yet */ } }
@@ -316,8 +327,20 @@ function startCluster(opts) {
         if (now - lastText >= 1000 / TEXT_HZ - 4) { lastText = now; samples(d); update(false, d); }
     }
 
-    /** The pieces made again (the options changed); the glyph atlas stays. */
-    function rebuild() { specs = withCredit(opts.layout().pieces(opts.options())); if (built) { endSweep(); build(); } }
+    /** What the cluster is sent for a set of pieces (functions aside): two equal sets need no new layers. */
+    const sigOf = (list) => JSON.stringify(list.map((x) => [x.key, x.kind, x.x, x.y, x.w, x.h, x.z, x.group || '', x.params || {}, typeof x.text === 'string' ? x.text : '',
+        x.align, x.tracking, !!x.value, x.max || 0]));
+    /** The pieces made again (the options changed); the glyph atlas stays. Pieces that come out the same (a driver
+     * profile's settings applied again, a setting that changes nothing on the cluster) are only refreshed: the
+     * layers aren't taken down and put up again (the cluster flashed). */
+    function rebuild() {
+        const next = withCredit(opts.layout().pieces(opts.options()));
+        const same = sigOf(next) === sigOf(specs);
+        specs = next;
+        if (!built) return;
+        if (same) { pieces.forEach((p, i) => { p.spec = specs.find((x) => x.key === p.spec.key && x.kind === p.spec.kind) || p.spec; }); update(true); return; }
+        endSweep(); build();
+    }
     /** Another group (page): its pieces built, the new page up before the old one goes. */
     function setGroup(g) {
         if (g === group) return;

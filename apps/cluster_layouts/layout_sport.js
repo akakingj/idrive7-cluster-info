@@ -58,29 +58,43 @@ module.exports = {
         // electric M cars (i4 M50) do (0-100 kW as 0-100%)
         const elec = (d) => C.electric(o, d);
         const ePower = (d) => (isNum(d.kw) ? clamp01(d.kw / 100) : 0);
-        // (the stock centre full screen: its area, x 566-1104, cut out of the view and left to the cluster)
-        const list = [];
-        list.push({
-            key: 'sport', kind: 'sdash', x: 0, y: 0, w: 1920, h: strip ? C.STRIP_Y : 720,
-            params: {
-                u_geo: [Y(120), Y(317), Y(620), 180], u_k: [0.58 / SY, 0.75 / SY, 30], u_w: [40], u_inner: [59],
-                u_scale: [Y(610), Y(155)], u_ticks: [8, 7], u_redFrom: [redFrom], u_orange: [orange],
-                u_fuelSeg: [412, Y(440), 537, Y(607)], u_oilSeg: [1508, Y(440), 1383, Y(607)],
-                // the map window cut see-through (the map drawn in it); the stock centre's area likewise
-                u_hole: map ? [WINDOW.x, WINDOW.y, WINDOW.w, WINDOW.h] : stock ? [566, 0, 538, 720] : [0, 0, 0, 0], u_holeR: [map ? 28 : 0],
-                u_strip: [425, Y(632), Math.round(42 * SY), 26], u_topEnd: [726],
-            },
-            // the engine speed eased by the engine (u_value); the speed, the fuel and the oil as they come
-            value: (d) => (elec(d) ? ePower(d) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
-            dyn: (d) => ({
-                u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : redFrom], u_orange: [elec(d) ? 2 : orange],
-                // the bottom bar's halves as gauges: the charge (boost) and the battery's power (coolant)
-                u_stripFill: engine ? [C.boostFrac(d), C.tempFrac(d.coolant)] : [isNum(d.soc) ? clamp01(d.soc / 100) : 0, isNum(d.kw) ? clamp01(Math.abs(d.kw) / 100) : 0],
+        // the background: black (with the map round its window; the stock centre full screen round its area, x 566-1104)
+        const W2 = WINDOW, around = [{ x: 0, y: 0, w: 1920, h: W2.y }, { x: 0, y: W2.y + W2.h, w: 1920, h: 720 - W2.y - W2.h },
+            { x: 0, y: W2.y, w: W2.x, h: W2.h }, { x: W2.x + W2.w, y: W2.y, w: 1920 - W2.x - W2.w, h: W2.h }];
+        const list = map ? around.map((r, i) => C.flat('bg' + i, r.x, r.y, r.w, r.h, 'bg'))
+            : stock ? [C.flat('bgL', 0, 0, 566, 720, 'bg'), C.flat('bgR', 1104, 0, 816, 720, 'bg')] : [C.flat('bg', 0, 0, 1920, 720, 'bg')];
+        /*
+         * The view (SDASH_FS) in three layers, never one over the whole panel (M's backdrop in one full-screen layer
+         * restarted the cluster): the speed bracket with the fuel bar, the rev bracket with the oil bar, the bottom line
+         * and strip. Each over the background.
+         */
+        const sd = {
+            u_geo: [Y(120), Y(317), Y(620), 180], u_k: [0.58 / SY, 0.75 / SY, 30], u_w: [40], u_inner: [59],
+            u_scale: [Y(610), Y(155)], u_ticks: [8, 7], u_redFrom: [redFrom], u_orange: [orange],
+            u_fuelSeg: [412, Y(440), 537, Y(607)], u_oilSeg: [1508, Y(440), 1383, Y(607)],
+            // the map window cut see-through (the map drawn in it); the stock centre's area likewise
+            u_hole: map ? [WINDOW.x, WINDOW.y, WINDOW.w, WINDOW.h] : stock ? [566, 0, 538, 720] : [0, 0, 0, 0], u_holeR: [map ? 28 : 0],
+            u_strip: [425, Y(632), Math.round(42 * SY), 26], u_topEnd: [726],
+            u_speed: [0], u_fuel: [0], u_oil: [0], u_stripFill: [0, 0],
+        };
+        const bottom = strip ? C.STRIP_Y : 646;
+        const part = (key, n, x, y, w, h, extra) => Object.assign({ key, kind: 'sdash', x, y, w, h, z: -90, params: Object.assign({ u_part: [n], u_off: [x, y] }, sd) }, extra);
+        list.push(
+            part('speedSide', 1, 0, 60, 760, bottom - 60, { dyn: (d) => ({
                 u_speed: [isNum(d.speed) ? Math.round(B.scaleFrac(C.speedIn(o, d.speed), scale) * 500) / 500 : 0],
                 u_fuel: [isNum(d.fuelPct) ? Math.round(clamp01(d.fuelPct / 100) * 500) / 500 : 0],
-                u_oil: [isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 500) / 500 : 0],
-            }),
-        });
+            }) }),
+            // the engine speed eased by the engine (u_value), or in an electric drive the battery's power
+            part('revSide', 2, 1160, 60, 760, bottom - 60, {
+                value: (d) => (elec(d) ? ePower(d) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
+                dyn: (d) => ({
+                    u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : redFrom], u_orange: [elec(d) ? 2 : orange],
+                    u_oil: [isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 500) / 500 : 0],
+                }) }),
+            // the bottom bar's halves as gauges: the charge and the battery's power (boost and the coolant)
+            part('bottomBar', 3, 400, Y(620) - 6, 1120, bottom - Y(620) + 6, { dyn: (d) => ({
+                u_stripFill: engine ? [C.boostFrac(d), C.tempFrac(d.coolant)] : [isNum(d.soc) ? clamp01(d.soc / 100) : 0, isNum(d.kw) ? clamp01(Math.abs(d.kw) / 100) : 0],
+            }) }));
         // the scales' numerals: the one nearest the reading white (theirs: "near")
         const nearSpeed = (i) => (t, d) => {
             const v = isNum(d.speed) ? B.scaleFrac(C.speedIn(o, d.speed), scale) * 8 : -9;
@@ -146,7 +160,7 @@ module.exports = {
             B.icon('barIconR', 992, Y(638), 30, 30, halves[1].icon, 'fg'),
             T('barR', [1026, 640, 100, 26], 's_val', halves[1].txt, B.role('fg'), 'right'),
             T('barRUnit', [1132, 640, 60, 29], 's_unit', halves[1].unit, B.role('dim'), 'left'));
-        if (stock) return list.filter((p) => p.kind === 'flat' || p.kind === 'sdash' || p.x + p.w <= 566 || p.x >= 1104);
+        if (stock) return list.filter((p) => p.kind === 'flat' || /^(speedSide|revSide)$/.test(p.key) || p.x + p.w <= 566 || p.x >= 1104);
         return list;
     },
 };

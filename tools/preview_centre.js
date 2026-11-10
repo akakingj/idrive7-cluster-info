@@ -45,7 +45,8 @@ if (require.main === module) {
     const o = { look: a.look, fit: a.fit, pages: [a.page], style: a.style, accent: a.accent, size: 'normal', units, warn: {}, shift: { on: true, from: 4000, at: 6200 }, badge: true,
         custom: [{ style: 'bar', slots: ['oil', 'coolant', 'gearbox', 'iat'] }, { style: 'arc', slots: ['soc', 'kw', 'splitRear', 'boostActual'] }] };
     const d = sample(a);
-    const e = startCluster({ client, log: { info() {}, warn: (m) => console.error(m) }, target: 'map', contend: true, layout: () => ({ id: 'centre', pieces }), options: () => o,
+    const e = startCluster({ client, log: { info() {}, warn: (m) => console.error(m) }, target: 'map', contend: true,
+        settleMs: 0, layout: () => ({ id: 'centre', pieces }), options: () => o,
         theme: () => palette(a.accent, a.look), font: () => (a.look === 'modern' ? 'bold' : 'light'), data: () => d, live: () => true, enabled: () => true, sweep: () => false, group: a.page });
     // two minutes of driving first, on a made-up clock, so the trend lines have a past
     const now = Date.now, t0 = now(), base = Object.assign({}, d);

@@ -83,7 +83,8 @@ check('every reading has a view in each unit set', () => {
 check('pages are groups: a page is built alone, a layer a piece; a switch puts the new page up before the old goes', () => {
     const { startCluster } = require(path.join(APP, 'engine'));
     const client = new FakeClient(), d = sample({ rpm: 3000 });
-    const e = startCluster({ client, log: { info() {}, warn(m) { throw new Error(m); } }, target: 'map', contend: true, z: 200, layout: () => ({ id: 'c', pieces }), options: () => opts(),
+    const e = startCluster({ client, log: { info() {}, warn(m) { throw new Error(m); } }, target: 'map', contend: true, z: 200,
+        settleMs: 0, layout: () => ({ id: 'c', pieces }), options: () => opts(),
         theme: () => palette('blue'), data: () => d, live: () => true, enabled: () => true, sweep: () => false, group: 'temps' });
     e._tick();
     const effects = () => Array.from(client.layers.values()).filter((l) => l.kind === 'effect');
@@ -118,6 +119,7 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
 (async () => {
     process.env.SOMEIP_CATALOG = '/nonexistent/someip-interfaces.json';
     process.env.CLUSTER_INFO_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-'));
+    process.env.CLUSTER_SETTLE_MS = '0';
     process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
     let app = null, client = null;
     const load = Module._load;

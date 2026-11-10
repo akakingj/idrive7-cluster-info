@@ -374,10 +374,13 @@ function startData(ctx, opts) {
                 }
             }
         } catch (e) { const m = String(e); if (m !== lastPollErr) { lastPollErr = m; log.warn('diagnostic poll: ' + m); } }   // (once per distinct error)
-        // the battery's current read again at once (the link's own round trip sets the pace, ~10-20 a second);
-        // a little longer with other reads in the turn, so the link isn't held without a gap
+        // the battery's current read again soon (about 10 a second); a little longer with other reads in the turn,
+        // so the link isn't held without a gap
         // (nothing asked, the link down or every reading resting after failures: no spinning, a look again soon)
-        timer = setTimeout(poll, !turn.length ? 2000 : !asked ? 250 : turn.length === 1 && turn[0] === 'hv' ? 5 : 40);
+        // (the battery's current: at most 10 a second, the unit's own pace, and less after misses: a unit that stops
+        // answering is given room, not asked harder)
+        const hvMiss = fail.hv || 0;
+        timer = setTimeout(poll, !turn.length ? 2000 : !asked ? 250 : turn.length === 1 && turn[0] === 'hv' ? (hvMiss >= 3 ? 1000 : hvMiss ? 250 : 100) : 60);
     }
     timer = setTimeout(poll, 1500);
 
@@ -385,7 +388,11 @@ function startData(ctx, opts) {
     const providers = startProviders(log, { onChange: () => fresh_() });
     // eDrive Live reads the battery's power already and shares each reading: this app then doesn't read it too
     // (two apps asking the battery unit in turn halves the rate each gets)
-    function sharedKw() { return isNum(providers.readings().kw); }
+    /* eDrive Live sharing the power (its file fresh, even with its last read missed): the battery unit is left to it.
+     * Asking it from here as well, while its reads miss, made both miss: two apps reading the same unit back to back
+     * till neither got an answer (eDrive Live 'NO REPLY', the kW frozen). Not shared for 30 s: read here. */
+    let sharedAt = 0;
+    function sharedKw() { if (providers.powerShared()) sharedAt = Date.now(); return Date.now() - sharedAt < 30000; }
     // while shown, ask eDrive Live to share; otherwise let go at once (providers.js: Cluster Info's file)
     setInterval(() => { if (opts && opts.shown && opts.shown()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
 
