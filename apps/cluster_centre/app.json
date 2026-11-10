@@ -2,7 +2,7 @@
   "id": "cluster_centre",
   "title": "Cluster Centre",
   "description": "Pages of engine, gearbox and eDrive data, warm-up, turbo cool-down, a shift light and a 0-60 timer in the centre of the factory cluster, drawn by the cluster itself",
-  "version": "0.8.1",
+  "version": "0.9.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9M",
@@ -29,7 +29,8 @@
       "statusSwitchDriveDynamicSport2": "rs",
       "statusVehicleDynamicEngine": "rs",
       "statusActualValueTorque2": "rs",
-      "statusFESVehicleDynamicSwitchHMI": "rs"
+      "statusFESVehicleDynamicSwitchHMI": "rs",
+      "displaySportPowertrain": "s"
     },
     "de.bmw.infrastructure.analytics.BasicDataSet": {
       "_optional": "gearbox oil temperature",
@@ -59,7 +60,8 @@
     },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
       "_optional": "the battery's temperature (eDrive Live's is used instead)",
-      "statusBatteryTemperature": "rs"
+      "statusBatteryTemperature": "rs",
+      "statusPowerRelativHybrid": "rs"
     },
     "de.bmw.infotainment.KombiIF": {
       "_optional": "the car's power distribution figures, and its fuel and electric ranges",
@@ -74,6 +76,14 @@
     "de.bmw.chassis.SteeringAngle": {
       "_optional": "the steering angle (the Steering page)",
       "ActualSteeringAngleDriver": "s"
+    },
+    "de.bmw.infotainment.resetlogic.ResetLogic": {
+      "_optional": "the consumption now (a candidate for the fast kW)",
+      "currentConsumption": "rs"
+    },
+    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
+      "_optional": "the cruise control's set speed",
+      "functionalLibraryData": "rs"
     }
   },
   "screens": [

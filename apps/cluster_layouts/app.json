@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.27.2",
+  "version": "0.28.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -29,7 +29,8 @@
       "statusSwitchDriveDynamicSport2": "rs",
       "statusVehicleDynamicEngine": "rs",
       "statusActualValueTorque2": "rs",
-      "statusFESVehicleDynamicSwitchHMI": "rs"
+      "statusFESVehicleDynamicSwitchHMI": "rs",
+      "displaySportPowertrain": "s"
     },
     "de.bmw.infrastructure.analytics.BasicDataSet": {
       "_optional": "gearbox oil temperature",
@@ -59,7 +60,8 @@
     },
     "de.bmw.infotainment.drivingexcitement.Efficiencytainment2": {
       "_optional": "the battery's temperature (eDrive Live's is used instead)",
-      "statusBatteryTemperature": "rs"
+      "statusBatteryTemperature": "rs",
+      "statusPowerRelativHybrid": "rs"
     },
     "de.bmw.infotainment.KombiIF": {
       "_optional": "the car's power distribution figures, and its fuel and electric ranges",
@@ -103,6 +105,14 @@
     "de.bmw.infotainment.vehicle.Vehicle": {
       "statusNewCurrentUnitsStatusExt": "rs",
       "_optional": "the car's pressure unit, for the tyre pressures"
+    },
+    "de.bmw.infotainment.resetlogic.ResetLogic": {
+      "_optional": "the consumption now (a candidate for the fast kW)",
+      "currentConsumption": "rs"
+    },
+    "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
+      "_optional": "the cruise control's set speed",
+      "functionalLibraryData": "rs"
     }
   },
   "screens": [

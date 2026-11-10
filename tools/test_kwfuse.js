@@ -52,4 +52,34 @@ check('no reading for 4 s: nothing shown', () => {
     assert.strictEqual(f.now(5000), null);
 });
 
+check('the cluster\'s own power meter (relative %): fitted, chosen over the wheels, closer still', () => {
+    const f = createFuse();
+    let v = 20, last = null, errF = 0, errM = 0, n = 0, used = {};
+    const queue = [];
+    for (let ms = 0; ms <= 40000; ms += 20) {
+        const t = ms / 1000, a = accelAt(t % 30);
+        v = Math.max(0, v + a * 9.80665 * 0.02 * 3.6);
+        const truth = trueKw(wheelKw(v, a));
+        f.sample(ms, { speed: v, gLong: a + (Math.random() - 0.5) * 0.04, engineOn: false });
+        // the meter: % of 83 kW driving, % of 60 kW recuperating, every 100 ms
+        if (ms % 100 === 0) f.signal(ms, 'rel', { drive: Math.max(0, truth) / 0.83, recup: Math.max(0, -truth) / 0.6 });
+        if (ms % 333 < 20) queue.push([ms + 300, ms, truth]);
+        while (queue.length && queue[0][0] <= ms) { const q = queue.shift(); f.measure(q[1], q[2]); last = q[2]; }
+        const r = f.now(ms);
+        if (ms > 15000 && r) { errF += Math.abs(r.kw - truth); errM += Math.abs(last - truth); n++; used[r.model] = (used[r.model] || 0) + 1; }
+    }
+    const fit = f.fit().models.rel;
+    console.log('     mean error: readings ' + (errM / n).toFixed(2) + ' kW, fused ' + (errF / n).toFixed(2) + ' kW; models ' + JSON.stringify(used) + '; rel ' + JSON.stringify(fit.theta));
+    assert(used.rel > n * 0.9, 'the meter\'s model shows');
+    assert(errF / n < 1.5, 'within 1.5 kW: ' + errF / n);
+});
+
+check('a car signal gone quiet (no notification for 2.5 s): not used', () => {
+    const f = createFuse();
+    for (let i = 0; i < 30; i++) { f.sample(i * 100, { speed: 50, gLong: 0, engineOn: false }); f.signal(i * 100, 'rel', { drive: 10, recup: 0 }); f.measure(i * 100, 9); }
+    assert.strictEqual(f.now(3000).model, 'rel');
+    f.sample(6000, { speed: 50, gLong: 0, engineOn: false }); f.measure(6000, 9);
+    assert.strictEqual(f.now(6000).model, 'wheel');
+});
+
 console.log(ok + ' passed');

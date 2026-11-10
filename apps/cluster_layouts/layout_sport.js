@@ -144,8 +144,11 @@ module.exports = {
                 T('gear', [1415, strip ? 230 : 182, 200, 65], 's_gear', gearNum, gearC, 'center'));
         } else {
             // the cruise control, as BMW's: its icon grey, green while it holds a speed, with the set speed beside it
-            const acc = (d) => !!(d.dap && d.dap.acc && d.dap.acc.on);
-            const setTxt = (d) => (acc(d) && isNum(d.dap.acc.set) ? String(Math.round(d.dap.acc.set)) : '');
+            // the driving assistant's view (sends nothing on this G05), else the head-up display's set speed (data.js cruise)
+            const dapOn = (d) => !!(d.dap && d.dap.acc && d.dap.acc.on);
+            const acc = (d) => dapOn(d) || !!(d.cruise && d.cruise.on);
+            const setOf = (d) => (dapOn(d) ? d.dap.acc.set : d.cruise ? d.cruise.set : undefined);
+            const setTxt = (d) => (acc(d) && isNum(setOf(d)) ? String(Math.round(setOf(d))) : '');
             list.push(Object.assign(B.icon('accIcon', 490, Y(182), 40, 36, 'gauge', 'faint'), { colors: (t, d) => ({ color: [acc(d) ? t.regen : t.faint, 1] }) }),
                 T('accSet', [538, 182, 110, 29], 's_val', setTxt, (t) => ({ color: [t.regen, 1], glow: [t.regen, 0] }), 'left'),
                 T('speedDigits', [420, 313, 280, 68], 's_speed', (d) => C.speedText(o, d), B.role('fg'), 'center'),

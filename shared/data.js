@@ -174,6 +174,11 @@ function startData(ctx, opts) {
     // (each signal's raw value is kept for the Signals screen; only its first 20 distinct values go to the log,
     // since the boost pressure in it changes all the time while driving)
     const raw = {}, rawLogged = {};
+    // the battery's power between eDrive Live's readings (kwfuse.js; below: "the battery's power"), fed by the car's
+    // own power signals here as they come
+    const fuse = createFuse();
+    /** A number under one of these field names however deep, or null; the binding's invalid values (all bits set) left out. */
+    const numAt = (v, key) => { const e = entries(v, key)[0]; const n = e ? e[key] : undefined; return isNum(n) && n !== 255 && n !== 65535 && n !== 0x7FFF && n !== 0xFFFFFFFF ? n : null; };
     const fes = (name) => (v) => {
         const j = JSON.stringify(v);
         if (raw[name] !== j) {
@@ -201,6 +206,12 @@ function startData(ctx, opts) {
             if (isNum(b) && Date.now() - (x.at.boostRawLog || 0) > 60000) { x.at.boostRawLog = Date.now(); log.info('raw FES boost ' + b + ' (max ' + (v && v.displayMaximumValueBoostPressure) + ')'); }
             if (isNum(b) && b >= 0 && b < Math.min(254, invalid)) put('boostCar', b * factor + (bs.offset || 0));
         },
+        // the sport display's powertrain power (+ driving, - recuperating; its unit fitted in kwfuse.js)
+        displaySportPowertrain: (v) => {
+            fes('displaySportPowertrain')(v);
+            const p = numAt(v, 'displaySportPowerPowertrain');
+            if (p !== null) fuse.signal(Date.now(), 'sport', p);
+        },
     }, 'driving mode');
     watch('de.bmw.infrastructure.EnvironmentalInformation', { ExteriorTemperature: (v) => put('outside', sc('ambient', v && v.temperatureExterior)) }, 'outside temperature');
     watch('de.bmw.infrastructure.analytics.BasicDataSet', {
@@ -215,7 +226,32 @@ function startData(ctx, opts) {
             const bt = (raw) => { const t = sc('batteryTemp', raw); return isNum(t) && t > -30 && t < 70 ? t : null; };
             if (e) { put('battTemp', bt(e.actualValueTemperatureHighVoltageStorage)); put('battMin', bt(e.actualValueTemperatureHighVoltageStorageMinimum)); put('battMax', bt(e.actualValueTemperatureHighVoltageStorageMaximum)); }
         },
-    }, 'battery temperature', { pollMs: 30000 });
+        /* The stock cluster's own power meter: electric drive and recuperation, relative (%). Found in the car's catalog
+         * (Nov 10 2026 log); the fastest candidate for the kW gauges, fitted to eDrive Live's readings (kwfuse.js). Re-read
+         * every 2 s too: a value that doesn't change may not be notified. */
+        statusPowerRelativHybrid: (v) => {
+            fes('statusPowerRelativHybrid')(v);
+            const drive = numAt(v, 'displayActualValuePowerRelativeDrivingElectric'), recup = numAt(v, 'displayActualValuePowerRelativeRecuperation');
+            if (drive !== null || recup !== null) fuse.signal(Date.now(), 'rel', { drive: drive || 0, recup: recup || 0 });
+        },
+    }, 'battery temperature and power meter', { pollMs: 2000 });
+    // the onboard computer's electric consumption now (x the speed: a power), as a third candidate
+    watch('de.bmw.infotainment.resetlogic.ResetLogic', {
+        currentConsumption: (v) => {
+            fes('currentConsumption')(v);
+            const c = numAt(v, 'consumptionElectricCurrentDigit');
+            if (c !== null) fuse.signal(Date.now(), 'cons', c);
+        },
+    }, 'consumption now', { pollMs: 2000 });
+    // the cruise control's set speed as the head-up display shows it (the driving assistant's view services send nothing
+    // on this car): 0 or invalid while it is off; in the display's unit
+    watch('de.bmw.infotainment.displaydataserver.DisplayDataServer', {
+        functionalLibraryData: (v) => {
+            fes('functionalLibraryData')(v);
+            const c = numAt(v, 'cruiseCtrlSpeedHUD');
+            if (c !== null) { x.cruiseSet = c; x.at.cruiseSet = Date.now(); }
+        },
+    }, 'cruise control (head-up display)', { pollMs: 2000 });
     /* the car's ranges (KombiIF.statusRangeTankStatus, as installed apps declare it): the fields' names
      * differ by car, so numbers are picked by their names - range / Reichweite, electric (elec, ev, hv, bev)
      * or fuel (fuel, tank, kraftstoff, combustion), and the tank's level; kilometres, invalid at 0xFFFF and up */
@@ -382,7 +418,6 @@ function startData(ctx, opts) {
     };
     /* The battery's power between eDrive Live's readings (kwfuse.js): its readings fitted to the power at the wheels
      * from the car's speed and acceleration, many times a second. Settings > kW: Fast (the default) or Readings only. */
-    const fuse = createFuse();
     let lastKwAt = null;
     const fastKw = () => setting('kwFast') !== 'off';
     let shownFor = 0;
@@ -413,7 +448,7 @@ function startData(ctx, opts) {
             }
             const fz = !d.demo && fastKw() ? fuse.now(tNow) : null;
             const o = Object.assign({}, d, { mode: x.mode, soc: isNum(p.soc) ? p.soc : undefined,
-                kw: fz ? fz.kw : isNum(p.kw) ? p.kw : undefined, kwRead: isNum(p.kw) ? p.kw : undefined, kwFused: !!(fz && fz.fused), kwOut: endsOf(p).out || undefined, kwIn: kwEnds.in || undefined, driveMode: x.driveMode,
+                kw: fz ? fz.kw : isNum(p.kw) ? p.kw : undefined, kwRead: isNum(p.kw) ? p.kw : undefined, kwFused: !!(fz && fz.fused), kwModel: fz && fz.model ? fz.model : undefined, kwOut: endsOf(p).out || undefined, kwIn: kwEnds.in || undefined, driveMode: x.driveMode,
                 erange: isNum(p.erange) ? p.erange : fresh('carErange', 120000) ? x.carErange : undefined,
                 frange: isNum(p.frange) ? p.frange : fresh('carFrange', 120000) ? x.carFrange : undefined,
                 trange: fresh('carTrange', 120000) ? x.carTrange : undefined, fuelLevel: fresh('fuelLevel', 120000) ? x.fuelLevel : undefined });
@@ -439,6 +474,8 @@ function startData(ctx, opts) {
             o.fuelPct = isNum(o.fuelLevel) ? Math.max(0, Math.min(100, o.fuelLevel / tank * 100)) : undefined;
             if (o.engineOn === undefined && Date.now() - (x.at.engineState || 0) < 60000) o.engineOn = x.engineState === 'on';
             if (x.startWhy) o.startWhy = x.startWhy;
+            // the cruise control: on with a set speed (the head-up display's), off at 0
+            if (!d.demo && Date.now() - (x.at.cruiseSet || 0) < 10000) o.cruise = { on: x.cruiseSet > 0 && x.cruiseSet < 250, set: x.cruiseSet > 0 && x.cruiseSet < 250 ? x.cruiseSet : undefined };
             return o;
         },
         /** The page on screen needs these (data keys): read them fast. */

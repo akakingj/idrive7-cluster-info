@@ -203,7 +203,8 @@ regenerating; boost and coolant on a petrol or diesel car). In an electric drive
 the most it takes). The rev bracket's colour follows the drive mode: red in a sport mode (as BMW's Sport view),
 silver in comfort, teal in ECO PRO and on electricity alone. The cruise control's
 icon is grey, and green with the set speed beside it while the cruise control holds a speed (the driving assistant's
-own services, as Modern wide's road). Pressed 5% in height to end at the car's own strip; with the Waze map the map
+own services, as Modern wide's road; those send nothing on the G05 tried, so else the head-up display's set speed,
+`DisplayDataServer.functionalLibraryData`). Pressed 5% in height to end at the car's own strip; with the Waze map the map
 goes in the window between the brackets.
 
 ![Sport](../../docs/sport.png)
@@ -320,10 +321,14 @@ car is taken to have the same cluster. What differs between cars is a setting, o
 - The battery's charge and power come from **eDrive Live** only: this app never asks the battery unit itself
   (two apps asking it in turn left both without answers).
 - **Battery power (kW)**: *Fast* (the default) moves every power gauge as the car accelerates or regenerates, without
-  waiting for eDrive Live's next reading: the power at the wheels from the car's own speed and acceleration signals
-  (many a second), fitted continuously to eDrive Live's readings of the battery (`shared/kwfuse.js`); on electricity
-  only (with the engine running, and with *eDrive Live's readings only*, the readings as they are). Nothing shows
-  when eDrive Live has said nothing for 4 s.
+  waiting for eDrive Live's next reading. The car's own signals that move with the battery's power, each fitted
+  continuously to eDrive Live's readings of the battery (`shared/kwfuse.js`), the best fitting one shown: the stock
+  cluster's own power meter (`Efficiencytainment2.statusPowerRelativHybrid`, electric drive and recuperation in %),
+  the sport display's powertrain power (`FES.displaySportPowertrain`, on electricity), the onboard computer's
+  consumption now x the speed (`ResetLogic.currentConsumption`), and the power at the wheels from the speed and
+  acceleration (on electricity). With the engine running and none of the car's signals fitted, and with *eDrive
+  Live's readings only*, the readings as they are. Nothing shows when eDrive Live has said nothing for 4 s. Logs >
+  *fast power* shows each source: how often it came, its fit and its average miss in kW.
 - **Electric range when full**: the estimate shown (with ~) until the car's own electric range arrives.
 - The glass and the KOMBI's boxes (the camera cowl, the gear bracket, the eDrive box, the warning lights)
   are taken as the same on every car with this cluster (`layout_common.js`; every layout is checked against

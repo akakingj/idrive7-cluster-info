@@ -56,7 +56,7 @@ const check = async (name, fn) => { await fn(); ok++; console.log('ok   ' + name
         assert.strictEqual(a.parked(), false);
     });
 
-    await check('data.js: shown, the car parked: eDrive Live not asked; switched on: asked', async () => {
+    await check('data.js: shown, the car parked: eDrive Live not asked; switched on: asked; the car\'s power meter and cruise speed taken', async () => {
         const handlers = {};
         const log = { info() {}, warn() {}, debug() {} };
         const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'app.json'), 'utf8'));
@@ -83,6 +83,15 @@ const check = async (name, fn) => { await fn(); ok++; console.log('ok   ' + name
             handlers.VehicleCondition({ statusConditionVehicle: 'PARKEN_BN_IO' });
             await new Promise((r) => setTimeout(r, 1300));
             assert.deepStrictEqual(own(), [], 'parked again: let go');
+            // the car's own power meter and the head-up display's cruise speed reach the kW fusion and the data
+            handlers.statusPowerRelativHybrid({ displayActualValuePowerRelativeDrivingElectric: 20, displayActualValuePowerRelativeRecuperation: 0 });
+            handlers.displaySportPowertrain({ displaySportPowerPowertrain: 31 });
+            handlers.functionalLibraryData({ cruiseCtrlSpeedHUD: 70 });
+            const m = D.status().kwFit.models;
+            assert.deepStrictEqual([m.rel.last, m.sport.last], [{ drive: 20, recup: 0 }, 31]);
+            assert.deepStrictEqual(D.data().cruise, { on: true, set: 70 });
+            handlers.functionalLibraryData({ cruiseCtrlSpeedHUD: 0 });
+            assert.deepStrictEqual(D.data().cruise, { on: false, set: undefined });
         } finally { D.stop(); }
     });
 

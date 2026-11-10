@@ -176,6 +176,14 @@ mgu.run({
                 ['driving assistant (Modern wide, Sport)', dap ? JSON.stringify(dap.status()) + '\nnow ' + JSON.stringify(dap.state()) : 'not started (Modern wide or Sport not shown yet)'],
                 ['vehicle', (() => { const v = D.vehicle(); return v.vehicle + ' (' + v.how + ': ' + v.why + ')'; })()],
                 ['data status', JSON.stringify(Object.assign({}, D.status(), { raw: undefined }))],
+                // the kW gauges' sources: each of the car's power signals (how often it came, its last value), its fit to
+                // eDrive Live's readings (theta: kW = theta . features; err: the average miss, kW) and the one shown
+                ['fast power (the kW gauges)', (() => {
+                    const f = D.status().kwFit || {}, ms = f.models || {};
+                    return ['shown now: ' + (d.kwModel || (isNum(d.kwRead) ? 'eDrive Live\'s reading as it is' : 'nothing')) + '   eDrive Live ' + (isNum(d.kwRead) ? d.kwRead.toFixed(1) + ' kW' : '--') + '   gauges ' + (isNum(d.kw) ? d.kw.toFixed(1) + ' kW' : '--')]
+                        .concat(Object.keys(ms).map((k) => k + ': ' + (ms[k].rate === null ? 'every car sample' : ms[k].rate + '/s') + ', fits ' + ms[k].fits + ', error ' + (ms[k].err === null ? '--' : ms[k].err + ' kW') + ', theta ' + JSON.stringify(ms[k].theta) + (ms[k].last !== null ? ', last ' + JSON.stringify(ms[k].last) : '')))
+                        .concat(['cruise (head-up display): ' + (d.cruise ? JSON.stringify(d.cruise) : 'nothing yet')]).join('\n');
+                })()],
                 // the car's own names for these (its service catalog): what to declare for the electric range
                 // and the local time
                 ['range and charge signals', sigList(found, n(40, 400))],
