@@ -2,7 +2,7 @@
   "id": "cluster_layouts",
   "title": "Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.21.3",
+  "version": "0.22.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9L",
@@ -91,6 +91,15 @@
         "suAARObjectList"
       ],
       "_optional": "Modern wide's road: the cars ahead and beside"
+    },
+    "de.bmw.infotainment.vehicle.TPMS": {
+      "statusTyrePressure": "rs",
+      "statusTyreTemperature": "rs",
+      "_optional": "the tyres' pressures and temperatures (GT3)"
+    },
+    "de.bmw.infotainment.vehicle.Vehicle": {
+      "statusNewCurrentUnitsStatusExt": "rs",
+      "_optional": "the car's pressure unit, for the tyre pressures"
     }
   },
   "screens": [
@@ -237,6 +246,10 @@
         [
           "pulse",
           "Pulse"
+        ],
+        [
+          "gt3",
+          "GT3"
         ]
       ]
     },

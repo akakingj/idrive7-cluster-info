@@ -114,6 +114,14 @@ function entries(v, key, out) {
     return out;
 }
 
+/** The first value under `key` however deep the binding wraps it. */
+function one(v, key, depth) {
+    if (!v || typeof v !== 'object' || (depth || 0) > 6) return undefined;
+    if (key in v) return v[key];
+    for (const k of Object.keys(v)) { const r = one(v[k], key, (depth || 0) + 1); if (r !== undefined) return r; }
+    return undefined;
+}
+
 function startData(ctx, opts) {
     const { log } = ctx;
     const cfg = ctx.spec.config || {}, S = cfg.scaling || {};
@@ -232,6 +240,43 @@ function startData(ctx, opts) {
     watch('de.bmw.infrastructure.VehicleInformation', {
         Range: (v) => { fes('Range')(v); pickRanges(v); },
     }, 'range');
+    /*
+     * The tyres: pressure and temperature at each corner from the car's tyre monitor (TPMS), as bimmer-lab's Cluster
+     * Themes reads it (MIT, Copyright (c) 2026 bimmer-lab). The car never notifies these (BMW's own x_call only reads
+     * them), so they are read every 10 s. Pressure: 0.1 x raw in the car's pressure unit (Vehicle
+     * statusNewCurrentUnitsStatusExt: bar, kPa or psi; 65532 and up none), kept in bar; temperature: raw - 40 degrees,
+     * kept in C (this G05 sent raw 53-57 on a 10 C day, Celsius with the car set to F: so only a value no tyre in C
+     * reaches is taken as F).
+     */
+    const TYRES = ['FL', 'FR', 'RL', 'RR'], PRESS_UNITS = { 1: 'BAR', 2: 'KPA', 3: 'PSI' }, PRESS_TO_BAR = { BAR: 1, KPA: 0.01, PSI: 1 / 14.5038 };
+    let carPress = null, tyreRawLogged = false;
+    const tyreBar = (raw) => {
+        if (!isNum(raw) || raw < 0 || raw >= 65532) return null;
+        const v = raw / 10, k = PRESS_TO_BAR[carPress];
+        const bar = k ? v * k : v >= 0.5 && v <= 6 ? v : v >= 7 && v < 60 ? v / 14.5038 : v >= 60 && v <= 600 ? v / 100 : null;
+        return isNum(bar) && bar > 0.3 && bar < 6 ? bar : null;
+    };
+    const tyreC = (raw) => {
+        if (!isNum(raw) || raw < 0 || raw >= 65535) return null;
+        const v = raw - 40, c = v > 85 ? (v - 32) * 5 / 9 : v;
+        return c > -40 && c < 150 ? c : null;
+    };
+    const tyreRead = (key, conv, field) => (v) => {
+        if (!tyreRawLogged) { tyreRawLogged = true; log.info('raw tyre ' + field + ': ' + JSON.stringify(v).slice(0, 300)); }
+        TYRES.forEach((k) => { const r = conv(one(v, 'actualValue' + field + 'Tyre' + k + 'H')); if (r !== null) put(key + k, r); });
+    };
+    // (only for an app that shows them, opts.tyres: one that doesn't declare the services gets a warning a start)
+    if (opts && opts.tyres) watch('de.bmw.infotainment.vehicle.TPMS', {
+        statusTyrePressure: tyreRead('tyreP', tyreBar, 'Pressure'),
+        statusTyreTemperature: tyreRead('tyreT', tyreC, 'Temperature'),
+    }, 'tyres', { pollMs: 10000 });
+    if (opts && opts.tyres) watch('de.bmw.infotainment.vehicle.Vehicle', {
+        statusNewCurrentUnitsStatusExt: (v) => {
+            const u = one(v, 'unitOfMeasurementAirPressure'), n = u && typeof u === 'object' ? (u.name || u.value) : u;
+            const p = PRESS_UNITS[n] || (/BAR|KPA|PSI/.test(String(n)) ? String(n).match(/BAR|KPA|PSI/)[0] : null);
+            if (p && p !== carPress) { carPress = p; log.info('car pressure unit: ' + p); }
+        },
+    }, 'units', { pollMs: 60000 });
     watch('de.bmw.infotainment.KombiIF', {
         statusRangeTankStatus: (v) => { fes('statusRangeTankStatus')(v); pickRanges(v); },
         // the cluster's own electric range (in this car's catalog), in the unit the cluster shows: miles on a car
@@ -382,6 +427,9 @@ function startData(ctx, opts) {
                 erange: isNum(p.erange) ? p.erange : fresh('carErange', 120000) ? x.carErange : undefined,
                 frange: isNum(p.frange) ? p.frange : fresh('carFrange', 120000) ? x.carFrange : undefined,
                 trange: fresh('carTrange', 120000) ? x.carTrange : undefined, fuelLevel: fresh('fuelLevel', 120000) ? x.fuelLevel : undefined });
+            // the tyres: { p: { FL.. } bar, t: { FL.. } C }, each fresh for a minute (read every 10 s)
+            o.tyres = { p: {}, t: {} };
+            ['FL', 'FR', 'RL', 'RR'].forEach((k) => { if (fresh('tyreP' + k, 60000)) o.tyres.p[k] = x['tyreP' + k]; if (fresh('tyreT' + k, 60000)) o.tyres.t[k] = x['tyreT' + k]; });
             ['steer', 'yaw', 'outside', 'gearbox', 'battTemp', 'battMin', 'battMax', 'pdDrive', 'pdClimate', 'pdSeats', 'iat', 'hpfp', 'lpfp', 'timing', 'boostTarget', 'boostActual']
                 .forEach((k) => { if (!d.demo && fresh(k, 60000)) o[k] = x[k]; });
             // boost: the engine unit's (fast, while a layout wants it), else the car's sport display signal
@@ -424,6 +472,7 @@ function demo(d) {
         timing: 18 - rpm / 800, boostTarget: Math.max(0, (rpm - 1500) / 4000), boostActual: Math.max(0, (rpm - 1600) / 4100),
         battTemp: 27, battMin: 25, battMax: 29, soc: 64, kw: -12 + 25 * Math.sin(t / 7), pdDrive: 60, pdClimate: 25, pdSeats: 15,
         splitRear: 62 + 25 * Math.sin(t / 3), erange: 29, frange: 520, fuelLevel: 38,
+        tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } },
     };
 }
 

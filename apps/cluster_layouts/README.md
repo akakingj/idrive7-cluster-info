@@ -4,7 +4,7 @@
 
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
 itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro, Track and
-Pulse), each in comfort, sport and efficient colours (following the selector's S / M
+Pulse) and GT3 (after bimmer-lab's), each in comfort, sport and efficient colours (following the selector's S / M
 programme, or chosen), each with three centres: the **readings**, **Waze** or the **stock** centre content.
 
 With the car's own bottom strip (the default) the strip shows the gear, the drive mode, the ranges, the time and the
@@ -147,6 +147,23 @@ sits beside it and the rpm bar runs under it.
 | Sport | Map in the centre |
 |---|---|
 | ![](../../docs/pulse_sport.png) | ![](../../docs/pulse_map.png) |
+
+### GT3
+
+A race dash, after bimmer-lab's GT3 theme for Cluster Themes ([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT):
+its arrangement and its shift grading, redrawn with this app's engine and fitted to the G05 and a plug-in hybrid.
+Eighteen round shift lights over a segmented rev bar (the lights fill to the shift point, the red line less 300
+rpm, pulled down while the oil is cold, and all flash there); the gear huge in the middle with the coolant and oil
+under it; on the left the speed, the engine speed (OFF in an electric drive) and the **tyres**: pressure and
+temperature at each corner from the car's tyre monitor (read every 10 s); on the right the battery's power, the
+charge, and the last upshift with its grade (EARLY, SPOT ON, LATE, COLD REV or LIMITER). On a petrol or diesel car,
+or with Show: Engine, boost and the shift point take the battery's places.
+
+![GT3](../../docs/gt3.png)
+
+| Sport colours at the shift point |
+|---|
+| ![](../../docs/gt3_sport.png) |
 
 *(Drawn by `tools/preview.js` from the same shaders the cluster runs; the map is a stand-in for the real one.)*
 
