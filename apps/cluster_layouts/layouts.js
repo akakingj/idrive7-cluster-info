@@ -92,7 +92,9 @@ const CUT_Y = C0.STRIP_Y;
  * strip (seen at 646 on the car); over the strip's drive mode and gear (x BG_NOTCH) only to BG_NOTCH_Y, short of
  * their tops at 660 (to 662 clipped them; a notch the band's whole height showed the separator's grey line, and
  * reached past the gear on the right: from a photo of the car, 2026-11-09). */
-const BG_Y = 662, BG_NOTCH = [1236, 1424], BG_NOTCH_Y = 658;
+// (the notch's left end at 1196: from 1236 the band still covered the top of the E of ELECTRIC INDIVIDUAL, the longest
+// drive mode, car photo Nov 9 2026)
+const BG_Y = 662, BG_NOTCH = [1196, 1424], BG_NOTCH_Y = 658;
 const stripOn = (o) => C0.strip(o);
 const blackBand = () => [[0, BG_NOTCH[0], BG_Y], [BG_NOTCH[0], BG_NOTCH[1], BG_NOTCH_Y], [BG_NOTCH[1], 1920, BG_Y]].map(([x0, x1, y1], i) =>
     ({ key: 'bgBand' + i, kind: 'flat', x: x0, y: CUT_Y, w: x1 - x0, h: y1 - CUT_Y, colors: () => ({ color: ['#000000', 1] }) }));

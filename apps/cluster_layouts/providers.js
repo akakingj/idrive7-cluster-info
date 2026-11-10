@@ -25,7 +25,7 @@ function startProviders(log, opts) {
         try { names = fs.readdirSync(dir); } catch (e) { entries = {}; return; }
         const next = {};
         names.forEach((n) => {
-            if (!/\.json$/.test(n) || n === 'wanted.json') return;
+            if (!/\.json$/.test(n) || /^wanted(-[\w.-]+)?\.json$/.test(n)) return;   // (what the apps want: not a provider)
             try {
                 const j = JSON.parse(fs.readFileSync(path.join(dir, n), 'utf8'));
                 if (j && typeof j.t === 'number' && Date.now() - j.t < STALE_MS) next[n.replace(/\.json$/, '')] = j;
@@ -45,6 +45,11 @@ function startProviders(log, opts) {
      */
     const WANTED = path.join(dir, 'wanted.json');
     const uid = typeof process.getuid === 'function' ? process.getuid() : -1;
+    /* This app's own wanted file, always: a wanted.json Cluster Info left behind (it doesn't remove it when its panel
+     * goes) belongs to it, so this app can't replace it, and eDrive Live, seeing it stale, stopped sharing: no kW on
+     * the cluster (Nov 9 2026). eDrive Live 1.9.6 reads every wanted*.json; wanted.json too while it's ours, for an
+     * older one. */
+    const OWN = path.join(dir, 'wanted-' + (opts.app || 'u' + uid) + '.json');
     const ours = () => { try { return fs.statSync(WANTED).uid === uid; } catch (e) { return null; } };   // null: none
     let wantedT = 0, holding = false;
     /** Ask the providers to read fast and share, at most once a second (see above). */
@@ -53,18 +58,19 @@ function startProviders(log, opts) {
         wantedT = Date.now();
         try {
             try { fs.mkdirSync(dir); fs.chmodSync(dir, 0o1777); } catch (e) { if (e.code !== 'EEXIST') throw e; }
-            if (ours() === false) { holding = false; return; }   // another app's (Cluster Info's): it asks already
-            const tmp = WANTED + '.' + process.pid + '.tmp';
-            fs.writeFileSync(tmp, JSON.stringify(Object.assign({ t: Date.now() }, what)), { mode: 0o644 });
-            fs.renameSync(tmp, WANTED);
+            const body = JSON.stringify(Object.assign({ t: Date.now() }, what));
+            const put = (f) => { const tmp = f + '.' + process.pid + '.tmp'; fs.writeFileSync(tmp, body, { mode: 0o644 }); fs.renameSync(tmp, f); };
+            put(OWN);
             holding = true;
+            if (ours() !== false) put(WANTED);   // (none there, or ours: for an eDrive Live before 1.9.6)
         } catch (e) { if (!want.warned) { want.warned = true; log.warn('providers: ' + e.message); } }
     }
     /** Stops asking: removes this app's wanted.json, so Cluster Info can write its own. */
     function release() {
-        if (!holding && ours() !== true) return;
+        if (!holding && ours() !== true && !fs.existsSync(OWN)) return;
         holding = false;
         try { if (ours() === true) fs.unlinkSync(WANTED); } catch (e) { /* gone */ }
+        try { fs.unlinkSync(OWN); } catch (e) { /* gone */ }
     }
     release();   // a leftover from before (an older version of this app, or one stopped mid-way)
     process.once('exit', release);
@@ -80,7 +86,7 @@ function startProviders(log, opts) {
     function watchDir() {
         if (watcher || opts.watch === false) return;
         try {
-            watcher = fs.watch(dir, (ev, name) => { if (!name || (/\.json$/.test(name) && name !== 'wanted.json')) soon(); });
+            watcher = fs.watch(dir, (ev, name) => { if (!name || (/\.json$/.test(name) && !/^wanted/.test(name))) soon(); });
             watcher.on('error', () => { try { watcher.close(); } catch (e) { /* gone */ } watcher = null; });
         } catch (e) { watcher = null; }   // no folder yet: tried again with each scan
     }

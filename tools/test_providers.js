@@ -1,6 +1,8 @@
 'use strict';
 /* wanted.json is Cluster Info's: these apps write it only when no other app has one, and remove theirs as soon
- * as they stop wanting (a leftover of ours in the sticky folder stopped eDrive Live sharing with Cluster Info). */
+ * as they stop wanting (a leftover of ours in the sticky folder stopped eDrive Live sharing with Cluster Info).
+ * Each also asks in its own wanted-<id>.json (a stale wanted.json of Cluster Info's stopped eDrive Live sharing with
+ * them). */
 const assert = require('assert');
 const fs = require('fs');
 const os = require('os');
@@ -23,14 +25,20 @@ check('wants: writes wanted.json; release removes it', () => {
     p.stop();
 });
 
-check('another app\'s wanted.json (Cluster Info\'s) is left alone', () => {
+check('another app\'s stale wanted.json (Cluster Info\'s, left behind) is left alone, and this app still asks in its own file', () => {
     fs.writeFileSync(W, JSON.stringify({ t: 1, from: 'cluster info' }));
     process.getuid = () => realUid() + 1;   // this app runs as another uid than the file's owner
     try {
         const p = startProviders(log, { dir, scanMs: 60000 });
         p.want({ power: true });
+        const own = fs.readdirSync(dir).filter((n) => /^wanted-.+\.json$/.test(n));
+        assert.strictEqual(own.length, 1, 'its own wanted file');
+        const w = JSON.parse(fs.readFileSync(path.join(dir, own[0]), 'utf8'));
+        assert(w.power === true && Date.now() - w.t < 3000);
+        assert.deepStrictEqual(Object.keys(p.readings()).filter((k) => p.readings()[k] !== undefined), [], 'a wanted file is not a provider');
         p.release();
         p.stop();
+        assert(!fs.readdirSync(dir).some((n) => /^wanted-/.test(n)), 'its own removed on release');
         assert.strictEqual(JSON.parse(fs.readFileSync(W, 'utf8')).from, 'cluster info');
     } finally { process.getuid = realUid; }
     fs.unlinkSync(W);

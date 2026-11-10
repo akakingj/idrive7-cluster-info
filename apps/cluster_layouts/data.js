@@ -333,7 +333,10 @@ function startData(ctx, opts) {
             : (dme[k] || []).length);
         const ready = (k) => !((fail[k] || 0) >= 3 && Date.now() - (tried[k] || 0) < 30000);
         if (!queue.length && on) {
-            queue = wantedNow ? wanted.filter((k) => DME_KEYS.indexOf(k) >= 0) : [];
+            /* With the engine off (on electricity) the engine unit's readings don't move: only the every-10 s round.
+             * Each read is a request through the car's gateway, the one eDrive Live's battery reads go through. */
+            const engineOff = car.data().engineOn === false;
+            queue = wantedNow && !engineOff ? wanted.filter((k) => DME_KEYS.indexOf(k) >= 0) : [];
             if (wantedNow && now - slowAt > 10000) { slowAt = now; DME_KEYS.forEach((k) => { if (k !== 'lmv' && queue.indexOf(k) < 0) queue.push(k); }); }
             queue = queue.filter(usable);
         }
@@ -353,7 +356,8 @@ function startData(ctx, opts) {
         } catch (e) { const m = String(e); if (m !== lastPollErr) { lastPollErr = m; log.warn('diagnostic poll: ' + m); } }   // (once per distinct error)
         // the next reading soon, with a gap so the link isn't held; nothing asked, the link down or every reading
         // resting after failures: no spinning, a look again soon
-        timer = setTimeout(poll, !turn.length ? 2000 : !asked ? 250 : 60);
+        // (at most 4 a second: these share the diagnostic gateway with eDrive Live's battery reads, 10 a second)
+        timer = setTimeout(poll, !turn.length ? 2000 : 250);
     }
     timer = setTimeout(poll, 1500);
 

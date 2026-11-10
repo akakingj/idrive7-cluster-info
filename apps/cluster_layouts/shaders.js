@@ -1652,29 +1652,28 @@ varying vec2 v_uv;
 /* one of the scale's numbers: its coverage at p, the number v with dec decimals, its cell's top-left reference x
  * (align 0 left, 0.5 centre, 1 right), y top */
 float label(vec2 p, float v, float dec, float x, float al, float y) {
+    /* (no loop: the slot under p worked out directly, one glyph looked up. A loop that broke out early with a font
+     * lookup in it was the one such construct in the app, and M - the one layout drawing it - restarted the
+     * cluster: Nov 9 2026.) */
     float h = u_labH, neg = v < -0.0001 ? 1.0 : 0.0, av = abs(v);
     float sc = dec > 0.5 ? (dec > 1.5 ? 100.0 : 10.0) : 1.0;
     float iv = floor(av * sc + 0.5);
     float ip = floor(iv / sc + 0.0001), fp = iv - ip * sc;
     float ni = ip >= 99.5 ? 3.0 : ip >= 9.5 ? 2.0 : 1.0;
-    float w = neg * u_glyph2.x + ni * u_glyph.w + (dec > 0.5 ? u_glyph2.y + dec * u_glyph.w : 0.0);
+    float am = u_glyph2.x, ad = u_glyph.w, ap = u_glyph2.y, hasDec = dec > 0.5 ? 1.0 : 0.0;
+    float w = neg * am + ni * ad + hasDec * (ap + dec * ad);
     float pen = x / h - w * al;
     vec2 g = vec2(p.x / h, (p.y - y) / h);
-    if (g.y < 0.0 || g.y > 1.0 || g.x < pen - 0.2 || g.x > pen + w + 0.2) return 0.0;
-    float best = 0.0;
-    for (int k = 0; k < 7; k++) {
-        float fk = float(k), code = -1.0, adv = u_glyph.w;
-        float slot = fk - neg;
-        if (fk < neg) { code = u_glyph.y; adv = u_glyph2.x; }
-        else if (slot < ni) code = u_glyph.x + digitOf(ip, slot, ni);
-        else if (dec > 0.5 && slot < ni + 0.5) { code = u_glyph.z; adv = u_glyph2.y; }
-        else if (dec > 0.5 && slot < ni + 1.0 + dec) code = u_glyph.x + digitOf(fp, slot - ni - 1.0, dec);
-        else break;
-        float s = sdf(code, vec2(g.x - (pen + adv * 0.5), g.y));
-        best = max(best, s);
-        pen += adv;
-    }
-    return smoothstep(0.5 - 1.5 / h, 0.5 + 1.5 / h, best);
+    float gx = g.x - pen;
+    if (g.y < 0.0 || g.y > 1.0 || gx < -0.2 || gx > w + 0.2) return 0.0;
+    float code = -1.0, cx = 0.0;
+    float x1 = gx - neg * am, x2 = x1 - ni * ad, x3 = x2 - ap;
+    if (neg > 0.5 && gx < am) { code = u_glyph.y; cx = am * 0.5; }
+    else if (x1 < ni * ad || hasDec < 0.5) { float i = clamp(floor(x1 / ad), 0.0, ni - 1.0); code = u_glyph.x + digitOf(ip, i, ni); cx = neg * am + (i + 0.5) * ad; }
+    else if (x2 < ap) { code = u_glyph.z; cx = neg * am + ni * ad + ap * 0.5; }
+    else { float j = clamp(floor(x3 / ad), 0.0, dec - 1.0); code = u_glyph.x + digitOf(fp, j, dec); cx = neg * am + ni * ad + ap + (j + 0.5) * ad; }
+    float s = sdf(code, vec2(gx - cx, g.y));
+    return smoothstep(0.5 - 1.5 / h, 0.5 + 1.5 / h, s);
 }
 void main() {
     vec2 p = v_uv * u_size;
@@ -1696,11 +1695,11 @@ void main() {
     vec3 fc = v >= u_zero ? mix(u_fill, u_fill * 0.62, clamp((t - u_zero) / max(v - u_zero, 0.05), 0.0, 1.0)) : u_neg;
     if (v >= u_zero && redz > 0.5) fc = mix(u_redc, vec3(1.0), 0.15);
     acc = over(acc, fc * (0.9 + 0.1 * clamp((yc - p.y) / 4.5, -1.0, 1.0)), f);
-    /* dark notches at the labels */
-    for (int i = 0; i < 3; i++) {
-        float m = i == 0 ? u_marks.x : i == 1 ? u_marks.y : u_marks.z;
-        if (m > 0.001 && m < 0.999) acc = over(acc, vec3(0.0), clamp(1.4 - abs(xs - (x0 + m * L)) + 0.5, 0.0, 1.0) * thick * 0.85);
-    }
+    /* dark notches at the labels (written out: no loop) */
+    float nd = min(min(u_marks.x > 0.001 && u_marks.x < 0.999 ? abs(xs - (x0 + u_marks.x * L)) : 99.0,
+                       u_marks.y > 0.001 && u_marks.y < 0.999 ? abs(xs - (x0 + u_marks.y * L)) : 99.0),
+                   u_marks.z > 0.001 && u_marks.z < 0.999 ? abs(xs - (x0 + u_marks.z * L)) : 99.0);
+    acc = over(acc, vec3(0.0), clamp(1.4 - nd + 0.5, 0.0, 1.0) * thick * 0.85);
     /* the start tick: short, red, slanted the other way */
     float tx = p.x - x0 + (p.y - yc) * 0.75;
     acc = over(acc, u_redc, clamp(1.6 - abs(tx) + 0.5, 0.0, 1.0) * span(p.y, yc - 11.0, yc + 4.5));

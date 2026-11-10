@@ -179,7 +179,10 @@ mgu.run({
                 // the car's own names for these (its service catalog): what to declare for the electric range
                 // and the local time
                 ['range and charge signals', sigList(found, n(40, 400))],
-                ['time and date signals', sigList(findSignals({ match: /time|date|uhrzeit|datum|zone|clock/i }), n(25, 300))],
+                // the cruise control's: the driving assistant's view services send nothing on this car (Nov 9 2026,
+                // "seen" empty), so the catalog's other candidates, to pick from
+                ['cruise control signals', sigList(findSignals({ match: /cruise|tempomat|geschwindigkeitsregel|wunschgeschw|speed.?limit|limiter|set.?speed|target.?speed|abstand|distance.?control|longitudinal.?(control|guid|function|assist)|\bacc\b|acc[A-Z_]|ACC|DCC|FGR/ }), n(30, 300))],
+                ['time and date signals', sigList(findSignals({ match: /time|date|uhrzeit|datum|zone|clock/i }), n(10, 300))],
                 ['cluster-render log', logs.tail(logs.RENDER_LOG, n(50, 1500))],
                 ['this app\'s log', logs.tail(path.join(ctx.dataDir || '.', 'cluster_layouts.log'), n(30, 400))],
                 ['Cluster Centre log', logs.siblingLog(ctx.dataDir || '.', 'cluster_centre', n(20, 300))],
