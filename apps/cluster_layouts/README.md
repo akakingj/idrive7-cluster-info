@@ -168,14 +168,14 @@ or with Show: Engine, boost and the shift point take the battery's places.
 
 ### M
 
-bimmer-lab's M theme for Cluster Themes ([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT; traced off an
-M8's cluster), as theirs: their own shaders (the backdrop with its cards, centre line, tyre block, side dials, M
-stripes and setup bars; the two bowed glass rev blades with their red marker) with their layout's numbers, and every
-text where their layout puts it, in their faces (Orbitron Black, Barlow Medium), the size and on the line theirs are.
-Fitted to the G05: their time, fuel range, outside temperature and badge along the bottom left out (the car's strip
-shows them), the M stripes and top numerals clear of the camera's cowl. The four setup rows, for a plug-in hybrid:
-the drive mode, the battery's power, the charge and the gearbox's programme, each with its level bar (boost and the
-coolant on a petrol or diesel car). With the Waze map the map goes in their window between the blades.
+The M8's M view: the backdrop and the two bowed glass rev blades from bimmer-lab's M theme
+([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT; their own shaders, traced off an M8's cluster), the
+scale 0-8 with the numerals every 2000, the gear's number with the shift programme's stack beside it, the speed under
+the line, and the M8's side gauges in its own manner (an icon over the bar, the unit at the right, a white fill over a
+thin track with its red zones, three scale numbers under it): for a plug-in hybrid the coolant and the battery's
+temperature on the left, the battery's power (charging in blue) and the charge on the right; on a petrol or diesel
+car the coolant and boost, the torque and the intake air. The fuel and oil dials in the corners; the charge is its own
+gauge, so the strip's charge bar isn't added. With the Waze map the map goes in the window between the blades.
 
 ![M](../../docs/m.png)
 
@@ -185,12 +185,12 @@ coolant on a petrol or diesel car). With the Waze map the map goes in their wind
 
 ### Sport
 
-bimmer-lab's Sport theme ([bimmer-lab/apps](https://github.com/bimmer-lab/apps), MIT; after BMW's Live Cockpit Sport
-view), as theirs: their shader for the whole view (the blue speed bracket, the red rev bracket with its shift dashes,
-the fuel and oil bars, the bottom bar) and every text in their places and faces (Michroma, Barlow Medium). Pressed
-5% in height so it ends at the car's own strip (their time, range and outside temperature left out); the bottom bar's
-blue half reads the battery's power (boost on a petrol or diesel car). With the Waze map the map goes in their window
-between the brackets.
+The iDrive 8 M cars' Sport view, from bimmer-lab's Sport theme (their shader, MIT) brought closer to BMW's own: the
+blue speed bracket and the red rev bracket with flares where they bend and meet the bottom line, segmented fuel and
+oil bars, and the bottom bar's halves as gauges (the charge on blue and the battery's power on red; boost and coolant
+on a petrol or diesel car). In an electric drive the rev bracket reads **ePower %** (the battery's power, 0-100 kW),
+as BMW's electric M cars do. Pressed 5% in height to end at the car's own strip; with the Waze map the map goes in
+the window between the brackets.
 
 ![Sport](../../docs/sport.png)
 
@@ -204,7 +204,8 @@ The round dials of BMW's M cars of the late 2000s, drawn after a photo of an E92
 a ring of cool white-blue light round each scale (open across the bottom), white bars, dots and numerals, km/h in
 small numerals inside the mph, thin glowing red needles over dark hubs, the fuel gauge across the speedometer's foot
 and the oil temperature across the tach's, and the amber display between them with the battery's power, the speed
-and the charge (and the gear, full screen). An original drawing.
+and the charge (and the gear, full screen; the charge is in the display, so the strip's charge bar isn't added). An
+original drawing.
 
 ![Classic M](../../docs/classic.png)
 
@@ -370,6 +371,7 @@ dynamic text's `chars` sets how many glyphs it can show):
 | `dial` | a round dial with its needle: face, metal bezel, ticks, red zone, numerals, backlight, value arc, shadow, hub, glass | `params.u_scale`, `u_arc`, `u_needle_dim`, `u_look`, `u_look2`; `value(d)`, `max` |
 | `band` | a gauge along an arc (or a straight bar): segments, gradient fill, red zone, glowing tip, marks, numerals | `params.u_geo`, `u_span`, `u_marks`, `u_red`; `value(d)` 0..1 |
 | `mdash`, `mtach`, `sdash`, `licon` | bimmer-lab's M backdrop, M rev blade, whole Sport view and line icons (their shaders) | their layout JSON's numbers as `params`; readings through `dyn` |
+| `mbar` | an M8 side gauge's bar: thin track, thicker fill (white, or blue below its zero), red zones, start tick, notches | `params.u_zero`, `u_zones`, `u_marks`; `value(d)` 0..1 |
 | `e9x` | a classic M dial: ring of light, bars, dots, numerals, a second scale, a small gauge at its foot, needles | `params.u_scale`, `u_arc`, `u_inner`, `u_sub`; `value(d)`, `dyn` `u_subv` |
 | `chevron` | a gauge along two straight segments (A, the corner B, C): track, gradient fill, white marker, glowing outer line, inner line, shift dashes, ticks, numerals beside it | `params.u_ab`, `u_c`, `u_lines`, `u_marks`, `u_nums`, `u_red`; `value(d)` 0..1 |
 | `text` | a line of glyphs with an optional glow | `text` (fixed, or `(d, t) => string`), `align`, `tracking` |

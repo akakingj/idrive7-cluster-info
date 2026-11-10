@@ -93,6 +93,7 @@ module.exports = {
     id: 'classic',
     title: 'Classic M',
     stripFuel: false,   // (its own fuel gauge, in the speedometer)
+    ownStripGauges: true,   // (the charge in its amber display: none of the strip's bars)
     palette: pal,
     gearText: C.gearText,
 

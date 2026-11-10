@@ -46,8 +46,8 @@ const TAU_MS = 10;           // a needle's easing towards its reading: most of t
 const MIN_GAP_MS = 4;        // a reading's update at most this soon after the last
 const EPS = 0.0015;          // a value moving less than this (of its max) is not sent
 const SWEEP_MS = 700;        // up, then as long back down
-const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, flag: SH.FLAG_FS, eagles: SH.EAGLE_FS, fireworks: SH.FIREWORKS_FS, road: SH.ROAD_FS, chevron: SH.CHEVRON_FS, mdash: SH.MDASH_FS, mtach: SH.MTACH_FS, sdash: SH.SDASH_FS, licon: SH.LICON_FS, e9x: SH.E9X_FS };
-const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, chevron: 0, mdash: -150, sdash: -150, mtach: 0, e9x: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20, licon: 20 };
+const FS = { flat: SH.FLAT_FS, panel: SH.PANEL_FS, dial: SH.DIAL_FS, band: SH.BAND_FS, text: SH.TEXT_FS, bg: SH.BG_FS, icon: SH.ICON_FS, spark: SH.SPARK_FS, car: SH.CAR_FS, leds: SH.LEDS_FS, flag: SH.FLAG_FS, eagles: SH.EAGLE_FS, fireworks: SH.FIREWORKS_FS, road: SH.ROAD_FS, chevron: SH.CHEVRON_FS, mdash: SH.MDASH_FS, mtach: SH.MTACH_FS, sdash: SH.SDASH_FS, licon: SH.LICON_FS, e9x: SH.E9X_FS, mbar: SH.MBAR_FS };
+const Z = { flag: -210, bg: -200, road: -40, fireworks: -190, eagles: -180, flat: -100, panel: -50, spark: -20, band: 0, chevron: 0, mdash: -150, sdash: -150, mtach: 0, e9x: 0, mbar: 0, dial: 0, car: 0, leds: 0, text: 20, icon: 20, licon: 20 };
 /* kinds that animate (u_time): their clock sent from the head unit every frame (values()) */
 const TIMED = { car: true, leds: true, flag: true, eagles: true, fireworks: true };
 const HIST = 64;

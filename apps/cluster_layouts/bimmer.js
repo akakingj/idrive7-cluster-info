@@ -19,6 +19,8 @@ const FONTS = {
     // M (Orbitron Black, Barlow)
     m_num: [36, 28, 'main'], m_gear: [125, 96, 'main'], m_speed: [78, 61, 'main'], m_gl: [25, 21, 'main'], m_mid: [34, 27, 'main'],
     m_tyre: [25, 21, 'main'], m_label: [20, 17, 'main'], m_tiny: [26, 25, 'lower'], m_unit: [30, 28, 'lower'], m_badge: [26, 21, 'lower'],
+    // (the M8's side gauges' scale numbers: Barlow)
+    m_scale: [25, 20, 'lower'],
 };
 const BASE = 0.79;   // our glyphs' baseline, of the text layer's height (tools/bake_font.py)
 
@@ -56,7 +58,7 @@ function redMarks(o, max) {
 const shiftNow = (o, d) => C.isNum(d.rpm) && d.rpm >= (o.redline || 7000) - 300;
 
 /* bimmer-lab's line icons (LICON_FS) by name */
-const ICON = { gauge: 0, shock: 1, wheel: 2, cog: 3, stack: 4, therm: 5, fuel: 6, tyre: 7, oilcan: 8 };
+const ICON = { gauge: 0, shock: 1, wheel: 2, cog: 3, stack: 4, therm: 5, fuel: 6, tyre: 7, oilcan: 8, battery: 9, bolt: 10, turbo: 11, batteryTemp: 12, torque: 13 };
 /** One of their line icons in their widget's box. */
 const icon = (key, x, y, w, h, name, colour) => ({ key, kind: 'licon', x, y, w, h, params: { u_icon: [ICON[name]] },
     colors: (t) => ({ color: [t[colour], 1] }) });

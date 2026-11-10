@@ -1342,6 +1342,7 @@ uniform vec4 u_hole;      // map window x, y, w, h, already inset (w 0 = none)
 uniform float u_holeR;    // the hole's corner radius px
 uniform vec4 u_strip;     // bottom strip: left end x, top y, height, slant px
 uniform float u_topEnd;   // the top lines run from the bracket to this x (left; mirrored on the right)
+uniform vec2 u_stripFill; // (here) the bottom strip's halves as gauges: the left half lit from its left end to x, the right from the middle to y (0..1; negative: all lit)
 
 const vec3 BLUE_LINE = vec3(0.36, 0.62, 1.0);
 const vec3 BLUE_BAND = vec3(0.13, 0.3, 0.78);
@@ -1423,13 +1424,26 @@ vec4 bar(vec2 p, vec4 s, float val, float zones, vec4 c) {
     float along = segD(p, a, b);
     if (along > 26.0) return c;
     float body = cov(abs(side) - 7.0) * cov(segD(p, a, b) - 7.5);
-    vec3 col = vec3(0.92, 0.94, 0.97);
-    if (zones > 0.5 && h > 0.88) col = vec3(1.0, 0.2, 0.22);
-    if (zones > 0.5 && h < 0.1) col = vec3(0.25, 0.5, 1.0);
-    c = over(vec4(0.36, 0.38, 0.44, 0.9 * body), c);
-    c = over(vec4(col, body * step(h, val) * step(0.001, val)), c);
+    // (here) in segments, as BMW's: white at the full end shading to blue at the empty one, the end zones coloured
+    float L = length(a - b), sg = fract(h * 8.0) * L / 8.0;
+    body *= clamp(sg - 1.5, 0.0, 1.0) * clamp(L / 8.0 - 1.5 - sg, 0.0, 1.0);
+    vec3 col = mix(vec3(0.35, 0.6, 1.0), vec3(0.96, 0.97, 1.0), smoothstep(0.0, 0.6, h));
+    if (zones < 0.5 && h < 0.125) col = vec3(1.0, 0.2, 0.22);
+    if (zones > 0.5 && h > 0.875) col = vec3(1.0, 0.2, 0.22);
+    if (zones > 0.5 && h < 0.125) col = vec3(0.25, 0.5, 1.0);
+    c = over(vec4(0.3, 0.32, 0.38, 0.9 * body), c);
+    c = over(vec4(col, body * step(h, val + 0.0001) * step(0.001, val)), c);
     c = over(vec4(0.5, 0.52, 0.58, 0.8 * cov(abs(side + 12.0) - 1.0) * cov(segD(p, a, b) - 13.0)), c);
     return c;
+}
+
+// (here) a flare where a bracket's outer line bends, as BMW's own: a soft glow and a four-pointed star
+vec4 flare(vec2 q, vec2 c, vec3 col, float s, vec4 acc) {
+    vec2 d = abs(q - c);
+    float star = exp(-d.x / (s * 2.6)) * exp(-d.y / (s * 0.07)) + exp(-d.y / (s * 1.6)) * exp(-d.x / (s * 0.07));
+    float glow = exp(-dot(d, d) / (s * s * 0.5));
+    acc = over(vec4(col, glow * 0.55), acc);
+    return over(vec4(mix(col, vec3(1.0), 0.55), clamp(star * 0.9, 0.0, 1.0)), acc);
 }
 
 void main() {
@@ -1439,6 +1453,11 @@ void main() {
 
     c = bracket(p, u_speed, 2.0, 2.0, u_ticks.x, BLUE_LINE, BLUE_BAND, BLUE_LIT, BLUE_IN, c);
     c = bracket(pm, u_rpm, u_redFrom, u_orange, u_ticks.y, RED_LINE, RED_BAND, RED_LIT, RED_IN, c);
+    // (here) the flares at each bracket's bend and at its foot, where it meets the bottom line
+    c = flare(p, vec2(u_geo.w - 1.0, u_geo.y), BLUE_LINE, 26.0, c);
+    c = flare(pm, vec2(u_geo.w - 1.0, u_geo.y), RED_LINE, 26.0, c);
+    c = flare(p, vec2(outerX(u_geo.z), u_geo.z), BLUE_LINE, 18.0, c);
+    c = flare(pm, vec2(outerX(u_geo.z), u_geo.z), RED_LINE, 18.0, c);
     // the map window: a rounded hole cut out of the backdrop and brackets, so the map shows clean; the fuel and
     // oil bars come off while it is open (they ran across the map, car photos Nov 7 2026), the bottom strip stays
     if (u_hole.z > 0.0) {
@@ -1462,6 +1481,10 @@ void main() {
         float inside = cov(dx - xe) * cov(-sy) * cov(sy - u_strip.z);
         float f = dx / xe;
         vec3 sc = p.x < u_size.x * 0.5 ? mix(vec3(0.06, 0.2, 0.62), vec3(0.15, 0.36, 0.92), f) : mix(vec3(0.4, 0.05, 0.1), vec3(0.85, 0.1, 0.16), f);
+        // (here) each half a gauge: lit to its reading, dim beyond
+        float fl = p.x < u_size.x * 0.5 ? (p.x - xl) / xe : (p.x - u_size.x * 0.5) / xe;
+        float lv = p.x < u_size.x * 0.5 ? u_stripFill.x : u_stripFill.y;
+        if (lv >= 0.0) sc *= mix(0.32, 1.0, clamp((lv - fl) * xe + 0.5, 0.0, 1.0));
         c = over(vec4(sc, 0.95 * inside), c);
         float div = cov(abs(mod(p.x - (u_strip.z - sy) * 0.45, 150.0) - 75.0) - 73.8);
         c = over(vec4(0.02, 0.03, 0.08, 0.5 * inside * div), c);
@@ -1473,7 +1496,8 @@ void main() {
 
 /**
  * bimmer-lab's line icons (shared/icons.js of github.com/bimmer-lab/apps, MIT), as distance functions in a 0..1 box
- * (y down), in one colour: u_icon 0 gauge, 1 shock, 2 wheel, 3 cog, 4 stack, 5 therm, 6 fuel, 7 tyre, 8 oilcan.
+ * (y down), in one colour: u_icon 0 gauge, 1 shock, 2 wheel, 3 cog, 4 stack, 5 therm, 6 fuel, 7 tyre, 8 oilcan; and in their
+ * manner 9 battery, 10 bolt, 11 turbo, 12 the battery's temperature, 13 torque.
  */
 const LICON_FS = `#version 100
 ${HIGHP}
@@ -1513,6 +1537,28 @@ void main() {
     else if (id < 7.5) {
         d = min(ring(p, vec2(0.5), 0.4) - 0.075, ring(p, vec2(0.5), 0.17) - 0.04);
         for (int i = 0; i < 8; i++) { float a = float(i) * PI / 4.0 + PI / 8.0; vec2 u = vec2(sin(a), -cos(a)); d = min(d, seg(p, vec2(0.5) + 0.42 * u, vec2(0.5) + 0.49 * u) - 0.04); }
+    }
+    else if (id > 8.5 && id < 9.5) {   /* battery */
+        d = abs(max(abs(p.x - 0.47) - 0.33, abs(p.y - 0.55) - 0.2)) - 0.04;
+        d = min(d, max(abs(p.x - 0.86) - 0.04, abs(p.y - 0.55) - 0.08));
+        d = min(d, min(seg(p, vec2(0.28, 0.55), vec2(0.4, 0.55)) - 0.035, min(seg(p, vec2(0.34, 0.49), vec2(0.34, 0.61)) - 0.035, seg(p, vec2(0.55, 0.55), vec2(0.67, 0.55)) - 0.035)));
+    }
+    else if (id > 9.5 && id < 10.5) {  /* bolt (electric power) */
+        d = min(min(seg(p, vec2(0.58, 0.1), vec2(0.34, 0.54)) - 0.05, seg(p, vec2(0.34, 0.54), vec2(0.64, 0.46)) - 0.05), seg(p, vec2(0.64, 0.46), vec2(0.42, 0.9)) - 0.05);
+    }
+    else if (id > 10.5 && id < 11.5) { /* turbo: the housing and its wheel */
+        d = min(ring(p, vec2(0.5), 0.34) - 0.05, ring(p, vec2(0.5), 0.12) - 0.04);
+        d = min(d, seg(p, vec2(0.5, 0.16), vec2(0.88, 0.16)) - 0.05);
+        for (int i = 0; i < 6; i++) { float a = float(i) * PI / 3.0; vec2 u = vec2(sin(a), -cos(a)), w = vec2(sin(a + 0.6), -cos(a + 0.6)); d = min(d, seg(p, vec2(0.5) + 0.13 * u, vec2(0.5) + 0.27 * w) - 0.03); }
+    }
+    else if (id > 11.5 && id < 12.5) { /* the battery's temperature: a battery and a thermometer */
+        d = abs(max(abs(p.x - 0.36) - 0.26, abs(p.y - 0.62) - 0.16)) - 0.04;
+        d = min(d, max(abs(p.x - 0.67) - 0.03, abs(p.y - 0.62) - 0.06));
+        d = min(d, min(seg(p, vec2(0.84, 0.12), vec2(0.84, 0.52)) - 0.045, disc(p, vec2(0.84, 0.62), 0.09)));
+    }
+    else if (id > 12.5 && id < 13.5) { /* torque: a curved arrow round a shaft */
+        d = min(arc(p, vec2(0.5), 0.32, -0.6 * PI, 0.55 * PI) - 0.05, disc(p, vec2(0.5), 0.08));
+        d = min(d, min(seg(p, vec2(0.5 + 0.32 * sin(0.55 * PI), 0.5 - 0.32 * cos(0.55 * PI)), vec2(0.86, 0.38)) - 0.045, seg(p, vec2(0.5 + 0.32 * sin(0.55 * PI), 0.5 - 0.32 * cos(0.55 * PI)), vec2(0.66, 0.68)) - 0.045));
     }
     else d = min(min(seg(p, vec2(0.2, 0.62), vec2(0.6, 0.62)) - 0.12, seg(p, vec2(0.6, 0.58), vec2(0.9, 0.44)) - 0.04), min(disc(p, vec2(0.92, 0.66), 0.05), min(seg(p, vec2(0.3, 0.46), vec2(0.3, 0.34)) - 0.035, seg(p, vec2(0.22, 0.34), vec2(0.38, 0.34)) - 0.04)));
     float a = clamp(0.5 - d * s, 0.0, 1.0);
@@ -1647,4 +1693,54 @@ void main() {
     gl_FragColor = acc;
 }`;
 
-module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS, ROAD_FS, CHEVRON_FS, MDASH_FS, MTACH_FS, SDASH_FS, LICON_FS, E9X_FS };
+/**
+ * An M8 side gauge's bar (layout_m.js), as on a photo of the M8's cluster: a thin grey track, a thicker fill from
+ * u_zero to the reading (white fading to grey; below zero in u_neg, the battery charging), its ends cut on a slant,
+ * a red zone (low end to u_zones.x, high end from u_zones.y) in the fill's thickness, a short red slanted tick at
+ * the start, dark notches at the scale's labels (u_marks: up to three, 0..1; -1 none). The bar runs the layer's width.
+ *   u_value   the reading 0..1 (eased)   u_zero   where the fill starts 0..1   u_zones   red to x, red from y
+ */
+const MBAR_FS = `#version 100
+${HIGHP}${COMMON}
+uniform vec2 u_size;
+uniform float u_value;
+uniform float u_zero;
+uniform vec4 u_zones;
+uniform vec4 u_marks;
+uniform vec3 u_fill;
+uniform vec3 u_neg;
+uniform vec3 u_track;
+uniform vec3 u_redc;
+varying vec2 v_uv;
+void main() {
+    vec2 p = v_uv * u_size;
+    float x0 = 6.0, x1 = u_size.x - 4.0, L = x1 - x0, yc = u_size.y * 0.5 + 2.0;
+    float sl = 0.7;                                    /* the slant: x per y px (the top leans right) */
+    float xs = p.x + (p.y - yc) * sl;                  /* x on the slant */
+    float t = (xs - x0) / L;
+    vec4 acc = vec4(0.0);
+    /* the track: thin, its right end slanted */
+    float tr = span(p.y, yc + 1.5, yc + 4.5) * span(xs, x0, x1);
+    acc = over(acc, u_track, tr);
+    /* the red zones, the fill's thickness */
+    float thick = span(p.y, yc - 4.5, yc + 4.5);
+    float redz = (t <= u_zones.x ? 1.0 : 0.0) + (t >= u_zones.y ? 1.0 : 0.0);
+    acc = over(acc, u_redc, thick * span(xs, x0, x1) * min(redz, 1.0) * 0.95);
+    /* the fill: zero to the reading */
+    float v = clamp(u_value, 0.0, 1.0), lo = min(u_zero, v), hi = max(u_zero, v);
+    float f = thick * span(xs, x0 + lo * L, x0 + hi * L) * step(0.002, hi - lo);
+    vec3 fc = v >= u_zero ? mix(u_fill, u_fill * 0.62, clamp((t - u_zero) / max(v - u_zero, 0.05), 0.0, 1.0)) : u_neg;
+    if (v >= u_zero && redz > 0.5) fc = mix(u_redc, vec3(1.0), 0.15);
+    acc = over(acc, fc * (0.9 + 0.1 * clamp((yc - p.y) / 4.5, -1.0, 1.0)), f);
+    /* dark notches at the labels */
+    for (int i = 0; i < 3; i++) {
+        float m = i == 0 ? u_marks.x : i == 1 ? u_marks.y : u_marks.z;
+        if (m > 0.001 && m < 0.999) acc = over(acc, vec3(0.0), clamp(1.4 - abs(xs - (x0 + m * L)) + 0.5, 0.0, 1.0) * thick * 0.85);
+    }
+    /* the start tick: short, red, slanted the other way */
+    float tx = p.x - x0 + (p.y - yc) * 0.75;
+    acc = over(acc, u_redc, clamp(1.6 - abs(tx) + 0.5, 0.0, 1.0) * span(p.y, yc - 11.0, yc + 4.5));
+    gl_FragColor = acc;
+}`;
+
+module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS, ROAD_FS, CHEVRON_FS, MDASH_FS, MTACH_FS, SDASH_FS, LICON_FS, E9X_FS, MBAR_FS };

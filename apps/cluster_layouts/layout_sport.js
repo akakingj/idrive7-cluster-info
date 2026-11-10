@@ -41,6 +41,7 @@ module.exports = {
     font: 'wide',
     stripGear: true,    // (the gear is one of its two big readings: kept over the car's own strip)
     stripFuel: false,   // (its own fuel bar)
+    ownStripGauges: true,   // (the charge is its bottom bar's blue half, the fuel its own bar: none of the strip's bars)
     mapWindow: WINDOW,
     gearNumber: true,   // (the gear's number alone, as theirs)
     speedGauge: false,  // (its speed bracket reads through dyn, u_speed: the engine eases the engine speed alone)
@@ -53,6 +54,10 @@ module.exports = {
         const engine = C.engineFocus(o) || o.vehicle === 'ice';
         const [redFrom, orange] = B.redMarks(o, RPM_MAX);
         const T = (key, box, font, txt, colors, align) => B.text('wide', key, box, font, txt, colors, align, Y);
+        // a plug-in hybrid in an electric drive: the rev bracket reads the battery's power as ePower %, as BMW's
+        // electric M cars (i4 M50) do (0-100 kW as 0-100%)
+        const elec = (d) => C.electric(o, d);
+        const ePower = (d) => (isNum(d.kw) ? clamp01(d.kw / 100) : 0);
         // (the stock centre full screen: its area, x 566-1104, cut out of the view and left to the cluster)
         const list = [];
         list.push({
@@ -66,8 +71,11 @@ module.exports = {
                 u_strip: [425, Y(632), Math.round(42 * SY), 26], u_topEnd: [726],
             },
             // the engine speed eased by the engine (u_value); the speed, the fuel and the oil as they come
-            value: (d) => (isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
+            value: (d) => (elec(d) ? ePower(d) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
             dyn: (d) => ({
+                u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : redFrom], u_orange: [elec(d) ? 2 : orange],
+                // the bottom bar's halves as gauges: the charge (boost) and the battery's power (coolant)
+                u_stripFill: engine ? [C.boostFrac(d), C.tempFrac(d.coolant)] : [isNum(d.soc) ? clamp01(d.soc / 100) : 0, isNum(d.kw) ? clamp01(Math.abs(d.kw) / 100) : 0],
                 u_speed: [isNum(d.speed) ? Math.round(B.scaleFrac(C.speedIn(o, d.speed), scale) * 500) / 500 : 0],
                 u_fuel: [isNum(d.fuelPct) ? Math.round(clamp01(d.fuelPct / 100) * 500) / 500 : 0],
                 u_oil: [isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 500) / 500 : 0],
@@ -79,14 +87,22 @@ module.exports = {
             return { color: [Math.round(v) === i ? t.fg : t.sblue, 1], glow: [t.sblue, 0] };
         };
         const nearRpm = (i) => (t, d) => ({ color: [isNum(d.rpm) && Math.round(d.rpm / 1000) === i ? t.fg : t.spink, 1], glow: [t.spink, 0] });
+        const nearPow = (i) => (t, d) => ({ color: [Math.round(ePower(d) * 4) === i ? t.fg : t.spink, 1], glow: [t.spink, 0] });
         const SPD = [[248, 596], [206, 540], [164, 483], [122, 426], [82, 369], [51, 312], [66, 255], [96, 198], [142, 142]];
         // (the top one nudged right of the glass's slanted corner: its right edge where theirs is)
         SPD.forEach(([x, y], i) => list.push(T('spd' + i, [x, y, i === 8 ? 96 : 110, 27], 's_scale', String(scale[i]), nearSpeed(i), 'right')));
         // (full screen 2 a few px right of the KOMBI's gear box, 5 a few down from its eDrive box)
         const RPM = [[1562, 596], [1610, 532], [strip ? 1658 : 1664, 466], [1706, 402], [1749, 336], [1752, strip ? 272 : 282], [1719, 206], [1682, 142]];
-        RPM.forEach(([x, y], i) => list.push(T('rpm' + i, [x, y, 40, 27], 's_scale', String(i), nearRpm(i), 'left')));
+        RPM.forEach(([x, y], i) => list.push(Object.assign(T('rpm' + i, [x, y, 40, 27], 's_scale', String(i), nearRpm(i), 'left'), { visible: (d) => !elec(d) })));
+        // the ePower scale's numerals (0-100 in 25s) at their places along the bracket (between the rpm numerals')
+        if (o.vehicle !== 'ice' && !C.engineFocus(o)) [0, 1, 2, 3, 4].forEach((i) => {
+            const f = i * 7 / 4, k = Math.min(6, Math.floor(f)), u = f - k, at = RPM[k].map((v, j) => Math.round(v + (RPM[k + 1][j] - v) * u));
+            // (full screen clear of the KOMBI's eDrive box, x 1770 on above y 265)
+            if (!strip && at[0] + 50 > 1770 && at[1] < 284) at[1] = 284;
+            list.push(Object.assign(T('pow' + i, [at[0], at[1], 50, 27], 's_scale', String(i * 25), nearPow(i), 'left'), { visible: elec }));
+        });
         list.push(T('mphCap', [338, 88, 80, 29], 's_unit', C.speedUnit(o), B.role('sblue'), 'center'),
-            T('rpmCap', [1430, 86, 200, 29], 's_unit', '1/min x 1000', B.role('sred'), 'center'));
+            T('rpmCap', [1430, 86, 200, 29], 's_unit', (d) => (elec(d) ? 'ePower %' : '1/min x 1000'), B.role('sred'), 'center'));
         // their gear: the number alone (P, R or N in park, reverse or neutral; the selector's letter with no gear)
         const gearNum = (d) => { const g = C.gearText(d); return /^[DSM]\d+$/.test(g) ? g.slice(1) : g; };
         const gearC = (t, d) => ({ color: [B.shiftNow(o, d) ? t.red : t.fg, 1], glow: [t.fg, 0] });
@@ -116,15 +132,20 @@ module.exports = {
                     T('oilCold', [1291, 593, 70, 22], 's_gl', tl(50), B.role('fg'), 'center'));
             }
         }
-        // the bottom bar's readings: the battery's power (boost) on blue, the coolant on red
-        const power = engine
-            ? { txt: (d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual) ? (us ? (d.boostActual * 14.5038).toFixed(1) : d.boostActual.toFixed(2)) : '--'), unit: us ? 'PSI' : 'bar' }
-            : { txt: (d) => (isNum(d.kw) ? (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : String(Math.round(d.kw))) : '--'), unit: 'kW' };
-        list.push(T('power', [680, 640, 160, 26], 's_val', power.txt, B.role('fg'), 'right'),
-            T('powerUnit', [846, 640, 60, 29], 's_unit', power.unit, B.role('dim'), 'left'),
-            B.icon('therm', 998, Y(638), 24, 30, 'therm', 'dim'),
-            T('coolant', [1020, 640, 90, 26], 's_val', (d) => (isNum(d.coolant) ? String(Math.round(C.tempIn(o, d.coolant))) : '--'), B.role('fg'), 'right'),
-            T('coolantUnit', [1116, 640, 50, 29], 's_unit', '°' + (o.tempUnit === 'c' ? 'C' : 'F'), B.role('dim'), 'left'));
+        // the bottom bar's halves, each a gauge: the charge on blue and the battery's power on red (boost and the
+        // coolant on a petrol or diesel car)
+        const tu = '°' + (o.tempUnit === 'c' ? 'C' : 'F');
+        const halves = engine
+            ? [{ icon: 'turbo', txt: (d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual) ? (us ? (d.boostActual * 14.5038).toFixed(1) : d.boostActual.toFixed(2)) : '--'), unit: us ? 'PSI' : 'bar' },
+                { icon: 'therm', txt: (d) => (isNum(d.coolant) ? String(Math.round(C.tempIn(o, d.coolant))) : '--'), unit: tu }]
+            : [{ icon: 'battery', txt: (d) => (isNum(d.soc) ? String(Math.round(d.soc)) : '--'), unit: '%' },
+                { icon: 'bolt', txt: (d) => (isNum(d.kw) ? (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : String(Math.round(d.kw))) : '--'), unit: 'kW' }];
+        list.push(B.icon('barIconL', 652, Y(638), 30, 30, halves[0].icon, 'fg'),
+            T('barL', [690, 640, 150, 26], 's_val', halves[0].txt, B.role('fg'), 'right'),
+            T('barLUnit', [846, 640, 60, 29], 's_unit', halves[0].unit, B.role('dim'), 'left'),
+            B.icon('barIconR', 992, Y(638), 30, 30, halves[1].icon, 'fg'),
+            T('barR', [1026, 640, 100, 26], 's_val', halves[1].txt, B.role('fg'), 'right'),
+            T('barRUnit', [1132, 640, 60, 29], 's_unit', halves[1].unit, B.role('dim'), 'left'));
         if (stock) return list.filter((p) => p.kind === 'flat' || p.kind === 'sdash' || p.x + p.w <= 566 || p.x >= 1104);
         return list;
     },

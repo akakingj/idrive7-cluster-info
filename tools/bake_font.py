@@ -10,7 +10,7 @@ instrument clusters use, with upper and lower case. Families:
   light  Regular
   wide   Michroma (SIL OFL 1.1, shared/NOTICE), thickened, with Barlow Medium for the small print: Sport's face
   orb    Orbitron Black (SIL OFL 1.1), with Barlow Medium for the small print: M's face
-         (both as bimmer-lab's Cluster Themes bakes them; wider cells, 72 x 48, for the wide faces)
+         (both as bimmer-lab's Cluster Themes bakes them; wider cells, 60 x 40, for the wide faces)
 
 Each cell: the glyph drawn at 4x, centred, its baseline at BASE of the cell's height (room below it for the
 descenders of g j p q y, which 0.86 cut off), as a signed distance field
@@ -45,12 +45,12 @@ LOWER_SIGNS = '°%'
 FAMILIES = {
     'bold': {'ttf': 'BarlowSemiCondensed-SemiBold.ttf'},
     'light': {'ttf': 'BarlowSemiCondensed-Regular.ttf'},
-    # cells 72 x 48 and 16 to a row: the atlas 1152 x 288 (324 KB: within the 2048 px any GLES 2 GPU takes, and
-    # a layout's start-up under 600 KB); scale: Michroma's capitals the height of Barlow's; grow: atlas px added round each glyph (thickened)
+    # cells 60 x 40 and 16 to a row: the atlas 960 x 320 (300 KB with the small print: within the 2048 px any GLES 2
+    # GPU takes, and a layout's start-up under 600 KB); scale: Michroma's capitals the height of Barlow's; grow: atlas px added round each glyph (thickened)
     # (Sport's: Michroma thickened, Barlow Medium for the small print, as bimmer-lab's Cluster Themes bakes them)
-    'wide': {'ttf': 'Michroma-Regular.ttf', 'lower': 'Barlow-Medium.ttf', 'cellW': 72, 'cellH': 48, 'cols': 16, 'scale': 0.93, 'grow': 1.65},
+    'wide': {'ttf': 'Michroma-Regular.ttf', 'lower': 'Barlow-Medium.ttf', 'cellW': 60, 'cellH': 40, 'cols': 16, 'scale': 0.93, 'grow': 1.375},
     # M's: Orbitron Black (its zero slashed: the O drawn for it, plain as the M8's), Barlow Medium for the small print
-    'orb': {'ttf': 'Orbitron[wght].ttf', 'weight': 'Black', 'subs': {'0': 'O'}, 'lower': 'Barlow-Medium.ttf', 'cellW': 72, 'cellH': 48, 'cols': 16, 'scale': 1.0, 'grow': 0.5},
+    'orb': {'ttf': 'Orbitron[wght].ttf', 'weight': 'Black', 'subs': {'0': 'O'}, 'lower': 'Barlow-Medium.ttf', 'cellW': 60, 'cellH': 40, 'cols': 16, 'scale': 1.0, 'grow': 0.42},
 }
 
 
