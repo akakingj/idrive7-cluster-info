@@ -2,7 +2,7 @@
   "id": "cluster_centre",
   "title": "Cluster Centre",
   "description": "Pages of engine, gearbox and eDrive data, warm-up, turbo cool-down, a shift light and a 0-60 timer in the centre of the factory cluster, drawn by the cluster itself",
-  "version": "0.7.18",
+  "version": "0.8.0",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "OA9M",
@@ -150,6 +150,22 @@
         83,
         85,
         90
+      ]
+    },
+    {
+      "key": "kwFast",
+      "label": "Battery power (kW)",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "Fast: between eDrive Live's readings from the car's speed and acceleration"
+        ],
+        [
+          "off",
+          "eDrive Live's readings only"
+        ]
       ]
     },
     {

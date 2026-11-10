@@ -93,10 +93,11 @@ function startProviders(log, opts) {
     const timer = setInterval(() => { scan(); watchDir(); }, opts.scanMs || 250);
     scan(); watchDir();
     return {
-        /** { kw, kwOut, kwIn, soc, erange, frange, battery (°C) } (each undefined when no app shares it). */
+        /** { kw, kwAt, kwOut, kwIn, soc, erange, frange, battery (°C) } (each undefined when no app shares it). */
         readings: () => ({
             // (its last reading too while a read or two missed, power.old: the gauge holds it, not dropping to 0)
             kw: first((e) => e.power && e.power.kw),
+            kwAt: first((e) => e.power && typeof e.power.kw === 'number' && e.t),      // (when that reading was written)
             kwOut: first((e) => e.power && e.power.outMax),
             kwIn: first((e) => e.power && e.power.inMax),
             soc: first((e) => e.values && e.values.soc && e.values.soc.pct),

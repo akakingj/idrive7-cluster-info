@@ -308,6 +308,11 @@ car is taken to have the same cluster. What differs between cars is a setting, o
 - **Fuel tank size** (40-90 L, 69 for an X5 45e): the fuel bar.
 - The battery's charge and power come from **eDrive Live** only: this app never asks the battery unit itself
   (two apps asking it in turn left both without answers).
+- **Battery power (kW)**: *Fast* (the default) moves every power gauge as the car accelerates or regenerates, without
+  waiting for eDrive Live's next reading: the power at the wheels from the car's own speed and acceleration signals
+  (many a second), fitted continuously to eDrive Live's readings of the battery (`shared/kwfuse.js`); on electricity
+  only (with the engine running, and with *eDrive Live's readings only*, the readings as they are). Nothing shows
+  when eDrive Live has said nothing for 4 s.
 - **Electric range when full**: the estimate shown (with ~) until the car's own electric range arrives.
 - The glass and the KOMBI's boxes (the camera cowl, the gear bracket, the eDrive box, the warning lights)
   are taken as the same on every car with this cluster (`layout_common.js`; every layout is checked against

@@ -23,6 +23,7 @@ const Car = require('./kit/car');
 const { Diag } = require('./kit/diag');
 const { DidReader } = require('./kit/dids');
 const { startProviders } = require('./providers');
+const { createFuse } = require('./kwfuse');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
@@ -372,6 +373,11 @@ function startData(ctx, opts) {
         if (isNum(p.kwIn) && p.kwIn > 0) kwEnds.in = Math.max(kwEnds.in || 0, Math.ceil(p.kwIn / 5) * 5);
         return kwEnds;
     };
+    /* The battery's power between eDrive Live's readings (kwfuse.js): its readings fitted to the power at the wheels
+     * from the car's speed and acceleration, many times a second. Settings > kW: Fast (the default) or Readings only. */
+    const fuse = createFuse();
+    let lastKwAt = null;
+    const fastKw = () => setting('kwFast') !== 'off';
     let shownFor = 0;
     const vehicleTimer = setInterval(() => {
         if (setting('vehicle') === 'ice' || setting('vehicle') === 'phev') return;
@@ -390,9 +396,17 @@ function startData(ctx, opts) {
         data() {
             const d = car.data(), p = providers.readings();
             // ranges: an app that shares them first (eDrive Live), else the car's own signal
-            // the battery: eDrive Live's (it alone reads the battery unit)
+            // the battery: eDrive Live's (it alone reads the battery unit); its power between readings from the car's
+            // own speed and acceleration (kwfuse.js), with Settings > kW: Fast
+            const tNow = Date.now();
+            if (!d.demo) {
+                fuse.sample(tNow, { speed: d.speed, gLong: d.gLong, engineOn: d.engineOn });
+                // (a new reading: taken a little before eDrive Live wrote it)
+                if (isNum(p.kw) && isNum(p.kwAt) && p.kwAt !== lastKwAt) { lastKwAt = p.kwAt; fuse.measure(p.kwAt - 100, p.kw); }
+            }
+            const fz = !d.demo && fastKw() ? fuse.now(tNow) : null;
             const o = Object.assign({}, d, { mode: x.mode, soc: isNum(p.soc) ? p.soc : undefined,
-                kw: isNum(p.kw) ? p.kw : undefined, kwOut: endsOf(p).out || undefined, kwIn: kwEnds.in || undefined, driveMode: x.driveMode,
+                kw: fz ? fz.kw : isNum(p.kw) ? p.kw : undefined, kwRead: isNum(p.kw) ? p.kw : undefined, kwFused: !!(fz && fz.fused), kwOut: endsOf(p).out || undefined, kwIn: kwEnds.in || undefined, driveMode: x.driveMode,
                 erange: isNum(p.erange) ? p.erange : fresh('carErange', 120000) ? x.carErange : undefined,
                 frange: isNum(p.frange) ? p.frange : fresh('carFrange', 120000) ? x.carFrange : undefined,
                 trange: fresh('carTrange', 120000) ? x.carTrange : undefined, fuelLevel: fresh('fuelLevel', 120000) ? x.fuelLevel : undefined });
@@ -422,7 +436,7 @@ function startData(ctx, opts) {
         },
         /** The page on screen needs these (data keys): read them fast. */
         want(keys) { wanted = keys.map((k) => (k === 'boostTarget' || k === 'boostActual' ? 'boostCtl' : k === 'gearbox' ? 'egs' : k)); wantedT = Date.now(); },
-        status: () => Object.assign({ diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw }, status),
+        status: () => Object.assign({ diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw, kwFit: fuse.fit() }, status),
         /** The vehicle in use: { vehicle 'phev' | 'ice', how: 'set' | 'found' | 'assumed', why }. */
         vehicle: () => ({ vehicle: vehicleNow(), how: setting('vehicle') === 'ice' || setting('vehicle') === 'phev' ? 'set' : detected.vehicle ? 'found' : 'assumed', why: detected.why }),
         /** fn() on each new reading (the car's speed and rpm samples, every changed reading). */
