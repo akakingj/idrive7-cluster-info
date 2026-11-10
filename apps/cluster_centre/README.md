@@ -98,6 +98,10 @@ signal in the car's own catalog (`/etc/oap/someip/someip-interfaces.json`).
 Layouts shows a layout over the whole panel, Cluster Centre waits (its page would be hidden under it), and its
 screen says so.
 
+With the car switched off or locked it asks nothing of the car's units or of eDrive Live (`shared/data.js` with
+`kit/awake.js`, as Cluster Layouts: its README, *Nothing asked of a parked car*): until 0.8.1, Show on kept those
+requests going with the car locked, and the car couldn't sleep.
+
 ## Not seen on the car yet
 
 The centre take-over is the one Waze on cluster uses on this car, and every signal and engine-unit read is

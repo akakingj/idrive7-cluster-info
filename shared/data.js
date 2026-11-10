@@ -17,13 +17,17 @@
  *
  * The diagnostic reads are the slow part: only the values the page on screen needs are read, about twice a
  * second (want(keys)); the rest every 10 s; none while nothing is shown or nothing wants them (the car shows
- * "Diagnostic mode active" while they run).
+ * "Diagnostic mode active" while they run), and none - nor eDrive Live asked for anything - while the car is switched
+ * off (kit/awake.js: its own state, else moved or ran in the last 3 min). "Shown" is a setting, on with the car
+ * locked: Nov 10 2026 these reads and eDrive Live's for the shared power kept a locked car from sleeping ("Battery
+ * management: malfunction while shutting down the vehicle electronics", body controller 801C16 - 801C18).
  */
 const Car = require('./kit/car');
 const { Diag } = require('./kit/diag');
 const { DidReader } = require('./kit/dids');
 const { startProviders } = require('./providers');
 const { createFuse } = require('./kwfuse');
+const Awake = require('./kit/awake');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
@@ -135,6 +139,9 @@ function startData(ctx, opts) {
     /** The first number in a value whose field name matches re (else the first number at all). */
     const numberIn = (v, re) => { const ls = leaves(v).filter((l) => typeof l.v === 'number'); const m = ls.find((l) => re.test(l.key)) || ls[0]; return m ? m.v : undefined; };
     const car = new Car(ctx, ['rpm', 'speed', 'temps', 'gear', 'torque', 'accel']);
+    // shown and the car switched on: the only time anything is asked of the car's units or of eDrive Live
+    const awake = Awake.watch(ctx, log, { sample: () => { const c = car.data(); return { speed: c.speed, rpm: c.rpm }; } });
+    const active = () => (!opts || !opts.shown || opts.shown()) && awake.on();
     car.onSample(() => fresh_());
     const x = { at: {} };          // readings that are not the kit's: value and when it came
     /* fresh: whoever shows the data hears of each new reading at once (the engine draws it then, not at its
@@ -325,7 +332,7 @@ function startData(ctx, opts) {
      */
     let lastPollErr = '';
     async function poll() {
-        const on = !opts || !opts.shown || opts.shown();
+        const on = active();
         const now = Date.now(), wantedNow = on && now - wantedT < 3000;
         const usable = (k) => (k === 'boostCtl' ? (dme.boostTarget || []).length
             : (dme[k] || []).length);
@@ -384,11 +391,11 @@ function startData(ctx, opts) {
         const p = providers.readings();
         if (providers.powerShared() || isNum(p.soc)) return detect('phev', 'eDrive Live shares its battery readings');
         if (fresh('carErange', 120000) && x.carErange > 0) return detect('phev', 'the car gives an electric range');
-        if (opts && opts.shown && opts.shown()) shownFor += 5000;
+        if (opts && opts.shown && active()) shownFor += 5000;
         if (!detected.vehicle && dmeAnswered && shownFor >= 90000) detect('ice', 'no drive modes, electric range or eDrive Live of a plug-in hybrid (the engine unit answers)');
     }, 5000);
-    // while shown, ask eDrive Live to share; otherwise let go at once (providers.js: Cluster Info's file)
-    const wantTimer = setInterval(() => { if (opts && opts.shown && opts.shown()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
+    // while shown with the car on, ask eDrive Live to share; otherwise let go at once (providers.js: Cluster Info's file)
+    const wantTimer = setInterval(() => { if (opts && opts.shown && active()) providers.want({ power: true, values: ['soc', 'battery', 'oil'] }); else providers.release(); }, 1000);
 
     return {
         car,
@@ -436,11 +443,13 @@ function startData(ctx, opts) {
         },
         /** The page on screen needs these (data keys): read them fast. */
         want(keys) { wanted = keys.map((k) => (k === 'boostTarget' || k === 'boostActual' ? 'boostCtl' : k === 'gearbox' ? 'egs' : k)); wantedT = Date.now(); },
-        status: () => Object.assign({ diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw, kwFit: fuse.fit() }, status),
+        status: () => Object.assign({ car: awake.why() + (awake.on() ? '' : ' - nothing asked of the car'), diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw, kwFit: fuse.fit() }, status),
         /** The vehicle in use: { vehicle 'phev' | 'ice', how: 'set' | 'found' | 'assumed', why }. */
         vehicle: () => ({ vehicle: vehicleNow(), how: setting('vehicle') === 'ice' || setting('vehicle') === 'phev' ? 'set' : detected.vehicle ? 'found' : 'assumed', why: detected.why }),
         /** fn() on each new reading (the car's speed and rpm samples, every changed reading). */
         onFresh(fn) { freshFns.push(fn); },
+        /** The car's state (kit/awake.js): { on, parked, why }. */
+        awake: () => ({ on: awake.on(), parked: awake.parked(), why: awake.why() }),
         stop() { clearTimeout(timer); clearInterval(wantTimer); clearInterval(vehicleTimer); providers.stop(); },
     };
 }

@@ -236,7 +236,7 @@ regeneration. An original drawing.
 | gearbox oil | `BasicDataSet.basicDataSet` |
 | battery temperature, where the power goes | `Efficiencytainment2.statusBatteryTemperature`, `KombiIF.statusDisplayElectricalPowerDistribution` |
 | intake air, boost | the engine unit over UDS, as M Vitals reads it (only while a layout that shows them is up) |
-| battery charge and power | eDrive Live, through the shared folder `/dev/shm/cluster-info` (asked for while the layout shows, as Cluster Info does) |
+| battery charge and power | eDrive Live, through the shared folder `/dev/shm/cluster-info` (asked for while the layout shows and the car is switched on, as Cluster Info does) |
 | fuel range, electric range | an app that shares them (eDrive Live, `values.frange.km` / `values.erange.km` in that folder), else the car's `KombiIF.statusRangeTankStatus` and `VehicleInformation.Range`, numbers picked by field name (`shared/data.js` `rangesOf`) |
 | drive mode (SPORT, SPORT INDIVIDUAL, HYBRID, HYBRID COMFORT, HYBRID ECO PRO, ELECTRIC, ELECTRIC INDIVIDUAL, BATTERY CONTROL, ADAPTIVE, + XTRABOOST) | `FES.statusFESVehicleDynamicSwitchHMI` (and `statusSwitchDriveDynamicSport2`), decoded with BMW's FES mode table (TAB_FES_MODUS_ARG); the Auto colours follow it |
 | steering angle, yaw rate | `SteeringAngle.ActualSteeringAngleDriver`, `CDS2.statusYawVelocityVehicle` (scaling in `config.scaling`, from the CAN signals, to confirm) |
@@ -294,6 +294,17 @@ end higher. The layouts' own fuel and electric range numbers are left out (the s
 readings in the centre a fuel gauge sits above the strip's fuel range (bottom left) and a charge gauge above its
 electric range (bottom right), bars with no numbers. With the stock centre the layout takes the same form as with Waze, its window left clear for the car's own centre
 content. `tools/preview.js --strip` shows it.
+
+### Nothing asked of a parked car
+
+Every diagnostic read (and every read eDrive Live makes for the shared power) goes through the car's gateway and
+wakes its networks. **Show** stays on with the car locked, so the layout alone can't say when to stop: until 0.27.2
+it kept asking, and the car couldn't sleep (body controller 801C16 - 801C18 "no sleep in parking state", the engine
+unit's switch-off time missing, *Battery management: malfunction while shutting down the vehicle electronics*). Now
+`shared/data.js` reads nothing and asks eDrive Live for nothing unless the car is switched on, by its own state
+(`VehicleCondition`, `kit/awake.js`: ignition on, ready to drive, driving), or, before the car has said, moved or ran
+in the last 3 minutes. The layout itself stays up; its readings simply stop until the car is on again. After
+installing, clear the stored faults once (Fault Scanner) and check they stay away.
 
 ## Vehicles
 
