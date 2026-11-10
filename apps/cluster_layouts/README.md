@@ -3,8 +3,8 @@
 *Part of [iDrive 7 cluster apps](../../README.md), with Cluster Info and [Cluster Centre](../cluster_centre/README.md).*
 
 Custom layouts for the whole instrument cluster of a BMW with iDrive 7 (MGU), **drawn by the cluster
-itself**. Six original layouts (Analog sport, Digital round, Modern wide, Digital dash, Retro and Pulse), held
-to what a car maker would ship, each in comfort, sport and efficient colours (following the selector's S / M
+itself**. Eight original layouts (Analog sport, Digital round, Modern wide, Digital dash, Freedom, Retro, Track and
+Pulse), each in comfort, sport and efficient colours (following the selector's S / M
 programme, or chosen), each with three centres: the **readings**, **Waze** or the **stock** centre content.
 
 With the car's own bottom strip (the default) the strip shows the gear, the drive mode, the ranges, the time and the
@@ -93,6 +93,16 @@ small eDrive box at the top right (`layout_common.js`; `tools/clearance.js` chec
 |---|---|
 | ![](../../docs/digital_dash_sport.png) | ![](../../docs/digital_dash_map.png) |
 
+### Freedom
+
+Over the top and American: the stars and stripes wave behind everything, bald eagles fly across and
+fireworks go off in red, white and blue, all drawn and moved by the cluster itself (`shaders.js`: `FLAG_FS`,
+`EAGLE_FS`, `FIREWORKS_FS`, on the renderer's clock, so nothing is sent to animate them). Over it: a huge speed
+inside a red-to-blue tach arc, the battery's power large on the left (the gear there without the car's own strip), a
+FREEDOM banner, a gold-edged plaque of readings along the bottom, and the xDrive split on the right.
+
+![Freedom](../../docs/freedom.png)
+
 ### Retro
 
 A tribute to the round-dial clusters of the 1980s and 90s: matte black faces with a thin dark rim, numerals
@@ -108,6 +118,21 @@ maker's marks or names.
 | Sport colours | Efficient colours |
 |---|---|
 | ![](../../docs/retro_sport.png) | ![](../../docs/retro_efficient.png) |
+
+### Track
+
+A motorsport data display: a row of shift lights (green, yellow, then red, all flashing red 300 rpm before
+the red line) over a segmented rpm bar, a huge gear with the engine speed in the middle, tiles for oil,
+coolant, boost and battery power either side of it (over the car's own strip, which shows the gear, the card holds
+the engine speed, large, instead) (timing and torque with Vehicle: ICE), the speed large on
+the left with a **0-60 timer** (it times every run from a stop to 60 mph, or 0-100 km/h, and keeps the best of
+the drive) and the drive's peak power (or boost), and the ranges and charge right of the KOMBI's box.
+
+![Track](../../docs/track.png)
+
+| Sport colours at the shift point |
+|---|
+| ![](../../docs/track_sport.png) |
 
 ### Pulse
 
@@ -174,8 +199,9 @@ disappears into the background; Settings > Frame behind the gear box puts a grey
 
 **M cars** (Settings > Cluster > M car): an M car's KOMBI leaves two more dark boxes in the middle of the
 panel while a layout is up, over whatever is drawn there. With the setting on, each layout moves its readings
-round them: Digital dash makes its middle and right top tiles one line high above the boxes, Modern wide moves its
-centre readings and gear below them, and the panel between the dials narrows. The rev counters of
+round them: Digital dash makes its middle and right top tiles one line high above the boxes, Track moves its gear
+card and right tiles below them, Modern wide moves its centre readings and gear below them, Freedom moves the
+speed to the left and the gear to the right, and the panel between the dials narrows. The rev counters of
 Analog sport, Digital round and Retro are too big to move out of the middle, so the boxes still sit on their
 faces. The boxes' places were measured from one photo of a car (`layout_common.M_BOXES`, to within about 10 px):
 a straight-on photo would tighten them. With Bottom strip
@@ -187,7 +213,7 @@ temperature and the electric range, and the warning lights; 660 just touched the
 black boxes some cars' KOMBIs leave over a full-screen layout go away. Found and tested on cars by thatgrayg22.
 With nothing of the KOMBI's to keep clear of, each layout takes its centred form there: the round dials of Analog
 sport, Digital round and Retro stand either side of the middle again as first drawn, sized to end above the
-strip; Digital dash's side columns balance either side of the middle; Modern wide's arcs
+strip; the side columns of Track, Digital dash and Freedom balance either side of the middle; Modern wide's arcs
 end higher. The layouts' own fuel and electric range numbers are left out (the strip shows both), and with the
 readings in the centre a fuel gauge sits above the strip's fuel range (bottom left) and a charge gauge above its
 electric range (bottom right), bars with no numbers. With the stock centre the layout takes the same form as with Waze, its window left clear for the car's own centre

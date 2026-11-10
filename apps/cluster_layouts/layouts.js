@@ -3,7 +3,7 @@
  * layouts.js - the layouts this app offers, by id. A layout is one file, layout_<id>.js, next to this one
  * (the build ships only top-level .js files); list it here and in app.json's "layout" setting (README.md).
  */
-const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_retro'), require('./layout_pulse')];
+const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse')];
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
@@ -25,12 +25,24 @@ const M_MOVES = {
         // the speed up between the cowl and the boxes; its unit, the drive mode and the rpm in one row below them
         info: { speedDigits: { y: 128, h: 146 }, speedUnit: { y: 432, h: 28 }, mode: { x: 200, y: 434, w: 440, h: 26 }, rpmDigits: { y: 430, h: 30 }, gear: { y: 186, h: 230 } },
     },
+    track: { info: {
+        // the gear card below the boxes, the drive mode above them; the right column's tiles stacked below
+        gearCard: { y: 432, h: 208 }, gear: { y: 438, h: 140 }, rpm: { y: 580, h: 34 }, rpmLbl: { y: 618, h: 16 }, mode: { y: 226, h: 26 },
+        boostCard: { y: 432, h: 100 }, boostLbl: { y: 442 }, boost: { y: 466, h: 55 },
+        powerCard: { y: 542, h: 100 }, powerLbl: { y: 552 }, power: { y: 576, h: 55 },
+    } },
     modern_wide: {
         // the centre column's readings under the boxes (the charge bar left out: no room), the gear below the right box
         info: { fuel: { y: 432 }, fuelLbl: { y: 482 }, elec: { y: 432 }, elecLbl: { y: 482 }, soc: { y: 508 }, socLbl: { y: 549 }, kw: { y: 508 }, kwLbl: { y: 549 },
             oil: { y: 578, h: 36 }, oilLbl: { y: 619, h: 18 }, coolant: { y: 578, h: 36 }, coolantLbl: { y: 619, h: 18 },
             gear: { y: 432, h: 120 }, rpmDigits: { y: 556 }, '-soc': 'band' },
         stock: { gear: { y: 432, h: 120 }, rpmDigits: { y: 556 } },
+    },
+    freedom: {
+        // the speed to the left (where the gear was), the gear to the right under the banner
+        info: { speedDigits: { x: 150, y: 186, w: 300, h: 150 }, speedUnit: { x: 150, y: 338, w: 300, h: 22 }, clock: { y: 376 }, outside: { y: 376 },
+            gear: { x: 1680, y: 268, w: 220, h: 140 } },
+        stock: { gear: { x: 1680, y: 268, w: 220, h: 140 } },
     },
     digital_dash: {
         // with the stock centre: the left column a little narrower, the right column's last two below the box
@@ -87,7 +99,7 @@ function bottomCut(list) {
     list.forEach((p) => {
         if (p.y >= CUT_Y) return;
         if (p.y + p.h <= CUT_Y) return out.push(p);
-        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'bg' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
+        if (p.kind === 'flat' || p.kind === 'panel' || p.kind === 'flag' || p.kind === 'bg' || /^bg/.test(p.key)) return out.push(Object.assign({}, p, { h: CUT_Y - p.y }));
         if (p.h <= 80) return out.push(Object.assign({}, p, { y: CUT_Y - p.h }));
         out.push(p);
     });
@@ -135,6 +147,5 @@ LAYOUTS.forEach((L) => {
         return list;
     };
 });
-/* (a saved choice of a retired layout, Freedom or Track: Analog sport) */
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
 module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, bottomCut };

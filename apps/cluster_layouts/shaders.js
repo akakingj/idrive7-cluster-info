@@ -608,6 +608,162 @@ void main() {
     gl_FragColor = acc;
 }`;
 
+/*
+ * Freedom (layout_freedom.js): the waving flag, the eagles and the fireworks. Each animates on the renderer's own
+ * clock (u_time): nothing is sent to move them. Small loops, no uniform arrays (a merged shader with big arrays
+ * once rebooted the KOMBI).
+ */
+const HASH = `
+float hash1(float n) { return fract(sin(n * 127.1) * 43758.5453); }
+`;
+
+/**
+ * The stars and stripes, waving, dimmed under the readings.
+ *   u_dim     the flag's brightness 0..1
+ *   u_red, u_white, u_blue
+ */
+const FLAG_FS = `#version 100
+${HIGHP}${COMMON}
+uniform vec2 u_size;
+uniform highp float u_time;
+uniform float u_dim;
+uniform vec3 u_red;
+uniform vec3 u_white;
+uniform vec3 u_blue;
+varying vec2 v_uv;
+float star5(vec2 p, float r, float rf) {
+    vec2 k1 = vec2(0.809016994, -0.587785252), k2 = vec2(-k1.x, k1.y);
+    p.x = abs(p.x);
+    p -= 2.0 * max(dot(k1, p), 0.0) * k1;
+    p -= 2.0 * max(dot(k2, p), 0.0) * k2;
+    p.x = abs(p.x);
+    p.y -= r;
+    vec2 ba = rf * vec2(-k1.y, k1.x) - vec2(0.0, 1.0);
+    float h = clamp(dot(p, ba) / dot(ba, ba), 0.0, r);
+    return length(p - ba * h) * sign(p.y * ba.x - p.x * ba.y);
+}
+void main() {
+    vec2 p = v_uv * u_size;
+    float t = u_time;
+    /* the wave: the cloth's rise and its light */
+    float w = sin(p.x * 0.006 - t * 1.4 + p.y * 0.002);
+    p.y += w * 10.0;
+    float shade = 0.72 + 0.28 * sin(p.x * 0.006 - t * 1.4 + 0.9 + p.y * 0.002);
+    float sh = u_size.y / 13.0;
+    float stripe = mod(floor(p.y / sh), 2.0);           /* 0: red, 1: white */
+    vec3 col = stripe < 0.5 ? u_red : u_white * 0.55;
+    /* the canton: 7 stripes deep, 0.4 of the width, 50 stars */
+    if (p.x < u_size.x * 0.4 && p.y < sh * 7.0) {
+        col = u_blue;
+        vec2 cs = vec2(u_size.x * 0.4 / 12.0, sh * 7.0 / 10.0);
+        vec2 c = floor(p / cs), f = (fract(p / cs) - 0.5) * cs;
+        float on = mod(c.x + c.y, 2.0) < 0.5 ? 1.0 : 0.0;
+        float d = star5(f * vec2(1.0, -1.0), min(cs.x, cs.y) * 0.42, 0.45);
+        float twinkle = 0.75 + 0.25 * sin(t * 3.0 + c.x * 1.7 + c.y * 2.3);
+        col = mix(col, u_white * twinkle, clamp(0.5 - d, 0.0, 1.0) * on);
+    }
+    gl_FragColor = vec4(col * shade * u_dim, 1.0);
+}`;
+
+/**
+ * Bald eagles flying across: two, at their own speeds and heights, wings beating.
+ *   u_body, u_head (and tail), u_beak, u_rim (a light edge, to read on the dark flag)
+ */
+const EAGLE_FS = `#version 100
+${HIGHP}${COMMON}${HASH}
+uniform vec2 u_size;
+uniform highp float u_time;
+uniform vec3 u_body;
+uniform vec3 u_head;
+uniform vec3 u_beak;
+uniform vec3 u_rim;
+varying vec2 v_uv;
+float seg(vec2 p, vec2 a, vec2 b, float ra, float rb) {
+    vec2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h) - mix(ra, rb, h);
+}
+float ell(vec2 p, vec2 r) { return (length(p / r) - 1.0) * min(r.x, r.y); }
+void main() {
+    vec2 p = v_uv * u_size;
+    vec4 acc = vec4(0.0);
+    for (int i = 0; i < 2; i++) {
+        float fi = float(i);
+        float speed = 0.045 + 0.02 * fi, sc = 1.7 - 0.45 * fi;   /* the near one bigger */
+        float x = fract(u_time * speed + fi * 0.47) * (u_size.x + 520.0) - 260.0;
+        float y = u_size.y * (0.42 + 0.22 * fi) + sin(u_time * 0.8 + fi * 2.0) * 10.0;
+        vec2 q = (p - vec2(x, y)) / sc;
+        if (abs(q.x) > 130.0 || abs(q.y) > 110.0) continue;   /* (in the eagle's own units) */
+        float flap = sin(u_time * 5.0 + fi * 1.3);
+        /* the wings: the far one darker, from the shoulders to the tips, primaries spread */
+        vec2 tipN = vec2(-30.0 + 18.0 * flap, -82.0 * flap - 12.0), tipF = vec2(-22.0 + 14.0 * flap, -64.0 * flap - 6.0);
+        float wf = seg(q, vec2(4.0, -2.0), tipF, 15.0, 3.0);
+        float wn = min(seg(q, vec2(-2.0, 0.0), tipN, 17.0, 3.0), min(seg(q, vec2(-2.0, 0.0), tipN + vec2(-14.0, 6.0), 12.0, 2.0), seg(q, vec2(-2.0, 0.0), tipN + vec2(10.0, 8.0), 12.0, 2.0)));
+        float body = ell(q - vec2(0.0, 4.0), vec2(42.0, 13.0));
+        float tail = seg(q, vec2(-36.0, 5.0), vec2(-62.0, 9.0), 8.0, 11.0);
+        float head = length(q - vec2(44.0, -2.0)) - 11.0;
+        float beak = seg(q, vec2(50.0, 0.0), vec2(62.0, 4.0), 4.0, 1.0);
+        float eye = length(q - vec2(48.0, -5.0)) - 1.6;
+        float dark = min(min(body, wn), wf);
+        acc = over(acc, u_rim, clamp(1.5 - abs(min(dark, min(head, tail))), 0.0, 1.0) * 0.55);
+        acc = over(acc, u_body * 0.7, clamp(0.5 - wf, 0.0, 1.0));
+        acc = over(acc, u_body, clamp(0.5 - min(body, wn), 0.0, 1.0));
+        acc = over(acc, u_head, clamp(0.5 - min(head, tail), 0.0, 1.0));
+        acc = over(acc, u_beak, clamp(0.5 - beak, 0.0, 1.0));
+        acc = over(acc, vec3(0.05), clamp(0.5 - eye, 0.0, 1.0));
+    }
+    gl_FragColor = acc;
+}`;
+
+/**
+ * Fireworks: three bursts in turn, each a rising trail, a flash and 14 sparks falling and fading, in red,
+ * white or blue.
+ *   u_red, u_white, u_blue; u_value: none (they go off on their own)
+ */
+const FIREWORKS_FS = `#version 100
+${HIGHP}${COMMON}${HASH}
+uniform vec2 u_size;
+uniform highp float u_time;
+uniform vec3 u_red;
+uniform vec3 u_white;
+uniform vec3 u_blue;
+varying vec2 v_uv;
+void main() {
+    vec2 p = v_uv * u_size;
+    vec3 col = vec3(0.0);
+    float a = 0.0;
+    for (int i = 0; i < 3; i++) {
+        float fi = float(i), P = 2.9 + 0.4 * fi;
+        float tt = u_time + fi * 1.13, n = floor(tt / P), f = fract(tt / P);
+        float seed = n * 7.31 + fi * 3.17;
+        vec2 c = vec2(mix(0.2, 0.8, hash1(seed)), mix(0.25, 0.55, hash1(seed + 1.0))) * u_size;
+        float pick = hash1(seed + 2.0);
+        vec3 k = pick < 0.34 ? u_red : pick < 0.67 ? u_white : u_blue;
+        if (f < 0.22) {
+            /* the rocket going up, a short trail */
+            float g = f / 0.22;
+            vec2 r = vec2(c.x, mix(u_size.y + 10.0, c.y, g * (2.0 - g)));
+            float d = length((p - r) * vec2(1.0, 0.35));
+            float s = exp(-d * d / 6.0);
+            col += vec3(1.0, 0.85, 0.6) * s; a += s;
+        } else {
+            float g = (f - 0.22) / 0.78, R = 130.0 + 70.0 * hash1(seed + 3.0);
+            float fade = pow(1.0 - g, 1.6);
+            float fl = exp(-length(p - c) / 40.0) * max(0.0, 1.0 - g * 6.0);   /* the flash */
+            col += k * fl * 1.4; a += fl;
+            for (int j = 0; j < 14; j++) {
+                float fj = float(j), ang = fj * 0.4488 + hash1(seed + fj) * 0.3;
+                vec2 sp = c + vec2(cos(ang), sin(ang)) * R * (1.0 - pow(1.0 - g, 2.2)) * (0.75 + 0.25 * hash1(seed + fj + 9.0)) + vec2(0.0, 60.0 * g * g);
+                float d = length(p - sp);
+                float s = exp(-d * d / 10.0) * fade * 1.3 + exp(-d / 9.0) * fade * 0.25;
+                col += k * s; a += s;
+            }
+        }
+    }
+    a = clamp(a, 0.0, 1.0);
+    gl_FragColor = vec4(a > 0.0 ? min(col / max(a, 0.001), vec3(1.0)) : vec3(0.0), a);
+}`;
+
 /**
  * The road ahead in perspective, drawn as the car's driving assistant sees it: three lanes converging to a point
  * above the layer, the car seen from behind at the bottom, and from the assistant (u_dap valid) the car it
@@ -718,4 +874,4 @@ void main() {
     gl_FragColor = acc;
 }`;
 
-module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, ROAD_FS };
+module.exports = { HIGHP, COMMON, GLYPH, FLAT_FS, PANEL_FS, DIAL_FS, BAND_FS, TEXT_FS, BG_FS, ICON_FS, SPARK_FS, CAR_FS, LEDS_FS, FLAG_FS, EAGLE_FS, FIREWORKS_FS, ROAD_FS };
