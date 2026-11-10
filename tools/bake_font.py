@@ -8,9 +8,9 @@ Font: Barlow Semi Condensed (SIL Open Font License 1.1, shared/NOTICE), a DIN-li
 instrument clusters use, with upper and lower case. Families:
   bold   SemiBold (figures and text the layouts call bold)
   light  Regular
-  wide   Michroma (SIL OFL 1.1, shared/NOTICE), thickened, for the figures, capitals and signs, and Barlow Semi
-         Condensed Regular for the lower case and the degree and per cent signs (the units): the M and Sport layouts' face, after bimmer-lab's
-         Cluster Themes. Its cells are wider (Michroma is a wide face); its capitals drawn the height of Barlow's.
+  wide   Michroma (SIL OFL 1.1, shared/NOTICE), thickened, with Barlow Medium for the small print: Sport's face
+  orb    Orbitron Black (SIL OFL 1.1), with Barlow Medium for the small print: M's face
+         (both as bimmer-lab's Cluster Themes bakes them; wider cells, 72 x 48, for the wide faces)
 
 Each cell: the glyph drawn at 4x, centred, its baseline at BASE of the cell's height (room below it for the
 descenders of g j p q y, which 0.86 cut off), as a signed distance field
@@ -47,7 +47,10 @@ FAMILIES = {
     'light': {'ttf': 'BarlowSemiCondensed-Regular.ttf'},
     # cells 72 x 48 and 16 to a row: the atlas 1152 x 288 (324 KB: within the 2048 px any GLES 2 GPU takes, and
     # a layout's start-up under 600 KB); scale: Michroma's capitals the height of Barlow's; grow: atlas px added round each glyph (thickened)
-    'wide': {'ttf': 'Michroma-Regular.ttf', 'lower': 'BarlowSemiCondensed-Regular.ttf', 'cellW': 72, 'cellH': 48, 'cols': 16, 'scale': 0.93, 'grow': 1.65},
+    # (Sport's: Michroma thickened, Barlow Medium for the small print, as bimmer-lab's Cluster Themes bakes them)
+    'wide': {'ttf': 'Michroma-Regular.ttf', 'lower': 'Barlow-Medium.ttf', 'cellW': 72, 'cellH': 48, 'cols': 16, 'scale': 0.93, 'grow': 1.65},
+    # M's: Orbitron Black (its zero slashed: the O drawn for it, plain as the M8's), Barlow Medium for the small print
+    'orb': {'ttf': 'Orbitron[wght].ttf', 'weight': 'Black', 'subs': {'0': 'O'}, 'lower': 'Barlow-Medium.ttf', 'cellW': 72, 'cellH': 48, 'cols': 16, 'scale': 1.0, 'grow': 0.5},
 }
 
 
@@ -64,23 +67,38 @@ def cell(font, ch, cell_w=CELL_W, grow=0.0, cell_h=CELL_H):
     return np.clip(np.round((0.5 + sd / (2 * SPREAD)) * 255), 0, 255).astype(np.uint8)
 
 
+# a family with a second face (its small print) has these too: that face's figures and capitals, at the fullwidth
+# forms (U+FF10-FF19, U+FF21-FF3A, and + , - . / : at U+FF0B-FF0F, FF1A; font.js smallPrint), so a unit reads '1/min x 1000' or 'PSI' in Barlow
+SMALL = ''.join(chr(ord(c) + 0xFEE0) for c in '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ+,-./:')
+
+
 def bake(src, fam, spec):
     ttf, cw, grow, cols, ch_ = spec['ttf'], spec.get('cellW', CELL_W), spec.get('grow', 0.0), spec.get('cols', COLS), spec.get('cellH', CELL_H)
     size = ch_ * 0.92
     font = ImageFont.truetype(os.path.join(src, ttf), int(round(size * UP * spec.get('scale', 1.0))))
+    if spec.get('weight'):
+        font.set_variation_by_name(spec['weight'])
+    subs = spec.get('subs', {})
     lower = ImageFont.truetype(os.path.join(src, spec['lower']), int(round(size * UP))) if spec.get('lower') else font
-    rows = -(-len(CHARS) // cols)
+    chars = CHARS + (SMALL if spec.get('lower') else '')
+    rows = -(-len(chars) // cols)
     atlas = np.zeros((ch_ * rows, cw * cols), np.uint8)
     adv = []
-    for k, ch in enumerate(CHARS):
-        f, g = (lower, 0.0) if ch.islower() or ch in LOWER_SIGNS else (font, grow)
+    for k, ch in enumerate(chars):
+        small = ch in SMALL
+        f, g = (lower, 0.0) if ch.islower() or ch in LOWER_SIGNS or small else (font, grow)
+        if small:
+            ch = chr(ord(ch) - 0xFEE0)
         oy, ox = (k // cols) * ch_, (k % cols) * cw
-        atlas[oy:oy + ch_, ox:ox + cw] = cell(f, ch, cw, g, ch_)
-        adv.append(round((f.getlength(ch) + 2 * g * UP) / (ch_ * UP), 4))
+        drawn = subs.get(ch, ch) if f is font else ch
+        atlas[oy:oy + ch_, ox:ox + cw] = cell(f, drawn, cw, g, ch_)
+        adv.append(round((f.getlength(drawn) + 2 * g * UP) / (ch_ * UP), 4))
     with open(os.path.join(SHARED, 'font_' + fam + '.wad'), 'wb') as f:
         f.write(atlas.tobytes())
-    print(fam, ttf, atlas.shape[1], 'x', atlas.shape[0], len(CHARS), 'glyphs')
-    return {'font': ttf + (' + ' + spec['lower'] if spec.get('lower') else ''), 'chars': CHARS, 'cellW': cw, 'cellH': ch_, 'cols': cols, 'rows': rows, 'spread': SPREAD, 'adv': adv}
+    print(fam, ttf, atlas.shape[1], 'x', atlas.shape[0], len(chars), 'glyphs')
+    return {'font': ttf + (' + ' + spec['lower'] if spec.get('lower') else ''), 'chars': chars, 'cellW': cw, 'cellH': ch_, 'cols': cols, 'rows': rows, 'spread': SPREAD, 'adv': adv,
+            # the font size each face is drawn at, in cell heights (the layouts size a text to match a font size)
+            'em': round(0.92 * spec.get('scale', 1.0), 4), 'emLower': 0.92, 'grow': round(grow / ch_, 4)}
 
 
 if __name__ == '__main__':

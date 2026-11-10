@@ -41,7 +41,9 @@ function args(argv) {
 /** The page: draws the scene with WebGL, quad by quad, alpha-blended in order. */
 function page(scene, mapWindow, over) {
     /* with the map in the centre, a stand-in for it behind the cluster's layers, where slot 0x100 shows */
-    const map = mapWindow ? `<div style="position:absolute;left:416px;top:120px;width:1088px;height:480px;background:#1b222b;
+    /* (mapWindow: true for the native map area, or the layout's own window { x, y, w, h }) */
+    const mw = mapWindow && mapWindow.w ? mapWindow : { x: 416, y: 120, w: 1088, h: 480 };
+    const map = mapWindow ? `<div style="position:absolute;left:${mw.x}px;top:${mw.y}px;width:${mw.w}px;height:${mw.h}px;background:#1b222b;
 background-image:linear-gradient(28deg,transparent 47%,#3a4656 47%,#3a4656 53%,transparent 53%),linear-gradient(-62deg,transparent 48%,#2f3a48 48%,#2f3a48 52%,transparent 52%),
 linear-gradient(90deg,transparent 30%,#4ea3ff 30%,#4ea3ff 31.4%,transparent 31.4%);background-size:260px 200px,340px 300px,100% 100%;
 color:#6f7f92;font:600 22px sans-serif;display:flex;align-items:center;justify-content:center">map</div>` : '';
@@ -133,7 +135,7 @@ if (require.main === module) {
     const scene = s.scene();
     s.stop();
     scene.time = a.time || 0;
-    render(scene, a.out, a.centre === 'map', a.mcar ? require('../apps/cluster_layouts/layout_common').M_BOXES : []).then((errors) => {
+    render(scene, a.out, a.centre === 'map' && (require('../apps/cluster_layouts/layouts').byId(a.layout).mapWindow || true), a.mcar ? require('../apps/cluster_layouts/layout_common').M_BOXES : []).then((errors) => {
         if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
         console.log('wrote ' + path.resolve(a.out) + ' (' + scene.quads.length + ' layers)');
         process.exit(0);

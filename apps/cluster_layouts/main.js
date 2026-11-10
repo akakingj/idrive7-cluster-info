@@ -116,8 +116,9 @@ mgu.run({
             if (showing()) D.want((layout.needs || []).concat(require('./layout_common').focus.needs(options())));
             // Cluster Centre steps aside while a layout shows
             if (cluster.status().shown) presence.mark('layouts', { centre: options().centre });
-            // the Waze centre: Waze on cluster draws its map over the layout, filling the window (map_window.js)
-            mapWindow.set(cluster.status().shown && options().centre === 'map' ? require('./layout_common').MAP : null);
+            // the Waze centre: Waze on cluster draws its map over the layout, filling the window (map_window.js): the
+            // layout's own (M's and Sport's: where bimmer-lab's put it), else the native map area
+            mapWindow.set(cluster.status().shown && options().centre === 'map' ? (layout.mapWindow || require('./layout_common').MAP) : null);
             // the vehicle found (Settings > Vehicle: Auto): the layout redrawn for it once known
             const v = D.vehicle().vehicle;
             if (v !== lastVehicle) { if (lastVehicle) cluster.rebuild(); lastVehicle = v; }

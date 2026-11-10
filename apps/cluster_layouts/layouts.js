@@ -18,7 +18,7 @@ const { boxBezel, MAP, mCar } = C0;
  * (slim tiles, layout_digital_dash.js). The big rev counters of the dial layouts can't move out of the middle:
  * the boxes sit on their faces (tools/clearance.js lists them; test_engine.js allows only those, M_ON_DIAL).
  */
-const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl', 'revR', 'revREdge', 'rpmRim'];
+const M_ON_DIAL = ['rpm', 'rpmUnit', 'rpmArc', 'kwDraw', 'kwRegen', 'kwLbl', 'rpmRim', 'tachR', 'nr2', 'nr4'];
 const shiftAll = (keys, dy) => keys.reduce((m, k) => { m[k] = { dy }; return m; }, {});
 const M_MOVES = {
     pulse: {
@@ -52,7 +52,6 @@ const M_MOVES = {
     },
     // the display between the dials narrowed clear of the left box
     analog_sport: { info: { lcd: { squeeze: [584, 186] } } },
-    classic: { info: { lcd: { squeeze: [584, 186] } } },
     digital_round: { info: { card: { squeeze: [584, 186] } } },
     retro: { info: { coolantDial: { dx: -32 } } },
 };

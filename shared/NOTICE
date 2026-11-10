@@ -1,5 +1,7 @@
-The GT3, M and Sport layouts (layout_gt3.js, layout_m.js, layout_sport.js) and the tyre readings (shared/data.js)
-follow bimmer-lab's Cluster Themes (https://github.com/bimmer-lab/apps), whose shift scoring comes from cauliflowermossgrape's Redline app:
+The GT3, M and Sport layouts (layout_gt3.js, layout_m.js, layout_sport.js), the M and Sport shaders and line icons
+(MDASH_FS, MTACH_FS, SDASH_FS and LICON_FS in shaders.js, taken from its shared/shaders.js and shared/icons.js), the
+places and font sizes of their texts (bimmer.js) and the tyre readings (shared/data.js) come from or follow
+bimmer-lab's Cluster Themes (https://github.com/bimmer-lab/apps), whose shift scoring comes from cauliflowermossgrape's Redline app:
 
 MIT License
 
@@ -21,14 +23,16 @@ OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
 
 -----------------------------------------------------------
 
-The cluster glyph atlases (font_bold.wad, font_light.wad, and font_wide.wad's lower case and degree and per cent
-signs) are made from Barlow Semi Condensed, Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow);
-font_wide.wad's figures, capitals and other signs (the M and Sport layouts' face) are made from Michroma, thickened,
-Copyright 2011 The Michroma Project Authors (https://github.com/googlefonts/Michroma-font). Both are used under the
-SIL Open Font License 1.1, below.
+The cluster glyph atlases are made from Barlow Semi Condensed and Barlow (font_bold.wad, font_light.wad, and the
+small print of font_wide.wad and font_orb.wad), Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow);
+Michroma, thickened (font_wide.wad, Sport's face), Copyright 2011 The Michroma Project Authors
+(https://github.com/googlefonts/Michroma-font); and Orbitron (font_orb.wad, M's face), Copyright 2018 The Orbitron
+Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name "Orbitron". All are used under
+the SIL Open Font License 1.1, below.
 
 Copyright 2017 The Barlow Project Authors (https://github.com/jpt/barlow)
 Copyright 2011 The Michroma Project Authors (https://github.com/googlefonts/Michroma-font)
+Copyright 2018 The Orbitron Project Authors (https://github.com/theleagueof/orbitron), with Reserved Font Name "Orbitron"
 
 This Font Software is licensed under the SIL Open Font License, Version 1.1.
 This license is copied below, and is also available with a FAQ at:
