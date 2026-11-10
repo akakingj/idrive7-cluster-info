@@ -17,12 +17,19 @@
 const C = require('./layout_common');
 const B = require('./bimmer');
 
-/* their theme (hud_themes.js sportdash): one look */
+/* their theme (hud_themes.js sportdash), its rev bracket's colours following the drive mode (themes.js lookNow):
+ * red in a sport mode, as theirs and BMW's Sport view; silver in comfort; teal in ECO PRO and on electricity alone */
 const PAL = {
     bg: '#000000', text: '#f4f7fc', fg: '#f4f7fc', dim: '#96aacd', faint: '#606e87', sblue: '#78aaf5', spink: '#ec8c8c', sred: '#eb3c46',
     red: '#ff2a2a', regen: '#3ddc84', glow: '#3cd7ff',
+    rline: '#f21f29', rband: '#540f1a', rlit: '#ed1a26', rin: '#db1421',
 };
-const pal = () => Object.assign({}, PAL);
+const LOOKS = {
+    sport: {},
+    comfort: { spink: '#c3cede', sred: '#e4eaf4', rline: '#d6deea', rband: '#262c38', rlit: '#b9c4d6', rin: '#a9b5ca' },
+    efficient: { spink: '#8fe0d6', sred: '#3fd6c4', rline: '#2cccbb', rband: '#0b3532', rlit: '#25bcab', rin: '#1ea898' },
+};
+const pal = (look) => Object.assign({}, PAL, LOOKS[look] || LOOKS.sport);
 const isNum = C.isNum;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 
@@ -31,7 +38,7 @@ const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const TOP = 120, SY = (C.STRIP_Y - TOP) / (674 - TOP);
 const Y = (y) => Math.round(TOP + (y - TOP) * SY);
 const RPM_MAX = 7000;   // their scale: 0-7 (ticks 7)
-const E_MIN = -100 / 3, E_ZERO = 0.25;   // the ePower scale: -33 to 100%, its 0 a quarter up
+const E_ZERO = C.KW_ZERO;   // the ePower scale's 0, a quarter up (below it regeneration, to the battery's limit)
 
 /* their map window ("hole" [524, 120, 872, 480], inset 10), pressed as the rest */
 const WINDOW = { x: 534, y: Y(130), w: 852, h: Y(130 + 460) - Y(130) };
@@ -57,9 +64,10 @@ module.exports = {
         const [redFrom, orange] = B.redMarks(o, RPM_MAX);
         const T = (key, box, font, txt, colors, align) => B.text('wide', key, box, font, txt, colors, align, Y);
         // a plug-in hybrid in an electric drive: the rev bracket reads the battery's power as ePower %, as BMW's
-        // electric M cars (i4 M50) do (0-100 kW as 0-100%), its bottom quarter regeneration (to -33%, green)
+        // electric M cars (i4 M50) do (the share of the most the battery gives, eDrive Live's limits:
+        // layout_common.kwRange), its bottom quarter regeneration (green, to the most it takes)
         const elec = (d) => C.electric(o, d);
-        const ePower = (d) => (isNum(d.kw) ? clamp01((d.kw - E_MIN) / (100 - E_MIN)) : E_ZERO);
+        const ePower = (d) => C.kwFrac(d.kw, C.kwRange(d), E_ZERO);
         // the background: black (with the map round its window; the stock centre full screen round its area, x 566-1104)
         const W2 = WINDOW, around = [{ x: 0, y: 0, w: 1920, h: W2.y }, { x: 0, y: W2.y + W2.h, w: 1920, h: 720 - W2.y - W2.h },
             { x: 0, y: W2.y, w: W2.x, h: W2.h }, { x: W2.x + W2.w, y: W2.y, w: 1920 - W2.x - W2.w, h: W2.h }];
@@ -77,10 +85,11 @@ module.exports = {
             // the map window cut see-through (the map drawn in it); the stock centre's area likewise
             u_hole: map ? [WINDOW.x, WINDOW.y, WINDOW.w, WINDOW.h] : stock ? [566, 0, 538, 720] : [0, 0, 0, 0], u_holeR: [map ? 28 : 0],
             u_strip: [425, Y(632), Math.round(42 * SY), 26], u_topEnd: [726],
-            u_speed: [0], u_fuel: [0], u_oil: [0], u_stripFill: [0, 0], u_zero: [0],
+            u_speed: [0], u_fuel: [0], u_oil: [0], u_stripFill: [0, 0], u_zero: [0], u_regenR: [0],
         };
         const bottom = strip ? C.STRIP_Y : 646;
-        const part = (key, n, x, y, w, h, extra) => Object.assign({ key, kind: 'sdash', x, y, w, h, z: -90, params: Object.assign({ u_part: [n], u_off: [x, y] }, sd) }, extra);
+        const part = (key, n, x, y, w, h, extra) => Object.assign({ key, kind: 'sdash', x, y, w, h, z: -90, params: Object.assign({ u_part: [n], u_off: [x, y] }, sd),
+            colors: (t) => ({ rline: t.rline, rband: t.rband, rlit: t.rlit, rin: t.rin }) }, extra);
         list.push(
             part('speedSide', 1, 0, 60, 760, bottom - 60, { dyn: (d) => ({
                 u_speed: [isNum(d.speed) ? Math.round(B.scaleFrac(C.speedIn(o, d.speed), scale) * 500) / 500 : 0],
@@ -95,7 +104,10 @@ module.exports = {
                 }) }),
             // the bottom bar's halves as gauges: the charge and the battery's power (boost and the coolant)
             part('bottomBar', 3, 400, Y(620) - 6, 1120, bottom - Y(620) + 6, { dyn: (d) => ({
-                u_stripFill: engine ? [C.boostFrac(d), C.tempFrac(d.coolant)] : [isNum(d.soc) ? clamp01(d.soc / 100) : 0, isNum(d.kw) ? clamp01(Math.abs(d.kw) / 100) : 0],
+                u_stripFill: engine ? [C.boostFrac(d), C.tempFrac(d.coolant)]
+                    : [isNum(d.soc) ? clamp01(d.soc / 100) : 0, isNum(d.kw) ? Math.round(clamp01(Math.abs(d.kw) / (d.kw < 0 ? C.kwRange(d).in : C.kwRange(d).out)) * 200) / 200 : 0],
+                // (green while regenerating, as the other power gauges)
+                u_regenR: [!engine && isNum(d.kw) && d.kw < -0.3 ? 1 : 0],
             }) }));
         // the scales' numerals: the one nearest the reading white (theirs: "near")
         const nearSpeed = (i) => (t, d) => {
@@ -103,20 +115,22 @@ module.exports = {
             return { color: [Math.round(v) === i ? t.fg : t.sblue, 1], glow: [t.sblue, 0] };
         };
         const nearRpm = (i) => (t, d) => ({ color: [isNum(d.rpm) && Math.round(d.rpm / 1000) === i ? t.fg : t.spink, 1], glow: [t.spink, 0] });
-        const nearPow = (i) => (t, d) => { const c = i < 0 ? t.regen : t.spink; return { color: [isNum(d.kw) && Math.round(d.kw / 25) === i ? t.fg : c, 1], glow: [c, 0] }; };
+        // (the nearest ePower numeral: above the 0 by quarters of the scale, below it the regeneration's half)
+        const powNear = (d) => { const f = ePower(d); return f >= E_ZERO - E_ZERO / 4 ? Math.round(Math.max(0, f - E_ZERO) / ((1 - E_ZERO) / 4)) : -1; };
+        const nearPow = (i) => (t, d) => { const c = i < 0 ? t.regen : t.spink; return { color: [isNum(d.kw) && powNear(d) === i ? t.fg : c, 1], glow: [c, 0] }; };
         const SPD = [[248, 596], [206, 540], [164, 483], [122, 426], [82, 369], [51, 312], [66, 255], [96, 198], [142, 142]];
         // (the top one nudged right of the glass's slanted corner: its right edge where theirs is)
         SPD.forEach(([x, y], i) => list.push(T('spd' + i, [x, y, i === 8 ? 96 : 110, 27], 's_scale', String(scale[i]), nearSpeed(i), 'right')));
         // (full screen 2 a few px right of the KOMBI's gear box, 5 a few down from its eDrive box)
         const RPM = [[1562, 596], [1610, 532], [strip ? 1658 : 1664, 466], [1706, 402], [1749, 336], [1752, strip ? 272 : 282], [1719, 206], [1682, 142]];
         RPM.forEach(([x, y], i) => list.push(Object.assign(T('rpm' + i, [x, y, 40, 27], 's_scale', String(i), nearRpm(i), 'left'), { visible: (d) => !elec(d) })));
-        // the ePower scale's numerals (-25 to 100 in 25s, -25 green) at their places along the bracket (between the
-        // rpm numerals')
+        // the ePower scale's numerals (0 to 100 in 25s; below the 0, green, -50: half the most regeneration) at their
+        // places along the bracket (between the rpm numerals')
         if (o.vehicle !== 'ice' && !C.engineFocus(o)) [-1, 0, 1, 2, 3, 4].forEach((i) => {
-            const f = 7 * (E_ZERO + i / 4 * (1 - E_ZERO)), k = Math.min(6, Math.floor(f)), u = f - k, at = RPM[k].map((v, j) => Math.round(v + (RPM[k + 1][j] - v) * u));
+            const f = 7 * (i < 0 ? E_ZERO / 2 : E_ZERO + i / 4 * (1 - E_ZERO)), k = Math.min(6, Math.floor(f)), u = f - k, at = RPM[k].map((v, j) => Math.round(v + (RPM[k + 1][j] - v) * u));
             // (full screen clear of the KOMBI's eDrive box, x 1770 on above y 265)
             if (!strip && at[0] + 50 > 1770 && at[1] < 284) at[1] = 284;
-            list.push(Object.assign(T(i < 0 ? 'powRegen' : 'pow' + i, [at[0], at[1], i < 0 || i === 4 ? 74 : 50, 27], 's_scale', String(i * 25), nearPow(i), 'left'), { visible: elec }));
+            list.push(Object.assign(T(i < 0 ? 'powRegen' : 'pow' + i, [at[0], at[1], i < 0 || i === 4 ? 74 : 50, 27], 's_scale', i < 0 ? '-50' : String(i * 25), nearPow(i), 'left'), { visible: elec }));
         });
         list.push(T('mphCap', [338, 88, 80, 29], 's_unit', C.speedUnit(o), B.role('sblue'), 'center'),
             T('rpmCap', [1430, 86, 200, 29], 's_unit', (d) => (elec(d) ? 'ePower %' : '1/min x 1000'), B.role('sred'), 'center'));

@@ -22,6 +22,7 @@
  *     colors(t, d) -> { name: '#rrggbb' | ['#rrggbb', a] }   sent as u_<name> (vec3, or vec4 with a) when they change,
  *     value(d) -> number, max             dial: the reading on its scale (max: the scale's end); band: 0..1,
  *     min                                 the lowest value passed on (0 unless set: a power gauge's regeneration),
+ *     range(d) -> [min, max]              instead, the lowest and highest now (a tach that reads kW in an electric drive),
  *     sweep: true                         part of the start-up sweep,
  *     group: 'name'                       built only while that group is active (setGroup: a page),
  *     dyn(d, t) -> { u_name: [numbers] }  more uniforms, sent when they change (at the text rate),
@@ -260,7 +261,8 @@ function startCluster(opts) {
                 Object.keys(u).forEach((n) => { const v = u[n], key = String(v); if ((p.frameSent || (p.frameSent = {}))[n] !== key) { p.frameSent[n] = key; cr.uniform(p.ref, n, v); } });
             }
             if (!s.value || !inGroup(p)) return;
-            const max = s.max || 1, want = Math.max(s.min || 0, Math.min(max * 1.02, Number(s.value(d)) || 0));
+            const r = s.range ? s.range(d) : null, max = r ? r[1] : s.max || 1;
+            const want = Math.max(r ? r[0] : s.min || 0, Math.min(max * 1.02, Number(s.value(d)) || 0));
             p.value += (want - p.value) * k;
             if (Math.abs(want - p.value) < max * EPS / 4) p.value = want;
             if (Math.abs(p.value - p.sent) >= max * EPS) { p.sent = p.value; cr.uniform(p.ref, 'u_value', [Math.round(p.value * 10000) / 10000]); }

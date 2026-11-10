@@ -362,6 +362,15 @@ function startData(ctx, opts) {
     /* Auto vehicle: a plug-in hybrid by its drive modes (above), eDrive Live sharing its battery readings or the
      * car giving an electric range; none of these in 90 s shown, while the engine unit answers (so the link is up),
      * a petrol or diesel car. A later sign of a plug-in hybrid changes it back. */
+    /* The power gauges' ends: eDrive Live's (the battery's discharge and charge limits), the largest it has
+     * shared, rounded up (10 kW, 5 kW): a scale that holds still while the limits move with the cells'
+     * temperature and charge. */
+    const kwEnds = { out: null, in: null };
+    const endsOf = (p) => {
+        if (isNum(p.kwOut) && p.kwOut > 0) kwEnds.out = Math.max(kwEnds.out || 0, Math.ceil(p.kwOut / 10) * 10);
+        if (isNum(p.kwIn) && p.kwIn > 0) kwEnds.in = Math.max(kwEnds.in || 0, Math.ceil(p.kwIn / 5) * 5);
+        return kwEnds;
+    };
     let shownFor = 0;
     const vehicleTimer = setInterval(() => {
         if (setting('vehicle') === 'ice' || setting('vehicle') === 'phev') return;
@@ -408,7 +417,7 @@ function startData(ctx, opts) {
             // ranges: an app that shares them first (eDrive Live), else the car's own signal
             // the battery: eDrive Live's (it alone reads the battery unit)
             const o = Object.assign({}, d, { mode: x.mode, soc: isNum(p.soc) ? p.soc : undefined,
-                kw: isNum(p.kw) ? p.kw : undefined, driveMode: x.driveMode,
+                kw: isNum(p.kw) ? p.kw : undefined, kwOut: endsOf(p).out || undefined, kwIn: kwEnds.in || undefined, driveMode: x.driveMode,
                 erange: isNum(p.erange) ? p.erange : fresh('carErange', 120000) ? x.carErange : undefined,
                 frange: isNum(p.frange) ? p.frange : fresh('carFrange', 120000) ? x.carFrange : undefined,
                 trange: fresh('carTrange', 120000) ? x.carTrange : undefined, fuelLevel: fresh('fuelLevel', 120000) ? x.fuelLevel : undefined });

@@ -25,8 +25,9 @@ battery's own pace sets the limit: its current answers 10-20 times a second over
 
 Deep analog dials with satin metal bezels and warm backlit markings, coolant and oil dials set into them, and a
 slim display between them with the digital speed, large, and the battery's power. On a plug-in hybrid in an
-electric mode the rev counter reads the battery's power (0-100 kW, and its first quarter green down to -35 kW for
-regeneration; Digital round and Retro likewise); in the hybrid, sport and battery control modes it is the rev counter
+electric mode the rev counter reads the battery's power (Digital round and Retro likewise): 0 a quarter of the way
+round, the power drawn above it and regeneration below it in green, each to the battery's own limit as eDrive Live
+reads it (100 and 35 kW without eDrive Live); in the hybrid, sport and battery control modes it is the rev counter
 with a small power gauge inside.
 
 ![Analog sport](../../docs/analog_sport.png)
@@ -174,10 +175,13 @@ The M8's M view: the backdrop and the two bowed glass rev blades from bimmer-lab
 scale 0-8 with the numerals every 2000, the gear's number with the shift programme's stack beside it, the speed under
 the line, and the M8's flat gauges in its own manner (an icon over the bar, the unit at the right, a white fill over a
 thin track with its red zones, the scale's numbers under it): in the cards the coolant and oil temperatures on the
-left, and on the right the battery's power (its first quarter, left of the 0, regeneration in green, to -35 kW) and
+left, and on the right the battery's power (its first quarter, left of the 0, regeneration in green) and
 temperature on a plug-in hybrid, the boost and torque on a petrol or diesel car; along the bottom, as the M8's fuel
-gauge, long flat bars for the fuel level (left) and the charge (right), so the strip's own bars aren't added. With
-the Waze map the map goes in the window between the blades.
+gauge, long flat bars for the fuel level (left) and the charge (right), so the strip's own bars aren't added. In an
+electric drive the blades read the battery's power in kW: 0 at the 2000 mark, regeneration below it in green to the
+battery's limit, the power drawn above it to the blades' top. Its colours follow the drive mode as the M8's: silver
+glass in comfort, lit red in a sport mode, blue in ECO PRO and on electricity alone. With the Waze map the map goes
+in the window between the blades.
 
 ![M](../../docs/m.png)
 
@@ -189,9 +193,11 @@ the Waze map the map goes in the window between the blades.
 
 The iDrive 8 M cars' Sport view, from bimmer-lab's Sport theme (their shader, MIT) brought closer to BMW's own: the
 blue speed bracket and the red rev bracket with flares where they bend and meet the bottom line, segmented fuel and
-oil bars, and the bottom bar's halves as gauges (the charge on blue and the battery's power on red; boost and coolant
-on a petrol or diesel car). In an electric drive the rev bracket reads **ePower %** (the battery's power, 0-100 kW),
-as BMW's electric M cars do, its bottom quarter regeneration (green, down from the 0 to -33%). The cruise control's
+oil bars, and the bottom bar's halves as gauges (the charge on blue and the battery's power on red, green while
+regenerating; boost and coolant on a petrol or diesel car). In an electric drive the rev bracket reads **ePower %**
+(the share of the most the battery gives), as BMW's electric M cars do, its bottom quarter regeneration (green, to
+the most it takes). The rev bracket's colour follows the drive mode: red in a sport mode (as BMW's Sport view),
+silver in comfort, teal in ECO PRO and on electricity alone. The cruise control's
 icon is grey, and green with the set speed beside it while the cruise control holds a speed (the driving assistant's
 own services, as Modern wide's road). Pressed 5% in height to end at the car's own strip; with the Waze map the map
 goes in the window between the brackets.

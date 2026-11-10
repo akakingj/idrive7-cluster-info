@@ -195,6 +195,19 @@ check('start-up sweep: played by the cluster (one animation per needle and band)
     assert(s.client.log.filter((m) => m.op === 'stop').length >= 4);
 });
 
+check('electric tach: the battery\'s power reaches the needle (past the rev scale\'s 8), regeneration below 0, scale from eDrive Live\'s ends', () => {
+    const d = { speed: 40, rpm: 0, stage: 'D', driveMode: 'ELECTRIC', engineOn: false, kw: 55, kwOut: 120, kwIn: 50 };
+    const s = makeScene({ layout: 'analog_sport', data: d });
+    const tach = () => s.engine._pieces().find((p) => p.key === 'rpm');
+    drive(s, 3, () => d);
+    assert(Math.abs(tach().value - 55) < 0.5, 'drawing: ' + tach().value);
+    const u = s.client.layers.get(tach().layer).uniforms;
+    assert.deepStrictEqual(u.u_min.v, [-50]); assert.strictEqual(u.u_scale.v[0], 125); assert.deepStrictEqual(u.u_zero.v, [0.25]);
+    drive(s, 3, () => Object.assign({}, d, { kw: -80 }));
+    assert(Math.abs(tach().value + 50) < 0.5, 'regenerating, held at the limit: ' + tach().value);
+    s.stop();
+});
+
 check('settle: shown only once wanted for a moment without a break (no flashing while the car comes up)', () => {
     let live = true;
     const s = makeScene({ data: { speed: 10 }, live: () => live, settleMs: 1200 });

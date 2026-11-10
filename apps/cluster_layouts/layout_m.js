@@ -20,9 +20,17 @@
 const C = require('./layout_common');
 const B = require('./bimmer');
 
-/* their theme (hud_themes.js mdash): one look */
-const PAL = { bg: '#000000', text: '#eef1f6', fg: '#eef1f6', dim: '#848c98', faint: '#606876', red: '#e2242c', regen: '#3ddc84', glow: '#e2242c', track: '#5c6068', ev: '#4ab4ff' };
-const pal = () => Object.assign({}, PAL);
+/* their theme (hud_themes.js mdash), following the drive mode (themes.js lookNow) as the M8's does: in comfort
+ * theirs (silver glass, the red marker); in a sport mode the blades' glass lit red and the bars' fill warm; in ECO
+ * PRO and on electricity alone blue */
+const PAL = { bg: '#000000', text: '#eef1f6', fg: '#eef1f6', dim: '#848c98', faint: '#606876', red: '#e2242c', regen: '#3ddc84', glow: '#e2242c', track: '#5c6068', ev: '#4ab4ff',
+    mark: '#e2242c', lit: '#dce0ea', fill: '#eef1f6' };
+const LOOKS = {
+    comfort: {},
+    sport: { lit: '#ff4650', mark: '#ff2a2a', fill: '#ffd9db', dim: '#a8868a' },
+    efficient: { lit: '#8fcaff', mark: '#4ab4ff', fill: '#d4ecff', dim: '#7f93a8' },
+};
+const pal = (look) => Object.assign({}, PAL, LOOKS[look] || LOOKS.comfort);
 const isNum = C.isNum;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
 const RPM_MAX = 8000;   // the M8's scale: 0-8
@@ -37,9 +45,13 @@ const BLADE = { x0: 515, w: 196, y: 36, h: 558, y0: 566, y8: 66, ym: 303, xm: 52
  * The gauges, as the M8's coolant and boost bars: an icon over the left end, the unit over the right, the bar
  * (MBAR_FS: a thin track, a thicker fill, red zones, a red start tick), the scale's labels under it. Each one
  * { icon, unit, labels: [[at 0..1 (-1: none), text] x3], value(d) 0..1, zero (where the fill starts), lo / hi (red
- * to, from), neg (the fill's colour below the zero) }.
+ * to, from), neg (the fill's colour below the zero), nums(d) (the labels' numbers now, if they move) }.
  */
-const KW_MIN = C.KW_MIN, KW_ZERO = -KW_MIN / (100 - KW_MIN);   // the power: -35 to 100 kW, its first quarter regeneration
+const KW_ZERO = C.KW_ZERO;   // the power: its first quarter regeneration (to the battery's limit), then to its top
+/** The power bar's top: eDrive Live's (layout_common.kwRange) up to 20 kW, so its middle label is a round number. */
+const barRange = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 20) * 20, in: r.in }; };
+/** The blades' top as a power gauge: three equal steps from the 0 (a quarter up), each a round 10 kW. */
+const bladeRange = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 30) * 30, in: r.in }; };
 function gauges(o, engine) {
     const isF = o.tempUnit !== 'c', us = o.speedUnit !== 'kmh';
     const tl = (c) => String(Math.round(C.tempIn(o, c) / 10) * 10), tu = '°' + (isF ? 'F' : 'C');
@@ -62,10 +74,11 @@ function gauges(o, engine) {
     }
     return {
         left,
-        // eDrive: the battery's power (to 35 kW regenerating, green, left of its 0 (numbered 0, 50, 100: the regeneration
-        // its green alone); to 100 kW drawn) and its
+        // eDrive: the battery's power (regenerating left of its 0, green, to the battery's limit; drawn to its top,
+        // the battery's limit too: eDrive Live's; numbered 0, half and the top) and its
         // temperature (0-50 C, hot from 45)
-        right: [{ icon: 'bolt', unit: 'kW', labels: [[KW_ZERO, '0'], [KW_ZERO + (1 - KW_ZERO) / 2, '50'], [1, '100']], value: (d) => f01(d.kw, KW_MIN, 100), zero: KW_ZERO, lo: -1, hi: 2, neg: 'regen' },
+        right: [{ icon: 'bolt', unit: 'kW', labels: [[KW_ZERO, '0'], [KW_ZERO + (1 - KW_ZERO) / 2, '50'], [1, '100']], value: (d) => C.kwFrac(d.kw, barRange(d)),
+            nums: (d) => [0, barRange(d).out / 2, barRange(d).out], zero: KW_ZERO, lo: -1, hi: 2, neg: 'regen' },
             { icon: 'batteryTemp', unit: tu, labels: [[0, tl(0)], [0.5, tl(25)], [1, tl(50)]], value: (d) => f01(d.battTemp, 0, 50), zero: 0, lo: -1, hi: 0.9 }],
         bottom: [fuel, charge],
     };
@@ -79,7 +92,8 @@ function gauge(T, key, x, y, w, g) {
         { key, kind: 'mbar', x: x - 6, y: y + 30, w: w + 10, h: 34 + sg.h + 2,
             params: { u_zero: [g.zero], u_zones: [g.lo, g.hi, 0, 0], u_marks: g.labels.map((l) => l[0]).concat([-1]).slice(0, 4),
                 u_lab: nums.concat([dec]), u_glyph: sg.glyph, u_glyph2: sg.glyph2, u_labH: [sg.h] },
-            colors: (t) => ({ fill: t.fg, neg: t[g.neg || 'ev'], track: t.track, redc: t.red }),
+            colors: (t) => ({ fill: t.fill, neg: t[g.neg || 'ev'], track: t.track, redc: t.red }),
+            dyn: g.nums ? (d) => ({ u_lab: g.nums(d).concat([dec]) }) : undefined,
             value: g.value, max: 1, sweep: true }]);
 }
 
@@ -122,24 +136,41 @@ module.exports = {
         list.push(part('cardL', 1, 160, 78, 492, 466), part('cardR', 1, 1268, 78, 492, 466));
         // (with the map the centre line and the stripes would be under its window: left out)
         if (!map) list.push(part('centreLine', 2, 734, 366, 456, 22), part('mStripes', 4, 918, 144, 84, 36));
-        // the rev blades: the engine speed, eased by the engine
+        // the rev blades: the engine speed, eased by the engine; in an electric drive (layout_common.electric) the
+        // battery's power, as Sport's ePower: 0 a quarter up (the 2000 mark), regeneration below it in green to the
+        // battery's limit, the power drawn above it to the blades' top (bladeRange)
+        const elec = (d) => C.electric(o, d);
         const blade = (key, right) => ({
             key, kind: 'mtach', x: right ? 1920 - BLADE.x0 - BLADE.w : BLADE.x0, y: BLADE.y, w: BLADE.w, h: BLADE.h,
             params: { u_side: [right ? 1 : -1], u_geoA: [BLADE.y0 - BLADE.y, BLADE.y8 - BLADE.y, BLADE.ym - BLADE.y, BLADE.xm - BLADE.x0],
                 u_geoB: [BLADE.kTop, BLADE.kBot, BLADE.round], u_wid: [BLADE.wBot, BLADE.wTop, BLADE.wBend], u_ticks: [RPM_MAX / 1000],
-                u_orange: [orange], u_redFrom: [redFrom] },
-            colors: (t) => ({ red: t.red }),
-            dyn: (d) => ({ u_shiftNow: [B.shiftNow(o, d) ? 1 : 0] }),
-            value: (d) => (isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
+                u_orange: [orange], u_redFrom: [redFrom], u_zero: [0] },
+            colors: (t, d) => ({ red: t.red, regen: t.regen, lit: t.lit, mark: !elec(d) ? t.mark : isNum(d.kw) && d.kw < -0.3 ? t.regen : t.ev }),
+            dyn: (d) => (elec(d) ? { u_shiftNow: [0], u_zero: [KW_ZERO], u_orange: [2], u_redFrom: [2] }
+                : { u_shiftNow: [B.shiftNow(o, d) ? 1 : 0], u_zero: [0], u_orange: [orange], u_redFrom: [redFrom] }),
+            value: (d) => (elec(d) ? C.kwFrac(d.kw, bladeRange(d)) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
         });
         list.push(blade('tachL', false), blade('tachR', true));
         // the blades' numerals, every 2000 as the M8's, on the blades' inner side (their places' curve; the top one
-        // kept clear of the camera's cowl, x 730-1190 above y 128)
-        [[0, 693, 547], [2, 659, 422], [4, 653, 297], [6, 675, 172], [8, 712, 47]].forEach(([n, cx, y]) => {
-            const w = n === 8 ? 30 : 60;
-            list.push(T('nl' + n, [cx - w / 2, y, w, 38], 'm_num', String(n), fg, 'center'), T('nr' + n, [1920 - cx - w / 2, y, w, 38], 'm_num', String(n), fg, 'center'));
+        // kept clear of the camera's cowl, x 730-1190 above y 128, its box reaching out from the cowl). In an electric
+        // drive in kW: the regeneration's limit (green) at the foot, then 0 and a third of the top each
+        const num = (i) => (d) => {
+            if (!elec(d)) return String(i * 2);
+            const r = bladeRange(d);
+            return String(i === 0 ? Math.round(r.in) : Math.round((i - 1) * r.out / 3));
+        };
+        const numC = (i) => (t, d) => ({ color: [i === 0 && elec(d) ? t.regen : t.fg, 1], glow: [t.fg, 0] });
+        [[0, 693, 547], [1, 659, 422], [2, 653, 297], [3, 675, 172], [4, 712, 47]].forEach(([i, cx, y]) => {
+            const n = i * 2, w = i === 4 ? 30 : 60, top = i === 4 ? { visible: (d) => !elec(d) } : {};
+            list.push(Object.assign(T('nl' + n, [cx - w / 2, y, w, 38], 'm_num', num(i), numC(i), 'center'), top),
+                Object.assign(T('nr' + n, [1920 - cx - w / 2, y, w, 38], 'm_num', num(i), numC(i), 'center'), top));
         });
-        list.push(T('rpmUnit', [1252, 602, 160, 29], 'm_tiny', '1/min x1000', faint, 'left'));   // (under the right blade's foot)
+        // (the power's top, three figures: over the blades' tips, clear of the cowl)
+        if (o.vehicle !== 'ice' && !C.engineFocus(o)) {
+            list.push(Object.assign(T('nlTop', [644, 10, 84, 38], 'm_num', num(4), numC(4), 'center'), { visible: elec }),
+                Object.assign(T('nrTop', [1192, 10, 84, 38], 'm_num', num(4), numC(4), 'center'), { visible: elec }));
+        }
+        list.push(T('rpmUnit', [1252, 602, 160, 29], 'm_tiny', (d) => (elec(d) ? 'kW' : '1/min x1000'), faint, 'left'));   // (under the right blade's foot)
         // the gear and the speed: in the middle, or (the map, an M car's boxes) their map-up places
         // the gear: its number (P, R, N as letters), the shift programme's stack beside it, as the M8's
         const gearNum = (d) => { const g = C.gearText(d); return /^[DSM]\d+$/.test(g) ? g.slice(1) : g; };

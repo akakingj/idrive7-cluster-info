@@ -5,6 +5,7 @@
  * than STALE_MS counts as gone. While the layout shows, want() asks for them as Cluster Info does.
  *
  *   power.kw                 the high-voltage battery's power (kW, - charging)
+ *   power.outMax, .inMax     the power gauge's ends (kW): eDrive Live's, the battery's discharge and charge limits
  *   values.soc.pct           the battery's charge (%)
  *   values.erange.km         the electric range (km)
  *   values.frange.km         the fuel range (km)
@@ -86,10 +87,12 @@ function startProviders(log, opts) {
     const timer = setInterval(() => { scan(); watchDir(); }, opts.scanMs || 250);
     scan(); watchDir();
     return {
-        /** { kw, soc, erange, frange, battery (°C) } (each undefined when no app shares it). */
+        /** { kw, kwOut, kwIn, soc, erange, frange, battery (°C) } (each undefined when no app shares it). */
         readings: () => ({
             // (its last reading too while a read or two missed, power.old: the gauge holds it, not dropping to 0)
             kw: first((e) => e.power && e.power.kw),
+            kwOut: first((e) => e.power && e.power.outMax),
+            kwIn: first((e) => e.power && e.power.inMax),
             soc: first((e) => e.values && e.values.soc && e.values.soc.pct),
             erange: first((e) => e.values && e.values.erange && e.values.erange.km),
             frange: first((e) => e.values && e.values.frange && e.values.frange.km),

@@ -89,8 +89,9 @@ void main() {
  * major ticks, numerals at the major ticks (digits from the atlas), a backlight glow round the markings, the
  * needle with its shadow and glow, the hub and a faint glass reflection.
  *   u_scale   max, major step, minor step, red zone start (>= max: none)
- *   u_min     the scale's start (0 unless set; below 0: a power gauge's regeneration, its zone in u_regen and
- *             no numerals there)
+ *   u_min     the scale's start (0 unless set; below 0: a power gauge's regeneration, from u_zero of the sweep
+ *             down to its start, its zone in u_regen, marks at its half and quarters, no numerals there)
+ *   u_zero    where 0 sits along the sweep (0..1) while u_min is below 0: each side on its own scale
  *   u_arc     start and end angle, numeral height px (0: none), numeral radius px
  *   u_needle_dim  length, tail, width at the hub, width at the tip (px)
  *   u_look    backlight glow 0..1, metal 0..1, value arc 0/1, value arc radius (px from the face's edge in)
@@ -103,6 +104,7 @@ ${HIGHP}${COMMON}${GLYPH}
 uniform vec2 u_size;
 uniform vec4 u_scale;
 uniform float u_min;
+uniform float u_zero;
 uniform vec3 u_regen;
 uniform vec4 u_arc;
 uniform vec4 u_needle_dim;
@@ -124,7 +126,10 @@ uniform vec3 u_accent;
 uniform vec3 u_glow;
 varying vec2 v_uv;
 
-float angleOf(float v) { return mix(u_arc.x, u_arc.y, clamp((v - u_min) / (u_scale.x - u_min), 0.0, 1.0)); }
+float zeroAt() { return u_min < 0.0 ? clamp(u_zero, 0.05, 0.95) : 0.0; }
+/* the place along the sweep (0..1) of value v: 0 at zeroAt(), the scale's end at 1, its start (u_min) at 0 */
+float fracOf(float v) { float z = zeroAt(); return v >= 0.0 ? z + (1.0 - z) * v / u_scale.x : z * (1.0 - v / u_min); }
+float angleOf(float v) { return mix(u_arc.x, u_arc.y, clamp(fracOf(v), 0.0, 1.0)); }
 /* a radial tick at value v: r0..r1, half width hw; soft adds a glow falloff that wide */
 float tick(float v, float ang, float r, float r0, float r1, float hw, float soft) {
     float off = abs(ang - angleOf(v)) * DEG * r;
@@ -158,8 +163,9 @@ void main() {
     col *= 1.0 - 0.38 * smoothstep(0.78, 1.0, f);
     col *= 1.0 + 0.018 * sin(r * 2.1);
 
-    float sc = u_scale.x - u_min;
-    float v = u_min + (clamp(ang, a0, a1) - u_arc.x) / (u_arc.y - u_arc.x) * sc;
+    float z = zeroAt(), fa = (clamp(ang, a0, a1) - u_arc.x) / (u_arc.y - u_arc.x);
+    float v = fa >= z ? (fa - z) / (1.0 - z) * u_scale.x : u_min * (1.0 - fa / max(z, 0.001));
+    float sc = v >= 0.0 ? u_scale.x / (1.0 - z) : -u_min / max(z, 0.001);     /* the scale's units a whole sweep, here */
     bool inArc = ang >= a0 - 3.0 && ang <= a1 + 3.0;
     /* the value arc: a lit band from 0 to the reading (either way), brighter towards the needle */
     if (u_look.z > 0.5 && inArc) {
@@ -172,8 +178,10 @@ void main() {
         col += ac * 0.25 * on * clamp(1.0 - abs(r - (rr0 + rr1) * 0.5) / (14.0 * k), 0.0, 1.0) * frac;
     }
     if (inArc) {
-        float vm = clamp(floor(v / u_scale.z + 0.5) * u_scale.z, u_min, u_scale.x);
-        float vM = clamp(floor(v / u_scale.y + 0.5) * u_scale.y, u_min, u_scale.x);
+        /* (below 0 marks at its half and quarters) */
+        float stm = v < 0.0 ? -u_min / 4.0 : u_scale.z, stM = v < 0.0 ? -u_min / 2.0 : u_scale.y;
+        float vm = clamp(floor(v / stm + 0.5) * stm, u_min, u_scale.x);
+        float vM = clamp(floor(v / stM + 0.5) * stM, u_min, u_scale.x);
         /* the red zone */
         if (u_scale.w < u_scale.x) {
             float zone = clamp((v - u_scale.w) / sc * (a1 - a0) * DEG * r + 0.5, 0.0, 1.0);
@@ -1120,6 +1128,8 @@ const MTACH_FS = `// The M theme's rev bar (GLSL ES 1.00), after the M8's: a bow
 // edge and bright ticks running in from it every 1000 rpm. The part below the rpm is lit dim grey, a glowing red
 // block rides the blade at the rpm (the M8's marker), an outlined grey foot block fills the bottom 20 px, orange dashes sit before
 // the redline and a solid red line past it. Drawn as the left bar; u_side 1 mirrors it. v_uv (0,0) is the top-left.
+// (Here, as a power gauge in an electric drive: u_zero above 0, the glass lit from the 0 to the value, below the 0
+// regeneration in u_regen; the marker in u_mark.)
 #ifdef GL_FRAGMENT_PRECISION_HIGH
 precision highp float;
 #else
@@ -1136,7 +1146,11 @@ uniform float u_value;    // 0..1
 uniform float u_orange;   // 0..1, orange dashes from here
 uniform float u_redFrom;  // 0..1, red dashes from here (the redline)
 uniform float u_shiftNow;
+uniform float u_zero;     // 0..1: where 0 sits (a power gauge; 0 for the engine speed)
 uniform vec3 u_red;
+uniform vec3 u_mark;      // the marker's colour
+uniform vec3 u_regen;
+uniform vec3 u_lit;       // the lit glass (the look's: comfort silver, sport red, efficient blue)
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
 vec4 over(vec4 top, vec4 under) {
@@ -1164,14 +1178,18 @@ void main() {
         float across = clamp(d / w, 0.0, 1.0);
         float yn = y0 - u_value * (y0 - y8);
         vec4 g = vec4(0.62, 0.67, 0.74, mix(0.42, 0.06, across));          // empty glass (bright at the outer edge, as the M8's)
-        if (p.y > yn) g = u_shiftNow > 0.5 ? vec4(u_red * 0.8, 0.6) : vec4(mix(vec3(0.86, 0.88, 0.92), vec3(0.6, 0.63, 0.68), across), mix(0.34, 0.22, across));
+        if (t < u_zero) g = vec4(mix(u_regen, vec3(0.62, 0.67, 0.74), 0.55), mix(0.3, 0.05, across));   // the regeneration's part
+        // lit from the 0 (the foot, or a power gauge's 0) to the value
+        if (t >= min(u_zero, u_value) && t <= max(u_zero, u_value))
+            g = u_shiftNow > 0.5 ? vec4(u_red * 0.8, 0.6) : t < u_zero ? vec4(u_regen, mix(0.6, 0.35, across))
+                : vec4(mix(u_lit, u_lit * 0.72, across), mix(0.34, 0.22, across));
         // the foot: the bottom 20 px as an outlined grey block, as the M8 draws it
         if (p.y > y0 - 20.0) g = over(vec4(0.7, 0.72, 0.78, 0.22), g);
         g = over(vec4(0.9, 0.92, 0.95, 0.7 * cov(min(abs(p.y - (y0 - 19.0)), abs(p.y - (y0 - 1.5))) - 0.8)), g);
         // the marker: a red block at the rpm with a glow either side of it
         float dm = abs(p.y - yn);
-        g = over(vec4(u_red, 0.5 * exp(-dm / 26.0)), g);
-        g = over(vec4(mix(u_red, vec3(1.0, 0.45, 0.4), 0.35 * cov(dm - 5.0)), cov(dm - 14.0)), g);
+        g = over(vec4(u_mark, 0.5 * exp(-dm / 26.0)), g);
+        g = over(vec4(mix(u_mark, vec3(1.0), 0.3 * cov(dm - 5.0)), cov(dm - 14.0)), g);
         c = vec4(g.rgb, g.a * inBand);
         c = over(vec4(0.93, 0.95, 0.98, cov(abs(d) - 1.6)), c);               // outer edge
         c = over(vec4(1.0, 1.0, 1.0, 0.3 * cov(abs(d - 4.0) - 0.6)), c);       // its bevel
@@ -1228,6 +1246,7 @@ uniform float u_topEnd;   // the top lines run from the bracket to this x (left;
 uniform vec2 u_off;       // (here) the layer's place on the panel
 uniform float u_part;     // (here) 1 the speed bracket (and the fuel bar), 2 the rev bracket (and the oil bar), 3 the bottom line and strip
 uniform vec2 u_stripFill; // (here) the bottom strip's halves as gauges: the left half lit from its left end to x, the right from the middle to y (0..1; negative: all lit)
+uniform float u_regenR;   // (here) 1: the bottom strip's right half is regeneration (green)
 uniform float u_zero;     // (here) the rev bracket's 0 (0..1 up it): above 0 a power gauge's regeneration below it, lit green
                           // from the 0 down to the value, its marks counted from the 0
 
@@ -1235,10 +1254,15 @@ const vec3 BLUE_LINE = vec3(0.36, 0.62, 1.0);
 const vec3 BLUE_BAND = vec3(0.13, 0.3, 0.78);
 const vec3 BLUE_LIT = vec3(0.62, 0.86, 1.0);
 const vec3 BLUE_IN = vec3(0.2, 0.45, 0.98);
-const vec3 RED_LINE = vec3(0.95, 0.12, 0.16);
-const vec3 RED_BAND = vec3(0.33, 0.06, 0.1);
-const vec3 RED_LIT = vec3(0.93, 0.1, 0.15);
-const vec3 RED_IN = vec3(0.86, 0.08, 0.13);
+// (here) the rev bracket's colours are the look's (red in sport, as theirs; silver in comfort, teal in efficient)
+uniform vec3 u_rline;
+uniform vec3 u_rband;
+uniform vec3 u_rlit;
+uniform vec3 u_rin;
+#define RED_LINE u_rline
+#define RED_BAND u_rband
+#define RED_LIT u_rlit
+#define RED_IN u_rin
 const vec3 REGEN_LIT = vec3(0.24, 0.86, 0.52);
 
 float cov(float d) { return clamp(0.5 - d, 0.0, 1.0); }
@@ -1282,8 +1306,8 @@ vec4 bracket(vec2 q, float val, float zero, float redFrom, float orange, float t
         c = over(vec4(col, a * inB), c);
         float yv = u_scale.x - val * (u_scale.x - u_scale.y);
         if (val > 0.002 || zero > 0.0) c = over(vec4(1.0, 1.0, 1.0, inB * cov(abs(q.y - yv) - 2.0)), c);
-        // marks at every label, on the band's outer half (counted from the 0, both ways)
-        float st = (1.0 - zero) / ticks;
+        // marks at every label, on the band's outer half (counted from the 0; below it at its half and its end)
+        float st = t < zero ? zero / 2.0 : (1.0 - zero) / ticks;
         float kk = floor((t - zero) / st + 0.5), tk = zero + kk * st;
         float yk = u_scale.x - tk * (u_scale.x - u_scale.y);
         if (tk >= -0.001 && kk <= ticks && d > 7.0 && d < 19.0) c = over(vec4(kk < 0.0 ? REGEN_LIT : line, 0.9 * cov(abs(q.y - yk) - 1.2)), c);
@@ -1377,7 +1401,8 @@ void main() {
             float dx = abs(p.x - 960.0), xe = 960.0 - xl;
             float inside = cov(dx - xe) * cov(-sy) * cov(sy - u_strip.z);
             float f = dx / xe;
-            vec3 sc = p.x < 960.0 ? mix(vec3(0.06, 0.2, 0.62), vec3(0.15, 0.36, 0.92), f) : mix(vec3(0.4, 0.05, 0.1), vec3(0.85, 0.1, 0.16), f);
+            vec3 sc = p.x < 960.0 ? mix(vec3(0.06, 0.2, 0.62), vec3(0.15, 0.36, 0.92), f)
+                : u_regenR > 0.5 ? mix(vec3(0.04, 0.3, 0.16), vec3(0.16, 0.72, 0.4), f) : mix(RED_LINE * 0.42, RED_LINE * 0.9, f);
             // (here) each half a gauge: lit to its reading, dim beyond
             float fl = p.x < 960.0 ? (p.x - xl) / xe : (p.x - 960.0) / xe;
             float lv = p.x < 960.0 ? u_stripFill.x : u_stripFill.y;
