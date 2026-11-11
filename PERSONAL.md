@@ -45,8 +45,9 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   across the blade / band, not a thin line.
 - Engine power = crankshaft torque (FES statusActualValueTorque2) x rpm / 9549: a calculation; on a tuned car
   (JB4) it may differ from the real power.
-- Accelerator pedal: `de.bmw.powertrain.AcceleratorPedal` / `AngleAcceleratorPedal`, to confirm on the car (raw
-  values in the log, 'raw AngleAcceleratorPedal').
+- Accelerator pedal: the engine unit's normalised pedal angle, as Live Data reads it (UDS DID 5814, then 480B, then
+  OBD PID 0x49), read only while a readout or gauge shows it; else the car's `AcceleratorPedal` signal (its scaling
+  unconfirmed: Redline's notes saw 60-96 % at a light touch with Live Data's guess). Check against Live Data.
 - Centre: engine power and the accelerator pedal for the custom pages' slots.
 
 ## Demo

@@ -114,4 +114,17 @@ check('shift point and red zone as the Redline app: the red line less 300, lower
     assert(Math.abs(B.redMarks(o({ redline: 6000, amberRpm: 1500 }), 8000, { oil: 90 })[1] - 4500 / 8000) < 1e-9);
     assert.strictEqual(B.redMarks(o({ redline: 6000, amberRpm: 0 }), 8000, { oil: 90 })[1], 2);
 });
+check('the pedal from the engine unit (as Live Data: 5814 / 480B, OBD 49), asked for while a readout shows it', () => {
+    const { DME_KEYS } = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'data.js'));
+    assert(DME_KEYS.indexOf('pedal') >= 0);
+    ['akakingj_cluster_layouts', 'akakingj_cluster_centre'].forEach((a) => {
+        const c = require(path.join(ROOT, 'apps', a, 'app.json')).config.dme.pedal;
+        assert.deepStrictEqual(c.map((x) => x.did || 'OBD ' + x.obd), ['5814', '480B', 'OBD 49'], a);
+        // raw 0x2000 (8192) x 0.01220703 = 100 % (100 / 8192 a bit)
+        assert(Math.abs(8192 * c[0].factor - 100) < 0.01);
+    });
+    assert(C.focus.needs(o({ infoMain: 'throttle' })).indexOf('pedal') >= 0);
+    assert(C.focus.needs(o({ gaugeRpm: 'throttle' })).indexOf('pedal') >= 0);
+    assert(C.focus.needs(o()).indexOf('pedal') < 0);
+});
 console.log(n + ' passed');

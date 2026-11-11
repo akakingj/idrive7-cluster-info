@@ -289,7 +289,7 @@ const READOUTS = {
     boost: { short: 'BST', long: 'BOOST', num: numOrOff((o, d) => pressNum(o, d.boostActual)), unit: (o) => pressLabel(o), frac: (d) => boostFrac(d), needs: ['boostActual', 'boostTarget'] },
     power: { short: (o) => powerUnitText(o).toUpperCase(), long: 'ENGINE POWER', num: (o, d) => powerNum(o, d.enginePower), unit: (o) => powerUnitText(o), frac: (d) => (isNum(d.enginePower) ? d.enginePower / 200 : 0) },
     torque: { short: 'TQ', long: 'ENGINE TORQUE', num: (o, d) => torqueNum(o, d.torque), unit: (o) => torqueUnit(o), frac: (d) => (isNum(d.torque) ? d.torque / 450 : 0) },
-    throttle: { short: 'THR', long: 'THROTTLE', num: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), frac: (d) => (isNum(d.pedal) ? d.pedal / 100 : 0) },
+    throttle: { short: 'THR', long: 'THROTTLE', num: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), frac: (d) => (isNum(d.pedal) ? d.pedal / 100 : 0), needs: ['pedal'] },
     timing: { short: 'TIM', long: 'TIMING', num: (o, d) => timingText(d), frac: (d) => (isNum(d.timing) ? (d.timing + 10) / 50 : 0), needs: ['timing'] },
 };
 const readoutOf = (k) => READOUTS[k] || null;
@@ -317,7 +317,7 @@ const GAUGES = {
     boost: { label: 'BOOST', min: 0, max: 1.6, red: null, v: (d) => (d.engineOn === false ? 0 : d.boostActual), text: (o, d) => { const n = numOrOff((o2, d2) => pressNum(o2, d2.boostActual))(o, d); return n === '--' || n === 'OFF' ? n : n + ' ' + pressLabel(o); }, needs: ['boostActual', 'boostTarget'] },
     power: { label: 'POWER', min: 0, max: 200, red: null, v: (d) => d.enginePower, text: (o, d) => { const n = powerNum(o, d.enginePower); return n === '--' ? n : n + ' ' + powerUnitText(o); } },
     torque: { label: 'TORQUE', min: 0, max: 450, red: null, v: (d) => d.torque, text: (o, d) => { const n = torqueNum(o, d.torque); return n === '--' ? n : n + ' ' + torqueUnit(o); } },
-    throttle: { label: 'THROTTLE', min: 0, max: 100, red: null, v: (d) => d.pedal, text: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--') },
+    throttle: { label: 'THROTTLE', min: 0, max: 100, red: null, v: (d) => d.pedal, text: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), needs: ['pedal'] },
     timing: { label: 'TIMING', min: -10, max: 40, red: null, v: (d) => d.timing, text: (o, d) => timingText(d), needs: ['timing'] },
     fuel: { label: 'FUEL', min: 0, max: 100, red: null, v: (d) => d.fuelPct, text: (o, d) => (isNum(d.fuelPct) ? Math.round(d.fuelPct) + '%' : '--') },
 };

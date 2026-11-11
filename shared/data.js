@@ -31,7 +31,7 @@ const Awake = require('./kit/awake');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
-const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs'];
+const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs', 'pedal'];
 
 /*
  * The driving mode, as the car's FES service sends it: BMW's FES mode table (TAB_FES_MODUS_ARG in the G05's
@@ -372,7 +372,9 @@ function startData(ctx, opts) {
         // (the high-voltage battery is eDrive Live's alone: its charge and power come from its shared file, below.
         // Two apps asking the battery unit in turn left both without answers, eDrive Live showing 'NO REPLY'.)
         const v = await rd.value(k, dme[k]);
-        if (v !== null) put(k === 'egs' ? 'gearbox' : k, v);
+        // (the pedal: the engine unit's own normalised pedal angle, as Live Data reads it; the car's pedal signal's
+        // scaling is unconfirmed, its value kept apart and used only when the engine unit has none)
+        if (v !== null) put(k === 'egs' ? 'gearbox' : k === 'pedal' ? 'pedalDme' : k, k === 'pedal' ? Math.max(0, Math.min(100, v)) : v);
         return v;
     }
     let slowAt = 0, queue = [];
@@ -473,7 +475,7 @@ function startData(ctx, opts) {
                 .forEach((k) => { if (!d.demo && fresh(k, 60000)) o[k] = x[k]; });
             // boost: the engine unit's (fast, while a layout wants it), else the car's sport display signal
             if (!isNum(o.boostActual) && !d.demo && fresh('boostCar', 5000)) o.boostActual = x.boostCar;
-            if (!d.demo && fresh('pedal', 3000)) o.pedal = x.pedal;
+            if (!d.demo) o.pedal = fresh('pedalDme', 3000) ? x.pedalDme : fresh('pedal', 3000) ? x.pedal : undefined;
             if (d.demo) Object.assign(o, demo(d));
             if (isNum(o.iat) && isNum(o.outside)) o.iatRise = o.iat - o.outside;
             if (isNum(o.battTemp) === false && p.battery !== undefined) o.battTemp = p.battery;
