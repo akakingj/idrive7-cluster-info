@@ -57,7 +57,7 @@ function dial(o, which, cx, cy, size) {
         range: speed ? undefined : (d) => (elec(d) ? [-C.kwRange(d).in, kwS(d).max] : [0, sc[0]]),
         dyn: speed ? (d) => ({ u_subv: subv(d) })
             : (d) => (elec(d) ? { u_subv: subv(d), u_scale: [kwS(d).max, kwS(d).major, kwS(d).major, kwS(d).major / 2], u_arc: [A0, A1, kwS(d).max + 1, 0.14], u_min: [-C.kwRange(d).in], u_zero: [C.KW_ZERO] }
-                : { u_subv: subv(d), u_scale: sc, u_arc: [A0, A1, red, 0.14], u_min: [0], u_zero: [0] }),
+                : { u_subv: subv(d), u_scale: sc, u_arc: [A0, A1, Math.min(red, C.shiftPoint(o, d).red / 1000), 0.14], u_min: [0], u_zero: [0] }),
     }];
     // the small gauge's labels round its pivot (0.42 R below the centre): either end and the middle
     const pv = [cx, cy + 0.42 * R], lr = 0.47 * R, h = Math.round(30 * k);

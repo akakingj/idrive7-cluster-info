@@ -19,6 +19,23 @@ function rpmScale(o) {
     const max = Math.max(5, Math.min(10, Math.round((o.rpmMax || 8000) / 1000)));
     return { max, major: 1, minor: 0.25, red: Math.max(2, Math.min(max, (o.redline || 7000) / 1000)) };
 }
+/*
+ * The shift point and the red zone now, worked as cauliflowermossgrape's Redline app works them (GT3 did already):
+ * the shift point the red line less Settings > Shift point before redline (300 rpm); with Settings > Cold-engine
+ * rev guard on, pulled down to the Cold rev limit (4500 rpm) with the oil at 30 °C and climbing back as the oil
+ * reaches Oil warm at (80 °C). The red zone starts that far above the shift point: at the red line once warm, lower
+ * while cold (as an M car's variable redline). d: the data (its oil); { rpm, red, cold }.
+ */
+const SHIFT_DEFAULTS = { shiftBefore: 300, coldLimit: 4500, warmOil: 80 };
+const setNum = (o, k) => { const v = o ? Number(o[k]) : NaN; return o && o[k] !== '' && o[k] !== null && o[k] !== undefined && isFinite(v) ? v : SHIFT_DEFAULTS[k]; };
+function shiftPoint(o, d) {
+    const red = rpmScale(o || {}).red * 1000, before = Math.max(0, setNum(o, 'shiftBefore'));
+    const n = Math.max(2500, red - before), oil = d && d.oil, warm = setNum(o, 'warmOil');
+    if (!o || o.coldGuard === 'off' || !isNum(oil) || oil >= warm) return { rpm: n, red, cold: false };
+    const cold = Math.min(setNum(o, 'coldLimit'), n), f = Math.max(0, Math.min(1, (oil - 30) / Math.max(1, warm - 30)));
+    const rpm = Math.round((cold + (n - cold) * f) / 50) * 50;
+    return { rpm, red: Math.min(red, rpm + before), cold: true };
+}
 /** A temperature (°C) on a 40-140 °C scale, 0..1. */
 const tempFrac = (c) => (isNum(c) ? Math.max(0, Math.min(1, (c - 40) / 100)) : 0);
 
@@ -151,7 +168,8 @@ function kwDialScale(out) {
 /** A tach dial's dyn, value and range: kW in an electric mode (0 a quarter round), else the engine speed
  * (s: rpmScale(o), red where it is). */
 const tachDyn = (o, s, red) => (d) => {
-    if (!electric(o, d)) return { u_scale: [s.max, s.major, s.minor, red], u_min: [0], u_zero: [0], u_regen: REGEN_RGB };
+    // (the red zone where the shift point puts it now: lower while the oil is cold)
+    if (!electric(o, d)) return { u_scale: [s.max, s.major, s.minor, Math.min(red, shiftPoint(o, d).red / 1000)], u_min: [0], u_zero: [0], u_regen: REGEN_RGB };
     const r = kwRange(d), k = kwDialScale(r.out);
     return { u_scale: [k.max, k.major, k.minor, k.max + 1], u_min: [-r.in], u_zero: [KW_ZERO], u_regen: REGEN_RGB };
 };
@@ -370,6 +388,6 @@ const text = (key, x, y, w, h, txt, colors, extra) => Object.assign({ key, kind:
 const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colors: (t, d) => ({ color: [typeof colour === 'function' ? colour(t, d) : t[colour], 1] }) });
 
 module.exports = {
-    isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
+    isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, shiftPoint, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
     STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
 };

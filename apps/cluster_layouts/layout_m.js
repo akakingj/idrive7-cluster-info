@@ -161,7 +161,7 @@ module.exports = {
                 u_orange: [orange], u_redFrom: [redFrom], u_zero: [0] },
             colors: (t, d) => ({ red: t.red, regen: t.regen, lit: t.lit, mark: !elec(d) ? t.mark : isNum(d.kw) && d.kw < -0.3 ? t.regen : t.ev }),
             dyn: (d) => (elec(d) ? { u_shiftNow: [0], u_zero: [KW_ZERO], u_orange: [2], u_redFrom: [2] }
-                : { u_shiftNow: [B.shiftNow(o, d) ? 1 : 0], u_zero: [0], u_orange: [orange], u_redFrom: [redFrom] }),
+                : ((m) => ({ u_shiftNow: [B.shiftNow(o, d) ? 1 : 0], u_zero: [0], u_orange: [m[1]], u_redFrom: [m[0]] }))(B.redMarks(o, RPM_MAX, d))),
             value: (d) => (elec(d) ? C.kwFrac(d.kw, bladeRange(d)) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
         });
         list.push(blade('tachL', false), blade('tachR', true));

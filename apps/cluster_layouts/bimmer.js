@@ -50,12 +50,13 @@ function scaleFrac(v, marks) {
     return 1;
 }
 /** Their red marks for a rev scale to max rpm: the red line's place and the orange dashes' start, 0..1. */
-function redMarks(o, max) {
-    const redFrom = Math.min(o.redline || 7000, max - 500) / max;
+function redMarks(o, max, d) {
+    // (the red zone where the shift point puts it now, layout_common.shiftPoint: lower while the oil is cold)
+    const redFrom = Math.min(C.shiftPoint(o, d || {}).red, max - 500) / max;
     return [redFrom, redFrom - 700 / max];
 }
 /** At the shift point now (theirs: the red line less 300 rpm). */
-const shiftNow = (o, d) => C.isNum(d.rpm) && d.rpm >= (o.redline || 7000) - 300;
+const shiftNow = (o, d) => C.isNum(d.rpm) && d.rpm >= C.shiftPoint(o, d).rpm;
 
 /* bimmer-lab's line icons (LICON_FS) by name */
 const ICON = { gauge: 0, shock: 1, wheel: 2, cog: 3, stack: 4, therm: 5, fuel: 6, tyre: 7, oilcan: 8, battery: 9, bolt: 10, turbo: 11, batteryTemp: 12, torque: 13 };

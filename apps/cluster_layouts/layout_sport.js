@@ -99,7 +99,7 @@ module.exports = {
             part('revSide', 2, 1160, 60, 760, bottom - 60, {
                 value: (d) => (elec(d) ? ePower(d) : isNum(d.rpm) ? clamp01(d.rpm / RPM_MAX) : 0), max: 1, sweep: true,
                 dyn: (d) => ({
-                    u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : redFrom], u_orange: [elec(d) ? 2 : orange], u_zero: [elec(d) ? E_ZERO : 0],
+                    u_ticks: [8, elec(d) ? 4 : 7], u_redFrom: [elec(d) ? 2 : B.redMarks(o, RPM_MAX, d)[0]], u_orange: [elec(d) ? 2 : B.redMarks(o, RPM_MAX, d)[1]], u_zero: [elec(d) ? E_ZERO : 0],
                     u_oil: [isNum(d.oil) ? Math.round(clamp01((d.oil - 50) / 100) * 500) / 500 : 0],
                 }) }),
             // the bottom bar's halves as gauges: the charge and the battery's power (boost and the coolant)

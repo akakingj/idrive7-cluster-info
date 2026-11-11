@@ -36,13 +36,9 @@ const isNum = C.isNum;
  * the oil reaches 80 C. Each upshift (the gear one higher) is graded on the highest rpm in the 0.6 s before it:
  * LIMITER within 60 rpm of the red line, EARLY 250 under the shift point, LATE 200 over it (COLD REV while the oil
  * is cold), else SPOT ON. Shifts under 2500 rpm aren't graded. */
-const SHIFT_BEFORE = 300, WARM_OIL = 80, COLD_LIMIT = 4500;
-function shiftPoint(o, oil) {
-    const n = Math.max(2500, C.rpmScale(o).red * 1000 - SHIFT_BEFORE);
-    if (!isNum(oil) || oil >= WARM_OIL) return { rpm: n, cold: false };
-    const cold = Math.min(COLD_LIMIT, n), f = Math.max(0, Math.min(1, (oil - 30) / (WARM_OIL - 30)));
-    return { rpm: Math.round((cold + (n - cold) * f) / 50) * 50, cold: true };
-}
+// (the shift point: layout_common.shiftPoint, with Settings > Shift point before redline, Cold-engine rev guard,
+// Cold rev limit and Oil warm at; 300, on, 4500 and 80 °C by default, as before)
+const shiftPoint = (o, oil) => C.shiftPoint(o, { oil });
 const score = { recent: [], lastGear: null, last: null, at: 0 };
 function sample(o, d) {
     const now = Date.now();

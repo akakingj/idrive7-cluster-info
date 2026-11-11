@@ -63,14 +63,15 @@ function tile(key, x, y, w, h, label, value, colours, valueH) {
         C.text(key, x + 14, y + 34, w - 28, vh, value, colours || white, { align: 0 }),
     ];
 }
-/** The shift lights: from 2500 rpm under the red line, all flashing red 300 rpm before it. */
+/** The shift lights: from 2200 rpm under the shift point (layout_common.shiftPoint: the red line less 300 rpm by
+ * default, lower while the oil is cold), all flashing red at it. */
 function shiftLights(o, x, y, w, h, count) {
-    const red = C.rpmScale(o).red * 1000, from = red - 2500, at = red - 300;
+    const at = (d) => C.shiftPoint(o, d).rpm, from = (d) => at(d) - 2200;
     return {
         key: 'shift', kind: 'leds', x, y, w, h, max: 1,
-        value: (d) => (C.isNum(d.rpm) ? Math.max(0, Math.min(1, (d.rpm - from) / (at - from))) : 0),
+        value: (d) => (C.isNum(d.rpm) ? Math.max(0, Math.min(1, (d.rpm - from(d)) / (at(d) - from(d)))) : 0),
         params: { u_count: [count], u_soft: [0], u_shape: [0] },
-        dyn: (d) => ({ u_flash: [C.isNum(d.rpm) && d.rpm >= at ? 1 : 0] }),
+        dyn: (d) => ({ u_flash: [C.isNum(d.rpm) && d.rpm >= at(d) ? 1 : 0] }),
         colors: (t) => ({ off: t.off, green: t.green, yellow: t.yellow, red: t.red }),
     };
 }

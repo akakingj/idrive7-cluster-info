@@ -23,6 +23,9 @@
 - Layouts > Speedometer gauge / Tach gauge: 아날로그 계열(Analog sport, Digital round, Retro, Classic M) 속도계·rpm계 안 작은 게이지
   - Auto(레이아웃 원래 것) 또는 냉각수, 엔진오일, 흡기온, 미션오일(TRANS), 부스트, 마력, 토크, 가속 페달, 점화시기, 연료
 - M / Sport: rpm 레드존을 가는 선 대신 칸 전체 빨간색으로 채움 (Redline 설정 값부터)
+- 변속 시점·레드존을 Redline 앱(cauliflowermossgrape/idrive7-apps) 방식으로: 변속 시점 = Redline − Shift point before redline(300),
+  Cold-engine rev guard(켬): 오일 30°C에서 Cold rev limit(4500)까지 내려갔다가 Oil warm at(80°C)에 원래대로. 레드존·노란 점선·M 빨간 칸·기어 빨강이 함께 움직임
+  (M, Sport, Analog sport, Digital round, Retro, Classic M, GT3, Track 시프트 라이트)
 - 마력 = 엔진 토크(FES statusActualValueTorque2) × rpm ÷ 9549 (계산값, JB4 등 튠 차량은 실제와 다를 수 있음)
 - 가속 페달 = de.bmw.powertrain.AcceleratorPedal / AngleAcceleratorPedal (실차 확인 필요: 로그 'raw AngleAcceleratorPedal')
 - Centre 커스텀 페이지 칸에도 Engine power, Accelerator pedal 추가

@@ -776,6 +776,40 @@
       ]
     },
     {
+      "key": "shiftBefore",
+      "label": "Shift point before redline (rpm; the gear and M's blades turn red there)",
+      "type": "number",
+      "default": 300
+    },
+    {
+      "key": "coldGuard",
+      "label": "Cold-engine rev guard (the shift point and the red zone lower while the oil is cold)",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "On"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ]
+    },
+    {
+      "key": "coldLimit",
+      "label": "Cold rev limit (rpm, with the oil at 30 °C)",
+      "type": "number",
+      "default": 4500
+    },
+    {
+      "key": "warmOil",
+      "label": "Oil warm at (°C)",
+      "type": "number",
+      "default": 80
+    },
+    {
       "key": "sweep",
       "label": "Needle sweep when it comes up",
       "type": "choice",
