@@ -480,7 +480,7 @@
     },
     {
       "key": "powerUnit",
-      "label": "Power unit (the engine's power)",
+      "label": "Power unit",
       "type": "choice",
       "default": "hp",
       "options": [
@@ -500,7 +500,7 @@
     },
     {
       "key": "infoA",
-      "label": "Readout 1 (petrol or diesel: top left of the centre display, where the time was over the car's own bottom strip)",
+      "label": "Centre readout: top left (petrol, diesel)",
       "type": "choice",
       "default": "iat",
       "options": [
@@ -548,7 +548,7 @@
     },
     {
       "key": "infoB",
-      "label": "Readout 2 (top right, where the outside temperature was)",
+      "label": "Centre readout: top right (petrol, diesel)",
       "type": "choice",
       "default": "gearbox",
       "options": [
@@ -596,7 +596,7 @@
     },
     {
       "key": "infoMain",
-      "label": "Main readout (petrol or diesel: under the digital speed, in place of the engine torque)",
+      "label": "Centre readout: under the speed (petrol, diesel)",
       "type": "choice",
       "default": "torque",
       "options": [
@@ -640,7 +640,7 @@
     },
     {
       "key": "gaugeSpeed",
-      "label": "Speedometer gauge (the small gauge in or under it: Analog sport, Digital round, Retro, Classic M)",
+      "label": "Small gauge in the speedometer",
       "type": "choice",
       "default": "auto",
       "options": [
@@ -692,7 +692,7 @@
     },
     {
       "key": "gaugeRpm",
-      "label": "Tach gauge (the small gauge in or under it: Analog sport, Digital round, Retro, Classic M)",
+      "label": "Small gauge in the tach",
       "type": "choice",
       "default": "auto",
       "options": [
@@ -773,7 +773,7 @@
     },
     {
       "key": "amberRpm",
-      "label": "Amber zone before the red zone (M and Sport)",
+      "label": "Amber zone below the red zone (M, Sport)",
       "type": "number",
       "unit": "rpm",
       "default": 700,
@@ -789,7 +789,7 @@
     },
     {
       "key": "shiftBefore",
-      "label": "Shift point before redline (the gear and M's blades turn red there)",
+      "label": "Shift point: below the red zone by",
       "type": "number",
       "unit": "rpm",
       "default": 300,
@@ -806,23 +806,23 @@
     },
     {
       "key": "coldGuard",
-      "label": "Cold-engine rev guard (the shift point and the red zone lower while the oil is cold)",
+      "label": "Cold engine: lower the shift point and red zone",
       "type": "choice",
       "default": "on",
       "options": [
         [
           "on",
-          "On"
+          "On (as the Redline app: from the cold rev limit up to the red line as the oil warms)"
         ],
         [
           "off",
-          "Off"
+          "Off (the red zone where it is set)"
         ]
       ]
     },
     {
       "key": "coldLimit",
-      "label": "Cold rev limit (with the oil at 30 °C)",
+      "label": "Cold engine: shift point with the oil at 30 °C",
       "type": "number",
       "unit": "rpm",
       "default": 4500,
@@ -837,7 +837,7 @@
     },
     {
       "key": "warmOil",
-      "label": "Oil warm at",
+      "label": "Cold engine: oil warm at",
       "type": "number",
       "unit": "°C",
       "default": 80,

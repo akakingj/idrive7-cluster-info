@@ -264,6 +264,7 @@ mgu.run({
                 return ui.image('MAIN_GFX', cv);
             }
             const st = cluster.status(), d = data(), o = options();
+            const LC = require('./layout_common');
             const spd = isNum(d.speed) ? Math.round(o.speedUnit === 'kmh' ? d.speed : d.speed / 1.609344) + ' ' + (o.speedUnit === 'kmh' ? 'km/h' : 'mph') : '--';
             const tmp = (c) => (isNum(c) ? Math.round(o.tempUnit === 'c' ? c : c * 9 / 5 + 32) + '°' : '--');
             const lines = [
@@ -272,14 +273,18 @@ mgu.run({
                 ['Cluster renderer', st.renderer + '   ·   panel: ' + st.target + '   ·   ' + st.layers + ' layers' + (st.refused ? '   ·   refused: ' + st.refused : '')],
                 ['Car data', (d.demo ? 'demo   ·   ' : live() ? 'live   ·   ' : 'not live   ·   ') + spd + '   ·   ' + (isNum(d.rpm) ? Math.round(d.rpm) + ' rpm' : '-- rpm')
                     + '   ·   gear ' + layout.gearText(d) + '   ·   oil ' + tmp(d.oil) + '   ·   coolant ' + tmp(d.coolant) + '   ·   outside ' + tmp(d.outside)],
-                ['Shared by apps', D.status().providers + '   ·   diagnostic link ' + D.status().diag + '   ·   charge ' + (isNum(d.soc) ? Math.round(d.soc) + '%' : '--') + '   ·   power ' + (isNum(d.kw) ? d.kw.toFixed(1) + ' kW' : '--')],
+                // a petrol or diesel car: what the engine unit answers (and from which identifier), to check against Live Data
+                o.vehicle === 'ice' ? ['Engine unit', 'diagnostic link ' + D.status().diag + '   ·   pedal ' + (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--') + (D.status().dme.pedal ? ' (' + D.status().dme.pedal + ')' : '')
+                    + '   ·   boost ' + LC.pressNum(o, d.boostActual) + ' ' + LC.pressLabel(o) + '   ·   intake ' + tmp(d.iat) + '   ·   gearbox ' + tmp(d.gearbox) + '   ·   power ' + LC.powerNum(o, d.enginePower) + ' ' + LC.powerUnitText(o)]
+                    : ['Shared by apps', D.status().providers + '   ·   diagnostic link ' + D.status().diag + '   ·   charge ' + (isNum(d.soc) ? Math.round(d.soc) + '%' : '--') + '   ·   power ' + (isNum(d.kw) ? d.kw.toFixed(1) + ' kW' : '--')],
                 ['Drive mode (car)', (d.driveMode || '-') + '   ·   raw: ' + rawOf('statusFESVehicleDynamicSwitchHMI') + '  ' + rawOf('statusSwitchDriveDynamicSport2')],
                 ['Range (car)', 'fuel ' + (isNum(d.frange) ? Math.round(d.frange) : '--') + '  electric ' + (isNum(d.erange) ? Math.round(d.erange) : '--') + '   ·   raw: ' + rawOf('statusRangeTankStatus')],
             ];
             cv.text(((ctx.spec && ctx.spec.title) || 'Cluster Layouts') + ' ' + ((ctx.spec && ctx.spec.version) || ''), 48, 80, 44, t.text, { font: 'bold', literal: true });
             lines.forEach(([k, v], i) => {
-                cv.text(k, 48, 160 + i * 64, 22, t.dim, { font: 'bold', literal: true });
-                cv.text(String(v).slice(0, 120), 330, 160 + i * 64, k.indexOf('(car)') >= 0 ? 17 : 22, t.text, { font: 'label', literal: true });
+                // (rows 56 apart: the sixth ran into the notice along the bottom)
+                cv.text(k, 48, 150 + i * 56, 22, t.dim, { font: 'bold', literal: true });
+                cv.text(String(v).slice(0, 120), 330, 150 + i * 56, k.indexOf('(car)') >= 0 ? 17 : 22, t.text, { font: 'label', literal: true });
             });
             creditFooter(cv, t);
             return ui.image('MAIN_GFX', cv);

@@ -487,7 +487,9 @@ function startData(ctx, opts) {
         },
         /** The page on screen needs these (data keys): read them fast. */
         want(keys) { wanted = keys.map((k) => (k === 'boostTarget' || k === 'boostActual' ? 'boostCtl' : k === 'gearbox' ? 'egs' : k)); wantedT = Date.now(); },
-        status: () => Object.assign({ car: awake.why() + (awake.on() ? '' : ' - nothing asked of the car'), diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw, kwFit: fuse.fit() }, status),
+        status: () => Object.assign({ car: awake.why() + (awake.on() ? '' : ' - nothing asked of the car'), diag: link.available ? 'up' : 'down', providers: providers.list().join(', ') || 'none', raw, kwFit: fuse.fit(),
+            // which candidate answered for each engine-unit reading ('5814', 'OBD 49' ...), for the app's page
+            dme: Object.keys(rd.pick).reduce((m, k) => { const c = (dme[k === 'boostActual' || k === 'boostTarget' ? k : k] || [])[rd.pick[k]]; if (c) m[k] = c.obd ? 'OBD ' + String(c.obd).toUpperCase() : c.did; return m; }, {}) }, status),
         /** The vehicle in use: { vehicle 'phev' | 'ice', how: 'set' | 'found' | 'assumed', why }. */
         vehicle: () => ({ vehicle: vehicleNow(), how: setting('vehicle') === 'ice' || setting('vehicle') === 'phev' ? 'set' : detected.vehicle ? 'found' : 'assumed', why: detected.why }),
         /** fn() on each new reading (the car's speed and rpm samples, every changed reading). */

@@ -557,7 +557,7 @@
       "label": "Oil warm at (°C)",
       "type": "number",
       "unit": "°C",
-      "default": 90,
+      "default": 80,
       "steps": [
         70,
         75,
@@ -573,7 +573,7 @@
       "label": "Rev limit while cold",
       "type": "number",
       "unit": "rpm",
-      "default": 3500,
+      "default": 4500,
       "steps": [
         2500,
         3000,
@@ -684,7 +684,7 @@
     },
     {
       "key": "powerUnit",
-      "label": "Power unit (the engine's power)",
+      "label": "Power unit",
       "type": "choice",
       "default": "hp",
       "options": [
