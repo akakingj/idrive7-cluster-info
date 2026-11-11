@@ -145,7 +145,7 @@ check('temperatures in colour: blue while cold, red when hot, the piece\'s own c
     assert.strictEqual(c({}, { oil: 90 }).color[0], '#ffffff');
     assert.strictEqual(C.toned(base, 'iat')({}, { iat: 5 }).color[0], '#ffffff');
     const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
-    const ps = L.byId('analog_sport').pieces(o({ bottomStrip: 'stock', centre: 'info', infoA: 'oil', infoB: 'gearbox', gaugeRpm: 'gearbox' }));
+    const ps = L.byId('analog_sport').pieces(o({ bottomStrip: 'stock', centre: 'info', infoA: 'oil', infoB: 'gearbox', gaugeRpm: 'gearbox', tempGauge: 'scale' }));
     const col = (k, d) => ps.find((p) => p.key === k).colors({ red: '#ff0000', text: '#ffb066', glow: '#ff7a1a', dim: '#999999' }, d).color[0];
     assert.strictEqual(col('clock', { oil: 30 }), '#4ab4ff');
     assert.strictEqual(col('outside', { gearbox: 120 }), '#ff3b30');
@@ -161,5 +161,20 @@ check('shift warning (off by default): the digital speed red at the shift point,
     assert.notStrictEqual(sp({ shiftWarn: 'on' }).colors(t, { rpm: 5000, oil: 90 }).color[0], '#ff0000');
     assert.strictEqual(sp({ shiftWarn: 'on' }).colors(t, { rpm: 4600, oil: 30 }).color[0], '#ff0000');
     assert.notStrictEqual(sp({}).colors(t, { rpm: 5800, oil: 90 }).color[0], '#ff0000');
+});
+check('temperature gauges as the car\'s (C-H, the default): the needle in the middle once warm, towards H above it', () => {
+    assert.strictEqual(C.chFrac('coolant', 20), 0);
+    assert(Math.abs(C.chFrac('coolant', 90) - 0.5) < 0.03);
+    assert(Math.abs(C.chFrac('oil', 100) - 0.5) < 0.03);
+    assert(C.chFrac('oil', 130) > C.CH_RED - 0.1 && C.chFrac('oil', 145) === 1);
+    assert(C.chFrac('coolant', 60) < 0.45);
+    assert.strictEqual(C.chOf(o(), 'oil'), 'oil');
+    assert.strictEqual(C.chOf(o({ tempGauge: 'scale' }), 'oil'), null);
+    assert.strictEqual(C.chOf(o(), 'boost'), null);
+    const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
+    ['analog_sport', 'digital_round', 'retro', 'classic'].forEach((id) => {
+        const keys = L.byId(id).pieces(o({ bottomStrip: 'stock', centre: 'info', gaugeSpeed: 'coolant', gaugeRpm: 'oil' })).map((p) => p.key);
+        assert(keys.some((k) => /ChH$|Sub2$/.test(k)), id + ': ' + keys.join(','));
+    });
 });
 console.log(n + ' passed');

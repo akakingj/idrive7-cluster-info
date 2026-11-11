@@ -45,6 +45,9 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   across the blade / band, not a thin line.
 - Layout in Sport / Layout in ECO PRO: another layout while the car's drive mode switch is in a sport mode or ECO PRO
   ('Same as Layout' by default), switched once the mode has held 1.5 s; the gear selector's S doesn't switch it.
+- Temperature gauges (C - H, the default; or the original's scale and figures): the analog layouts' coolant, oil and
+  gearbox oil gauges as the car's own, C at the cold end, H at the hot end, the needle in the middle once warm
+  (coolant 80-105 °C, oil 85-115, gearbox oil 65-95), red towards H.
 - Temperature colours (on): the readouts' and the small gauges' temperatures blue while cold (oil and coolant under
   60 °C, gearbox oil under 50) and red when too hot (130, 118, 115; intake air from 60).
 - Shift warning (off): the digital speed and the gear red at the shift point, in the layouts without their own

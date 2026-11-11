@@ -299,6 +299,29 @@ const readoutOf = (k) => READOUTS[k] || null;
  * tiles (readings.js: oil and coolant cold under 60 °C, the gearbox oil under 50; hot from 130, 118, 115; the
  * intake air from 60). toneOf: 'cold', 'hot' or null for a reading now; toned: a piece's colours with it.
  */
+/*
+ * Temperature gauges as the car's own (Settings > Temperature gauges: C-H, the default): C at the cold end, H at the hot
+ * end, the needle in the middle across the range an engine runs at once warm (as BMW's coolant gauge stays in the
+ * middle), climbing towards H only above it; red from CH_RED. chOf(o, k): k when that reading is shown so; chFrac:
+ * a temperature (°C) as 0..1 on that gauge.
+ */
+const CH = { coolant: { c: 40, lo: 80, hi: 105, h: 125 }, oil: { c: 40, lo: 85, hi: 115, h: 140 }, gearbox: { c: 30, lo: 65, hi: 95, h: 125 } };
+const CH_RED = 0.85;
+const chOf = (o, k) => (o && o.tempGauge !== 'scale' && CH[k] ? k : null);
+function chFrac(k, v) {
+    const r = CH[k];
+    if (!r || !isNum(v) || v <= r.c) return 0;
+    if (v < r.lo) return 0.45 * (v - r.c) / (r.lo - r.c);
+    if (v <= r.hi) return 0.45 + 0.1 * (v - r.lo) / (r.hi - r.lo);
+    return v < r.h ? 0.55 + 0.45 * (v - r.hi) / (r.h - r.hi) : 1;
+}
+/** C and H at a small gauge's ends: two text pieces at radius r round (cx, cy), at angles a0 and a1 (degrees from
+ * twelve o'clock, clockwise), letters size high; H in the red. */
+function chMarks(key, cx, cy, r, a0, a1, size, colors) {
+    const pos = (a) => [cx + Math.sin(a * Math.PI / 180) * r, cy - Math.cos(a * Math.PI / 180) * r];
+    const w = Math.round(size * 1.6), mk = (k, a, s, c) => { const [x, y] = pos(a); return text(key + k, Math.round(x - w / 2), Math.round(y - size / 2), w, size, s, c); };
+    return [mk('C', a0, 'C', colors), mk('H', a1, 'H', (t) => ({ color: [t.red || '#ff3b30', 1], glow: [t.red || '#ff3b30', 0.3] }))];
+}
 const TEMP_TONES = { oil: { cold: 60, hot: 130 }, coolant: { cold: 60, hot: 118 }, gearbox: { cold: 50, hot: 115 }, iat: { hot: 60 } };
 const TONE_RGB = { cold: '#4ab4ff', hot: '#ff3b30' };
 const toneOf = (k, d) => { const r = TEMP_TONES[k], v = d && d[k]; if (!r || !isNum(v)) return null; return isNum(r.hot) && v >= r.hot ? 'hot' : isNum(r.cold) && v < r.cold ? 'cold' : null; };
@@ -424,5 +447,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, shiftPoint, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, TEMP_TONES, toneOf, toned, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, TEMP_TONES, toneOf, toned, CH, CH_RED, chOf, chFrac, chMarks, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
 };

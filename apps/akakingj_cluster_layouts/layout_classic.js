@@ -42,7 +42,9 @@ function dial(o, which, cx, cy, size) {
     const kwS = (d) => C.kwDialScale(C.kwRange(d).out);
     // Settings > Speedometer gauge / Tach gauge: another reading in the small gauge (its name and figures by it)
     const g = C.gaugeOf(o, which);
-    const subv = (d) => (g ? [Math.round(g.frac(d) * 200) / 200] : speed ? [isNum(d.fuelPct) ? Math.round(Math.max(0, Math.min(1, d.fuelPct / 100)) * 200) / 200 : 0]
+    // (a temperature as the car's own: C to H, warm in the middle; Settings > Temperature gauges)
+    const ch = C.chOf(o, g ? g.key : speed ? null : 'oil');
+    const subv = (d) => (ch ? [Math.round(C.chFrac(ch, d[ch]) * 200) / 200] : g ? [Math.round(g.frac(d) * 200) / 200] : speed ? [isNum(d.fuelPct) ? Math.round(Math.max(0, Math.min(1, d.fuelPct / 100)) * 200) / 200 : 0]
         : [isNum(d.oil) ? Math.round(Math.max(0, Math.min(1, (d.oil - 50) / 100)) * 200) / 200 : 0]);
     const out = [{
         key: which, kind: 'e9x', x: cx - R, y: cy - R, w: size, h: size,
@@ -64,6 +66,17 @@ function dial(o, which, cx, cy, size) {
     const at = (a, r) => { const u = dir(a); return [pv[0] + u[0] * r, pv[1] + u[1] * r]; };
     const lab = (key, a, r, txt, w) => { const [x, y] = at(a, r); return C.text(key, Math.round(x - w / 2), Math.round(y - h / 2), w, h, txt, white); };
     const tl = (c) => String(Math.round(C.tempIn(o, c) / 10) * 10);
+    const unitTxt = () => (speed ? C.text('speedUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), kmh ? 'km/h' : 'mph', white)
+        : C.text('rpmUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), (d) => (elec(d) ? 'kW' : '1/min x 1000'), white));
+    if (ch) {
+        // C and H at the small gauge's ends (H red), its name above the pivot (the oil: its can)
+        const red = (t) => ({ color: [t.red, 1], glow: [t.red, 0] });
+        out.push(lab(which + 'Sub0', SUB[0] + 4, lr, 'C', Math.round(70 * k)), Object.assign(lab(which + 'Sub2', SUB[1] - 4, lr, 'H', Math.round(70 * k)), { colors: red }),
+            g ? C.text(which + 'SubLbl', Math.round(cx - 0.3 * R), Math.round(pv[1] - 0.17 * R), Math.round(0.6 * R), Math.round(22 * k), g.label, white, { tracking: 0.08 })
+                : B.icon('oilIcon', Math.round(cx - 17 * k), Math.round(pv[1] - 0.17 * R), Math.round(34 * k), Math.round(24 * k), 'oilcan', 'dim'),
+            unitTxt());
+        return out;
+    }
     if (g) {
         // the picked reading: its name above the pivot, its figures below it (red in its red zone)
         const [x, y] = at(180, lr * 1.04);

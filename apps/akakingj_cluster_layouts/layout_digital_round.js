@@ -36,6 +36,17 @@ const barColours = (t) => ({ track: t.track, fill0: t.ev, fill1: t.ev, redc: t.r
  * the oil's the tach's, or the reading picked for that dial (Settings > Speedometer gauge / Tach gauge). */
 function tempArc(key, x, y, which, redC, o) {
     const g = C.gaugeOf(o, which === 'coolant' ? 'speed' : 'rpm');
+    // a temperature as the car's own (Settings > Temperature gauges: C-H): the arc warm in the middle, C and H under
+    // its ends; its figures kept in the arc (a digital design)
+    const ch = C.chOf(o, g ? g.key : which);
+    if (ch) {
+        const list = tempArc0(key, x, y, which, redC, o, g);
+        list[0] = Object.assign({}, list[0], { params: Object.assign({}, list[0].params, { u_red: [C.CH_RED] }), value: (d) => C.chFrac(ch, d[ch]) });
+        return list.concat(C.chMarks(key + 'Ch', x + 100, y + 120, 76, -90, 90, 16, lbl));
+    }
+    return tempArc0(key, x, y, which, redC, o, g);
+}
+function tempArc0(key, x, y, which, redC, o, g) {
     if (g) {
         return [
             {

@@ -94,7 +94,7 @@ const M_MOVES = {
     // the display between the dials narrowed clear of the left box
     analog_sport: { info: { lcd: { squeeze: [584, 186] } } },
     digital_round: { info: { card: { squeeze: [584, 186] } } },
-    retro: { info: { coolantDial: { dx: -32 } } },
+    retro: { info: { coolantDial: { dx: -32 }, coolantChC: { dx: -32 }, coolantChH: { dx: -32 } } },
 };
 function mMoves(L, o, list) {
     const m = (M_MOVES[L.id] || {})[o.centre || 'info'];

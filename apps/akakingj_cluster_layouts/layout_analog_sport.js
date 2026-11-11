@@ -50,6 +50,8 @@ function dialSet(o, which, cx, size, cy) {
     const temp = which === 'speed' ? 'coolant' : 'oil', tempRed = which === 'speed' ? 120 : 130;
     // Settings > Speedometer gauge / Tach gauge: another reading in the small dial (its scale 0..100 here)
     const g = C.gaugeOf(o, which);
+    // (a temperature as the car's own: C to H, warm in the middle; Settings > Temperature gauges)
+    const tk = g ? g.key : temp, ch = C.chOf(o, tk);
     const extra = which === 'rpm' && !C.engineFocus(o) ? C.powerMeter(cx, size, cy, lbl, o) : [];   // (Show: Engine: no power meter)
     return extra.concat([
         {
@@ -62,16 +64,17 @@ function dialSet(o, which, cx, size, cy) {
         },
         {
             key: temp + 'Dial', kind: 'dial', x: cx - sub / 2, y: cy + subDy - sub / 2, w: sub, h: sub, z: 5,
-            params: { u_scale: [100, 50, 12.5, g ? Math.min(101, g.redFrac * 100) : tempRed - 40], u_arc: [-120, 120, 0, 0], u_needle_dim: [62 * sub / 176, 14 * sub / 176, 6, 2.5], u_look: [0.7, 0.85, 0, 0], u_look2: [Math.max(4, Math.round(7 * sub / 176)), ks, 0.6, 0.6] },
-            colors: dialColours, value: g ? (d) => g.frac(d) * 100 : (d) => (C.isNum(d[temp]) ? Math.max(0, d[temp] - 40) : 0), max: 100, sweep: true,
+            params: { u_scale: [100, 50, 12.5, ch ? C.CH_RED * 100 : g ? Math.min(101, g.redFrac * 100) : tempRed - 40], u_arc: [-120, 120, 0, 0], u_needle_dim: [62 * sub / 176, 14 * sub / 176, 6, 2.5], u_look: [0.7, 0.85, 0, 0], u_look2: [Math.max(4, Math.round(7 * sub / 176)), ks, 0.6, 0.6] },
+            colors: dialColours, value: ch ? (d) => C.chFrac(ch, d[ch]) * 100 : g ? (d) => g.frac(d) * 100 : (d) => (C.isNum(d[temp]) ? Math.max(0, d[temp] - 40) : 0), max: 100, sweep: true,
         },
         // the tach's unit, or with the engine off the battery's power (the power meter below reads it)
         C.text(which + 'Unit', cx - 120, cy + Math.round(50 * k), 240, Math.round(20 * k), which === 'speed' ? C.speedUnit(o)
             : (d) => (C.electric(o, d) ? C.kwText(d) : 'x1000 rpm'), which === 'speed' ? lbl : (t, d) => (C.electric(o, d) ? powerTxt(t, d) : lbl(t)), { tracking: 0.08 }),
         C.text(temp + 'Lbl', cx - 60, cy + subDy + Math.round(26 * k), 120, Math.max(11, Math.round(14 * k)), g ? g.label : temp === 'oil' ? 'OIL' : 'COOLANT', lbl, { tracking: 0.16 }),
+    ].concat(ch ? C.chMarks(temp + 'Ch', cx, cy + subDy, sub * 0.47, -120, 120, Math.max(12, Math.round(18 * k)), glowText) : [
         // its reading in figures, just under the small dial
         C.text(temp + 'Num', cx - 70, cy + subDy + sub / 2 + Math.round(4 * k), 140, Math.round(26 * k), g ? g.txt : (d) => C.tempText(o, d[temp]), glowText),
-    ]);
+    ]));
 }
 
 module.exports = {

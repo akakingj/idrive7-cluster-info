@@ -863,6 +863,22 @@
       ]
     },
     {
+      "key": "tempGauge",
+      "label": "Temperature gauges (analog layouts)",
+      "type": "choice",
+      "default": "ch",
+      "options": [
+        [
+          "ch",
+          "C - H, as the car's: the middle is warm"
+        ],
+        [
+          "scale",
+          "A scale and figures (40 - 140 °C)"
+        ]
+      ]
+    },
+    {
       "key": "tempTone",
       "label": "Temperature colours",
       "type": "choice",

@@ -74,7 +74,9 @@ function dialSet(o, which, cx, size, cy) {
     const sub = Math.round(176 * k), subY = cy + Math.round(170 * k);
     // Settings > Speedometer gauge / Tach gauge: another reading in the small gauge (its scale 0..100 here)
     const g = C.gaugeOf(o, which);
-    const subPiece = g ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, Math.min(101, g.redFrac * 100)], [-110, 110], (d) => g.frac(d) * 100)
+    const ch = g ? C.chOf(o, g.key) : null;   // (a temperature as the car's own: C to H; Settings > Temperature gauges)
+    const subPiece = ch ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, C.CH_RED * 100], [-110, 110], (d) => C.chFrac(ch, d[ch]) * 100)
+        : g ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, Math.min(101, g.redFrac * 100)], [-110, 110], (d) => g.frac(d) * 100)
         : which === 'speed'
         // fuel: full at the right, empty at the left, the reserve (the last eighth) red; read as 100 - level
         ? small('fuelDial', cx, subY, sub, [100, 25, 12.5, 87.5], [110, -110], (d) => (C.isNum(d.fuelPct) ? 100 - d.fuelPct : 100))
@@ -97,7 +99,7 @@ function dialSet(o, which, cx, size, cy) {
             which === 'speed' ? lbl : (t, d) => (engineOffKw(d) ? (C.isNum(d.kw) && d.kw < -0.3 ? regenTxt : lit(t)) : lbl(t)), { tracking: 0.08 }),
         Object.assign(C.text(which + 'SubLbl', cx - 60, subY + Math.round(22 * k), 120, Math.max(13, Math.round(19 * k)), subLbl, lbl, { tracking: 0.12 }),
             which === 'speed' || C.engineFocus(o) || o.vehicle === 'ice' ? {} : { visible: (d) => !engineOffKw(d) }),
-    ].concat(g ? [C.text(which + 'SubNum', cx - 70, subY + Math.round(44 * k), 140, Math.max(14, Math.round(24 * k)), g.txt, (t, d) => (g.hot(d) ? { color: [t.red, 1], glow: [t.red, 0.4] } : lit(t)))] : []);
+    ].concat(ch ? C.chMarks(which + 'Ch', cx, subY, sub * 0.36, -110, 110, Math.max(12, Math.round(18 * k)), lit) : g ? [C.text(which + 'SubNum', cx - 70, subY + Math.round(44 * k), 140, Math.max(14, Math.round(24 * k)), g.txt, (t, d) => (g.hot(d) ? { color: [t.red, 1], glow: [t.red, 0.4] } : lit(t)))] : []);
 }
 
 module.exports = {
@@ -147,6 +149,14 @@ module.exports = {
     },
 };
 
+/** The coolant gauge between the dials: C to H (Settings > Temperature gauges, warm in the middle), else a 40-140 °C
+ * scale, red from 120 °C; and under it its figures, or with C-H the C and H at its ends. */
+const coolantDial = (o, mid, gy) => (C.chOf(o, 'coolant')
+    ? small('coolantDial', mid, gy, 184, [100, 25, 12.5, C.CH_RED * 100], [-110, 110], (d) => C.chFrac('coolant', d.coolant) * 100, 2)
+    : small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2));
+const coolantFig = (o, mid, gy) => (C.chOf(o, 'coolant') ? C.chMarks('coolantCh', mid, gy, 70, -110, 110, 18, lit)
+    : [C.text('coolantNum', mid - 60, gy + 50, 120, 24, (d) => C.tempText(o, d.coolant), lit)]);   // (in figures)
+
 /** Between the dials, from y top to bottom: the time and outside temperature, the coolant gauge, and the amber
  * LCD with the gear, the speed and the drive mode. */
 function middle(o, X, W, gearC, top, bottom, stripped) {
@@ -154,9 +164,9 @@ function middle(o, X, W, gearC, top, bottom, stripped) {
     const head = [
         C.text('clock', X + 8, top, (W - 22) / 2, 36, C.clock, lit, { align: 0 }),
         C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
-        small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
+        coolantDial(o, mid, gy),
         C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
-        C.text('coolantNum', mid - 60, gy + 50, 120, 24, (d) => C.tempText(o, d.coolant), lit),   // (in figures)
+        ...coolantFig(o, mid, gy),
         { key: 'lcd', kind: 'panel', x: X + 10, y: ly, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
     ];
     // over the car's own strip (it shows the gear and the drive mode): the LCD is the digital speed, large
@@ -168,9 +178,9 @@ function middle(o, X, W, gearC, top, bottom, stripped) {
         C.text('clock', X + 8, top, (W - 22) / 2, 36, C.clock, lit, { align: 0 }),
         C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
         // coolant: cold left, hot right, red from 120 °C (a 40-140 °C scale)
-        small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2),
+        coolantDial(o, mid, gy),
         C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
-        C.text('coolantNum', mid - 60, gy + 50, 120, 24, (d) => C.tempText(o, d.coolant), lit),   // (in figures)
+        ...coolantFig(o, mid, gy),
         { key: 'lcd', kind: 'panel', x: X + 10, y: ly, w: W - 20, h: 206, params: { u_box: [10, 2, 0.4, 1] }, colors: (t) => ({ top: t.lcdTop, bottom: t.lcdBottom, border: t.lcdEdge }) },
         C.text('gear', X + 10, ly + 12, W - 20, 100, C.gearText, gearC),
         C.text('speedDigits', X + 10, ly + 118, W / 2 + 26, 46, (d) => C.speedText(o, d), lit, { align: 1 }),
