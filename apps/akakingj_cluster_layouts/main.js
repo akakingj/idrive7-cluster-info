@@ -169,7 +169,7 @@ mgu.run({
             const n = (short, long) => (full ? long : short);
             const d = data(), o = options(), snap = {};
             Object.keys(d).forEach((k) => { const v = d[k]; if (typeof v === 'number' || typeof v === 'string' || typeof v === 'boolean') snap[k] = typeof v === 'number' ? Math.round(v * 100) / 100 : v; });
-            return logs.bundle('Cluster Layouts ' + ((ctx.spec && ctx.spec.version) || ''), [
+            return logs.bundle(((ctx.spec && ctx.spec.title) || 'Cluster Layouts') + ' ' + ((ctx.spec && ctx.spec.version) || ''), [
                 ['settings', JSON.stringify({ layout: settings.get('layout'), centre: o.centre, look: settings.get('look'), background: settings.get('background'), show: settings.get('show') })],
                 ['engine', JSON.stringify(cluster.status())],
                 ['cluster renderer status', squeeze(cluster.rendererStatus() || '(no answer yet)', full)],
@@ -276,7 +276,7 @@ mgu.run({
                 ['Drive mode (car)', (d.driveMode || '-') + '   ·   raw: ' + rawOf('statusFESVehicleDynamicSwitchHMI') + '  ' + rawOf('statusSwitchDriveDynamicSport2')],
                 ['Range (car)', 'fuel ' + (isNum(d.frange) ? Math.round(d.frange) : '--') + '  electric ' + (isNum(d.erange) ? Math.round(d.erange) : '--') + '   ·   raw: ' + rawOf('statusRangeTankStatus')],
             ];
-            cv.text('Cluster Layouts ' + ((ctx.spec && ctx.spec.version) || ''), 48, 80, 44, t.text, { font: 'bold', literal: true });
+            cv.text(((ctx.spec && ctx.spec.title) || 'Cluster Layouts') + ' ' + ((ctx.spec && ctx.spec.version) || ''), 48, 80, 44, t.text, { font: 'bold', literal: true });
             lines.forEach(([k, v], i) => {
                 cv.text(k, 48, 160 + i * 64, 22, t.dim, { font: 'bold', literal: true });
                 cv.text(String(v).slice(0, 120), 330, 160 + i * 64, k.indexOf('(car)') >= 0 ? 17 : 22, t.text, { font: 'label', literal: true });

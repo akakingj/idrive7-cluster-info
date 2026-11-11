@@ -228,7 +228,7 @@ mgu.run({
         async function safeRender() {
             try { return await render(); } catch (e) {
                 log.warn('render: ' + (e && e.stack || e));
-                try { const t = ctx.theme(), cv = ctx.canvas(W, H).clear(t.bg); cv.text('Cluster Centre ' + ((ctx.spec && ctx.spec.version) || '') + ': the screen failed to draw', 48, 80, 26, t.text, { font: 'bold', literal: true }); cv.text(String(e && e.message || e).slice(0, 140), 48, 130, 20, t.dim, { font: 'label', literal: true }); return ui.image('MAIN_GFX', cv); } catch (e2) { return null; }
+                try { const t = ctx.theme(), cv = ctx.canvas(W, H).clear(t.bg); cv.text(((ctx.spec && ctx.spec.title) || 'Cluster Centre') + ' ' + ((ctx.spec && ctx.spec.version) || '') + ': the screen failed to draw', 48, 80, 26, t.text, { font: 'bold', literal: true }); cv.text(String(e && e.message || e).slice(0, 140), 48, 130, 20, t.dim, { font: 'label', literal: true }); return ui.image('MAIN_GFX', cv); } catch (e2) { return null; }
             }
         }
         ctx.loop('MAIN', 2, safeRender);

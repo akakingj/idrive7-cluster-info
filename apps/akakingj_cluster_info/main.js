@@ -206,7 +206,7 @@ mgu.run({
         function render() {
             const t = ctx.theme();
             const cv = ctx.canvas(W, H).clear(t.bg);
-            G.panel(cv, t, 24, 44, 1552, 468, 'Cluster Info');
+            G.panel(cv, t, 24, 44, 1552, 468, ((ctx.spec && ctx.spec.title) || 'Cluster Info'));
             const pw = src.power(t), ex = src.extras(t).filter((e) => e.text !== '--');
             if (pw || ex.length) {
                 const b = badgeRect(mapRect('map', 0), 'bottom', 'map', ex.length, !!pw, src.underOn('map'));
@@ -244,7 +244,7 @@ mgu.run({
             });
             const raws = Object.keys(live.raw).map((k) => k + ': ' + live.raw[k]).join('   ').slice(0, 190);
             cv.text(raws || 'No raw turn signal or day / night value received yet.', 48, 488, 16, t.dim, { font: 'label', literal: true });
-            G.frame(cv, t, ['Cluster Info'], 0, []);
+            G.frame(cv, t, [((ctx.spec && ctx.spec.title) || 'Cluster Info')], 0, []);
             return ui.image('MAIN_GFX', cv);
         }
         ctx.loop('MAIN', 2, render);
