@@ -84,10 +84,6 @@
     "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
       "_optional": "the cruise control's set speed",
       "functionalLibraryData": "rs"
-    },
-    "de.bmw.powertrain.AcceleratorPedal": {
-      "_optional": "the accelerator pedal",
-      "AngleAcceleratorPedal": "s"
     }
   },
   "screens": [
@@ -2338,13 +2334,6 @@
         "signed16": true,
         "invalid": 32767,
         "note": "degrees at the wheel, negative to the right as BMW counts; the CAN steering-angle factor, signed 16 bit, not yet confirmed on this field: raw values on the Signals page and in the log"
-      },
-      "pedal": {
-        "factor": 0.025,
-        "offset": 0,
-        "invalid": 65535,
-        "invalidFrom": 4095,
-        "note": "0.025 % a bit, to confirm on the car (raw values in the log, 'raw AngleAcceleratorPedal'); a value that never goes past 105 is taken as % already"
       }
     },
     "dme": {

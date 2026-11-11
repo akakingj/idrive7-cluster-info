@@ -260,20 +260,6 @@ function startData(ctx, opts) {
     watch('de.bmw.chassis.SteeringAngle', {
         ActualSteeringAngleDriver: (v) => { fes('ActualSteeringAngleDriver')(v); const a = sc('steer', numberIn(v, /angle|winkel/i)); if (isNum(a) && Math.abs(a) < 900) put('steer', a); },
     }, 'steering angle');
-    let pedalRaw = 0;
-    // the accelerator pedal, 0..100 % (as installed apps declare it; scaling in config.scaling 'pedal', to confirm
-    // on the car: its raw values go to the log, 'raw AngleAcceleratorPedal')
-    watch('de.bmw.powertrain.AcceleratorPedal', {
-        AngleAcceleratorPedal: (v) => {
-            fes('AngleAcceleratorPedal')(v);
-            const r = numberIn(v, /pedal|angle|accel|value/i);
-            if (!isNum(r) || r < 0 || (S.pedal && isNum(S.pedal.invalidFrom) && r >= S.pedal.invalidFrom)) return;
-            // raw (0.025 % a bit) or already in %: raw once it has gone past 105, which a percentage never does
-            pedalRaw = Math.max(pedalRaw, r);
-            const a = pedalRaw > 105 ? sc('pedal', r) : r;
-            if (isNum(a) && a <= 105) put('pedal', Math.max(0, Math.min(100, a)));
-        },
-    }, 'accelerator pedal');
     watch('de.bmw.infotainment.vehicle.CDS2', {
         statusYawVelocityVehicle: (v) => { fes('statusYawVelocityVehicle')(v); const y = sc('yaw', numberIn(v, /yaw|gier|velocity/i)); if (isNum(y) && Math.abs(y) < 160) put('yaw', y); },
     }, 'yaw rate');
@@ -475,7 +461,9 @@ function startData(ctx, opts) {
                 .forEach((k) => { if (!d.demo && fresh(k, 60000)) o[k] = x[k]; });
             // boost: the engine unit's (fast, while a layout wants it), else the car's sport display signal
             if (!isNum(o.boostActual) && !d.demo && fresh('boostCar', 5000)) o.boostActual = x.boostCar;
-            if (!d.demo) o.pedal = fresh('pedalDme', 3000) ? x.pedalDme : fresh('pedal', 3000) ? x.pedal : undefined;
+            // (the engine unit's only: the car's pedal signal's scaling is unconfirmed - Redline saw 60-96 % at a light
+            // touch with it - so its value goes to the log alone, never on the cluster)
+            if (!d.demo) o.pedal = fresh('pedalDme', 3000) ? x.pedalDme : undefined;
             if (d.demo) Object.assign(o, demo(d));
             if (isNum(o.iat) && isNum(o.outside)) o.iatRise = o.iat - o.outside;
             if (isNum(o.battTemp) === false && p.battery !== undefined) o.battTemp = p.battery;

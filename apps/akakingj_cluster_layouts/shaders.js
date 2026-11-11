@@ -1193,7 +1193,7 @@ void main() {
             g = u_shiftNow > 0.5 ? vec4(u_red * 0.8, 0.6) : t < u_zero ? vec4(u_regen, mix(0.6, 0.35, across))
                 : vec4(mix(u_lit, u_lit * 0.72, across), mix(0.34, 0.22, across));
         // the run-up to the redline: the whole glass amber (brighter where the rpm has reached it)
-        if (t >= u_orange && t < u_redFrom) g = t <= u_value && u_zero <= 0.0 ? vec4(1.0, 0.72, 0.2, mix(0.92, 0.75, across))
+        if (u_shiftNow < 0.5 && t >= u_orange && t < u_redFrom) g = t <= u_value && u_zero <= 0.0 ? vec4(1.0, 0.72, 0.2, mix(0.92, 0.75, across))
             : vec4(1.0, 0.6, 0.1, mix(0.62, 0.4, across));
         // the red zone: the whole glass red from the redline (brighter where the rpm has reached it)
         if (t >= u_redFrom) g = t <= u_value && u_zero <= 0.0 ? vec4(mix(u_red, vec3(1.0, 0.45, 0.4), 0.3), mix(0.95, 0.8, across))

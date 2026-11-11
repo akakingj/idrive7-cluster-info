@@ -106,7 +106,7 @@ module.exports = {
             // over the car's own strip (it shows the gear, the drive mode, the ranges, the time and the outside
             // temperature): the speed large in the middle, the battery's power and the engine speed either side of
             // it at the same height, the engine speed's bar under all three, one row of readings along the bottom
-            const kwC = C.engineFocus(o) ? txt : (t, d) => ({ color: [C.isNum(d.kw) && d.kw < -0.3 ? t.regen : t.text, 1], glow: [t.glow, 0] });
+            const kwC = C.engineFocus(o) ? txt : (t, d) => ({ color: [C.isNum(d.kw) && d.kw < -0.3 ? t.regen || '#3ddc84' : t.text, 1], glow: [t.glow, 0] });   // (its palettes have no regen colour: NaN on the car)
             const rpmNum = (d) => (d.engineOn === false ? 'OFF' : C.isNum(d.rpm) ? String(Math.round(d.rpm / 50) * 50) : '--');
             // (the gear stays: the layout is made round it and the speed)
             return [bg('bg', 0, 0, 1920, 720),
