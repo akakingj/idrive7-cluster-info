@@ -71,7 +71,7 @@ function dialSet(o, which, cx, size, cy) {
         C.text(which + 'Unit', cx - 120, cy + Math.round(50 * k), 240, Math.round(20 * k), which === 'speed' ? C.speedUnit(o)
             : (d) => (C.electric(o, d) ? C.kwText(d) : 'x1000 rpm'), which === 'speed' ? lbl : (t, d) => (C.electric(o, d) ? powerTxt(t, d) : lbl(t)), { tracking: 0.08 }),
         C.text(temp + 'Lbl', cx - 60, cy + subDy + Math.round(26 * k), 120, Math.max(11, Math.round(14 * k)), g ? g.label : temp === 'oil' ? 'OIL' : 'COOLANT', lbl, { tracking: 0.16 }),
-    ].concat(ch ? C.chMarks(temp + 'Ch', cx, cy + subDy, sub * 0.47, -120, 120, Math.max(12, Math.round(18 * k)), glowText) : [
+    ].concat(ch ? C.chMarks(temp + 'Ch', cx, cy + subDy, sub * 0.35, -116, 116, Math.max(12, Math.round(17 * k)), glowText) : [
         // its reading in figures, just under the small dial
         C.text(temp + 'Num', cx - 70, cy + subDy + sub / 2 + Math.round(4 * k), 140, Math.round(26 * k), g ? g.txt : (d) => C.tempText(o, d[temp]), glowText),
     ]));
