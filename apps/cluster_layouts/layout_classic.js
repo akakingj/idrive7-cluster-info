@@ -66,11 +66,12 @@ function dial(o, which, cx, cy, size) {
     out.push(lab(which + 'Sub0', SUB[0] + 4, lr, labels[0], Math.round(70 * k)), lab(which + 'Sub1', 180, lr * 1.04, labels[1], Math.round(70 * k)),
         lab(which + 'Sub2', SUB[1] - 4, lr, labels[2], Math.round(70 * k)));
     if (speed) {
-        out.push(B.icon('fuelIcon', Math.round(cx - 14 * k), Math.round(pv[1] + 0.13 * R), Math.round(28 * k), Math.round(28 * k), 'fuel', 'dim'),
-            C.text('speedUnit', Math.round(cx - 0.40 * R), Math.round(cy + 0.42 * R), Math.round(70 * k), Math.round(22 * k), kmh ? 'km/h' : 'mph', white, { align: 0 }));
+        // (the icon above the small needle's pivot, clear of its sweep; the unit under the top numerals, as the tach's)
+        out.push(B.icon('fuelIcon', Math.round(cx - 14 * k), Math.round(pv[1] - 0.17 * R), Math.round(28 * k), Math.round(28 * k), 'fuel', 'dim'),
+            C.text('speedUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), kmh ? 'km/h' : 'mph', white));
     } else {
-        out.push(B.icon('oilIcon', Math.round(cx - 34 * k), Math.round(pv[1] + 0.12 * R), Math.round(34 * k), Math.round(24 * k), 'oilcan', 'dim'),
-            C.text('oilUnit', Math.round(cx + 2 * k), Math.round(pv[1] + 0.12 * R), Math.round(40 * k), Math.round(22 * k), '°' + (o.tempUnit === 'c' ? 'C' : 'F'), white, { align: 0 }),
+        out.push(B.icon('oilIcon', Math.round(cx - 34 * k), Math.round(pv[1] - 0.17 * R), Math.round(34 * k), Math.round(24 * k), 'oilcan', 'dim'),
+            C.text('oilUnit', Math.round(cx + 2 * k), Math.round(pv[1] - 0.17 * R), Math.round(40 * k), Math.round(22 * k), '°' + (o.tempUnit === 'c' ? 'C' : 'F'), white, { align: 0 }),
             C.text('rpmUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), (d) => (elec(d) ? 'kW' : '1/min x 1000'), white));
     }
     return out;

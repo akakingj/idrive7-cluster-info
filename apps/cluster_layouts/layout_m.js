@@ -67,7 +67,8 @@ function gauges(o, engine) {
     // along the bottom: the fuel (red under an eighth) and the charge in figures too (red under 10%); on a petrol or
     // diesel car the oil there instead, and the gearbox's oil in the card in its place
     const ice = o.vehicle === 'ice';
-    const fuel = { icon: 'fuel', unit: '', labels: [[0, '0'], [-1, '0'], [1, '1']], value: (d) => (isNum(d.fuelPct) ? clamp01(d.fuelPct / 100) : 0), zero: 0, lo: 0.125, hi: 2 };
+    // (the fuel's bar reads the range left on it)
+    const fuel = { icon: 'fuel', unit: '', read: (d) => (isNum(d.frange) ? C.distText(o, d.frange) : ''), labels: [[0, '0'], [-1, '0'], [1, '1']], value: (d) => (isNum(d.fuelPct) ? clamp01(d.fuelPct / 100) : 0), zero: 0, lo: 0.125, hi: 2 };
     const charge = { icon: 'battery', unit: '%', read: (d) => (isNum(d.soc) ? String(Math.round(d.soc)) : '--'), labels: [[0, '0'], [0.5, '50'], [1, '100']], value: (d) => f01(d.soc, 0, 100), zero: 0, lo: 0.1, hi: 2 };
     const left = ice ? [coolant, gearbox] : [coolant, oil];
     if (engine) {
@@ -97,7 +98,7 @@ function gauge(T, key, x, y, w, g) {
     const fg = B.role('fg'), sg = B.smallGlyphs('orb', 'm_scale');
     const nums = g.labels.map((l) => Number(l[1])), dec = g.labels.some((l) => /\./.test(l[1])) ? 1 : 0;
     const readC = (t, d) => ({ color: [(g.hi < 1 && g.value(d) >= g.hi) || (g.lo > 0 && g.value(d) <= g.lo) ? t.red : t.fg, 1], glow: [t.fg, 0] });
-    return [B.icon(key + 'Icon', x - 4, y - 6, 38, 36, g.icon, 'fg')].concat(g.read ? [T(key + 'Read', [x + 46, y - 4, 100, 32], 'm_unit', g.read, readC, 'left')] : [],
+    return [B.icon(key + 'Icon', x - 4, y - 6, 38, 36, g.icon, 'fg')].concat(g.read ? [T(key + 'Read', [x + 46, y - 4, 170, 32], 'm_unit', g.read, readC, 'left')] : [],
         g.unit ? [T(key + 'Unit', [x + w - 90, y - 4, 90, 32], 'm_unit', g.unit, fg, 'right')] : [], [
         { key, kind: 'mbar', x: x - 6, y: y + 30, w: w + 10, h: 34 + sg.h + 2,
             params: { u_zero: [g.zero], u_zones: [g.lo, g.hi, 0, 0], u_marks: g.labels.map((l) => l[0]).concat([-1]).slice(0, 4),
@@ -180,7 +181,7 @@ module.exports = {
             list.push(Object.assign(T('nlTop', [644, 10, 84, 38], 'm_num', num(4), numC(4), 'center'), { visible: elec }),
                 Object.assign(T('nrTop', [1192, 10, 84, 38], 'm_num', num(4), numC(4), 'center'), { visible: elec }));
         }
-        list.push(T('rpmUnit', [1252, 602, 160, 29], 'm_tiny', (d) => (elec(d) ? 'kW' : '1/min x1000'), faint, 'left'));   // (under the right blade's foot)
+        list.push(T('rpmUnit', [1252, 602, 160, 29], 'm_tiny', (d) => (elec(d) ? 'kW' : '1/min x1000'), dim, 'left'));   // (under the right blade's foot)
         // the gear and the speed: in the middle, or (the map, an M car's boxes) their map-up places
         // the gear: its number (P, R, N as letters), the shift programme's stack beside it, as the M8's
         const gearNum = (d) => { const g = C.gearText(d); return /^[DSM]\d+$/.test(g) ? g.slice(1) : g; };
