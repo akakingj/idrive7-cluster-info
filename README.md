@@ -95,9 +95,12 @@ builds on the head unit with the unit's own SDK.
 
 ## License
 
-Copyright (C) 2026 eroobeeroo. GPL-3.0-or-later ([LICENSE](LICENSE)): anyone who distributes these apps, or changed
-versions of them, must make their full source available under the same license. That covers everything here except
-the parts below, which keep their own licenses.
+Copyright (C) 2026 eroobeeroo. [PolyForm Noncommercial License 1.0.0](LICENSE): free to use, change and share for
+any noncommercial purpose (your own car, a friend's, a hobby project), with this licence and the copyright notice
+kept. **Commercial use is not licensed: nobody may sell these apps or charge for installing, coding or bundling
+them.** If you paid for them, ask for a refund. That covers everything here except the parts below, which keep
+their own licenses. Versions published before 10 November 2026 remain under the GPL-3.0-or-later they were
+published with.
 
 - The app kit (`kit/`) is from [cauliflowermossgrape/idrive7-apps](https://github.com/cauliflowermossgrape/idrive7-apps)
   through eroobeeroo/idrive7-apps, under its MIT license ([LICENSE-MIT](LICENSE-MIT), `kit/LICENSE`). Cluster Info

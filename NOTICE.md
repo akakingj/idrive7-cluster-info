@@ -13,7 +13,9 @@
   the tyre readings come from or follow bimmer-lab's Cluster Themes
   ([bimmer-lab/apps](https://github.com/bimmer-lab/apps)), MIT licence: its notice ships with each app in `NOTICE`
   (`shared/NOTICE`).
-- Everything else: Copyright (C) 2026 eroobeeroo, GPL-3.0-or-later (`LICENSE`).
+- Everything else: Copyright (C) 2026 eroobeeroo, PolyForm Noncommercial License 1.0.0 (`LICENSE`): noncommercial
+  use only; no selling, no paid installation. Versions published before 10 November 2026: GPL-3.0-or-later, as
+  published.
 
 ## Barlow, Michroma and Orbitron (the cluster fonts)
 
