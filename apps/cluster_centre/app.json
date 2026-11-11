@@ -526,7 +526,7 @@
       "label": "Shift light: flashes at",
       "type": "number",
       "unit": "rpm",
-      "default": 6200,
+      "default": 5700,
       "steps": [
         4000,
         4500,
@@ -590,7 +590,7 @@
       "label": "Rev limit when warm",
       "type": "number",
       "unit": "rpm",
-      "default": 6500,
+      "default": 6000,
       "steps": [
         5500,
         6000,

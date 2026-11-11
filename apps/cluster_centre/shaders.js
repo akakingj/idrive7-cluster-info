@@ -1192,6 +1192,9 @@ void main() {
         if (t >= min(u_zero, u_value) && t <= max(u_zero, u_value))
             g = u_shiftNow > 0.5 ? vec4(u_red * 0.8, 0.6) : t < u_zero ? vec4(u_regen, mix(0.6, 0.35, across))
                 : vec4(mix(u_lit, u_lit * 0.72, across), mix(0.34, 0.22, across));
+        // the run-up to the redline: the whole glass amber (brighter where the rpm has reached it)
+        if (t >= u_orange && t < u_redFrom) g = t <= u_value && u_zero <= 0.0 ? vec4(1.0, 0.72, 0.2, mix(0.92, 0.75, across))
+            : vec4(1.0, 0.6, 0.1, mix(0.62, 0.4, across));
         // the red zone: the whole glass red from the redline (brighter where the rpm has reached it)
         if (t >= u_redFrom) g = t <= u_value && u_zero <= 0.0 ? vec4(mix(u_red, vec3(1.0, 0.45, 0.4), 0.3), mix(0.95, 0.8, across))
             : vec4(u_red, mix(0.82, 0.55, across));
@@ -1206,9 +1209,7 @@ void main() {
         c = over(vec4(0.93, 0.95, 0.98, cov(abs(d) - 1.6)), c);               // outer edge
         c = over(vec4(1.0, 1.0, 1.0, 0.3 * cov(abs(d - 4.0) - 0.6)), c);       // its bevel
         c = over(vec4(0.66, 0.7, 0.76, 0.75 * cov(abs(d - w) - 0.8)), c);      // inner edge
-        // BMW's marks: a few orange dashes in the run-up to the redline (the red zone itself filled, above)
-        bool orM = t >= u_orange && t < u_redFrom - 0.01 && d > 6.0 && d < 11.0 && mod(p.y, 20.0) < 7.0;
-        if (orM) c = over(vec4(1.0, 0.6, 0.1, 0.95), c);
+        // (the run-up to the redline and the red zone: filled across the glass, above)
     }
     // ticks every 1000 rpm: bright, from the outer edge 24 px into the glass, as the M8 draws them
     float kk = floor(t * u_ticks + 0.5);
@@ -1312,6 +1313,9 @@ vec4 bracket(vec2 q, float val, float zero, float redFrom, float orange, float t
         vec3 lc = t < zero ? REGEN_LIT : lit;
         if (on) col = mix(lc, mix(lc, vec3(1.0), 0.25), clamp((d - 5.0) / u_w, 0.0, 1.0)) * mix(0.8, 1.0, clamp(abs(t - zero) / max(abs(val - zero), 0.01), 0.0, 1.0));
         if (zero > 0.0 && t < zero && !on) col = mix(band, REGEN_LIT * 0.3, 0.6);
+        // the run-up to the redline: the band amber across its width (brighter where the rpm has reached it)
+        if (redFrom < 1.5 && t >= orange && t < redFrom) col = on ? mix(vec3(1.0, 0.78, 0.12), vec3(1.0, 0.92, 0.55), clamp((d - 5.0) / u_w, 0.0, 1.0) * 0.4)
+            : mix(vec3(0.55, 0.4, 0.04), vec3(0.8, 0.6, 0.08), clamp((d - 5.0) / u_w, 0.0, 1.0));
         // the red zone: the band red across its width from the redline (brighter where the rpm has reached it)
         if (redFrom < 1.5 && t >= redFrom && t <= 1.02) col = on ? mix(vec3(0.95, 0.12, 0.12), vec3(1.0, 0.5, 0.45), clamp((d - 5.0) / u_w, 0.0, 1.0) * 0.4)
             : mix(vec3(0.62, 0.04, 0.05), vec3(0.85, 0.1, 0.1), clamp((d - 5.0) / u_w, 0.0, 1.0));
@@ -1323,8 +1327,6 @@ vec4 bracket(vec2 q, float val, float zero, float redFrom, float orange, float t
         float kk = floor((t - zero) / st + 0.5), tk = zero + kk * st;
         float yk = u_scale.x - tk * (u_scale.x - u_scale.y);
         if (tk >= -0.001 && kk <= ticks && d > 7.0 && d < 19.0) c = over(vec4(kk < 0.0 ? REGEN_LIT : line, 0.9 * cov(abs(q.y - yk) - 1.2)), c);
-        // the run-up to the redline: yellow dashes on the outer edge of the band (the red zone itself filled, above)
-        if (redFrom < 1.5 && d > 8.0 && d < 13.0 && t >= orange && t < redFrom && mod(q.y, 16.0) < 7.0) c = over(vec4(1.0, 0.85, 0.1, 1.0), c);
     }
     // the outer line, its top run and its bottom run
     float o = inY || abs(q.y - u_geo.x) < 6.0 || abs(q.y - u_geo.z) < 6.0 ? cov(abs(d - 1.0) - 1.8) : 0.0;

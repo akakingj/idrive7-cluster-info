@@ -751,7 +751,7 @@
       "label": "Red zone from",
       "type": "number",
       "unit": "rpm",
-      "default": 7000,
+      "default": 6000,
       "steps": [
         5000,
         5500,
@@ -767,7 +767,7 @@
       "label": "Rev scale up to",
       "type": "number",
       "unit": "rpm",
-      "default": 8000,
+      "default": 7000,
       "steps": [
         6000,
         7000,

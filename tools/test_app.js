@@ -34,7 +34,7 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     const S = {}, changes = [];
     SPEC.settings.forEach((s) => { S[s.key] = s.default; });
     // (the personal build's defaults are Korean and petrol; these checks are written for the original's)
-    Object.assign(S, { vehicle: 'auto', tankLitres: 69, speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'auto', timeZone: 'eastern' });
+    Object.assign(S, { vehicle: 'auto', tankLitres: 69, speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'auto', timeZone: 'eastern', redline: 7000, rpmMax: 8000 });
     const handlers = {}, clicks = {}, warns = [];
     let pages = 0;
     const ctx = {

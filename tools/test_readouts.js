@@ -68,7 +68,7 @@ check('the engine unit reads what the readouts show', () => {
 check('the settings offer every readout, and the defaults are this build\'s', () => {
     const s = (k) => SPEC.settings.find((x) => x.key === k);
     ['infoA', 'infoB', 'infoMain'].forEach((k) => Object.keys(C.READOUTS).forEach((r) => assert(s(k).options.some((x) => x[0] === r), k + ' ' + r)));
-    const want = { vehicle: 'ice', tankLitres: 59, speedUnit: 'kmh', tempUnit: 'c', torqueUnit: 'kgm', pressUnit: 'psi', powerUnit: 'hp', timeZone: 'utc+9', infoA: 'iat', infoB: 'gearbox', infoMain: 'torque' };
+    const want = { vehicle: 'ice', tankLitres: 59, speedUnit: 'kmh', tempUnit: 'c', torqueUnit: 'kgm', pressUnit: 'psi', powerUnit: 'hp', timeZone: 'utc+9', infoA: 'iat', infoB: 'gearbox', infoMain: 'torque', redline: 6000, rpmMax: 7000 };
     Object.keys(want).forEach((k) => assert.strictEqual(s(k).default, want[k], k));
 });
 check('Cluster Centre: engine power and the pedal as readings', () => {
