@@ -46,6 +46,8 @@ SETS.push({ tag: 'layout strip, map', bottomStrip: 'layout', centre: 'map' });
 SETS.push({ tag: 'stock centre', centre: 'stock' });
 SETS.push({ tag: 'M cluster', cluster: 'm', bottomStrip: 'layout' });
 SETS.push({ tag: 'plug-in hybrid', vehicle: 'phev' });
+SETS.push({ tag: 'shift warning, no colours', shiftWarn: 'on', tempTone: 'off' });
+SETS.push({ tag: 'shift warning, gauges', shiftWarn: 'on', gaugeSpeed: 'coolant', gaugeRpm: 'gearbox', infoA: 'oil', infoB: 'coolant', infoMain: 'gearbox' });
 
 const bad = (v) => typeof v === 'number' && !isFinite(v);
 const problems = new Map();

@@ -11,6 +11,44 @@ const C0 = require('./layout_common');
 /** A readout put in the time's or the outside temperature's place, two side by side: made to hold its widest
  * figures ('TRANS 140°') with a gap to the other (layout_common.fitText). */
 const fitted = (L, p) => C0.fitText(p, L.font, 0.8);
+/* the main readout's pieces (layout_common.focus.power), the small gauges' figures (and which dial each is in) */
+const MAIN_KEYS = ['kwNow', 'power', 'powerBig', 'kw'];
+const SMALL_KEYS = { coolantNum: 'speed', oilNum: 'rpm', coolantTxt: 'speed', oilTxt: 'rpm', speedSubNum: 'speed', rpmSubNum: 'rpm', speedSub1: 'speed', rpmSub1: 'rpm' };
+const SMALL_OWN = { coolantNum: 'coolant', oilNum: 'oil', coolantTxt: 'coolant', oilTxt: 'oil' };
+/* the layouts with their own shift warning (the gear or the blades red at the shift point) */
+const OWN_SHIFT = ['m', 'sport', 'gt3', 'track'];
+/**
+ * Every layout's last step, on a petrol or diesel car: the temperatures in colour (Settings > Temperature colours: the
+ * readouts and the small gauges' figures) and, with Settings > Shift warning, the digital speed and the gear red
+ * at the shift point (layout_common.shiftPoint) in the layouts without their own.
+ */
+function finish(L, o, list) {
+    if (!o || !C0.engineFocus(o)) return list;
+    const strip = stripOn(o);
+    const readingOf = (p) => {
+        if (strip && p.key === 'clock') return o.infoA || 'iat';
+        if (strip && p.key === 'outside') return o.infoB || 'gearbox';
+        if (MAIN_KEYS.indexOf(p.key) >= 0) return o.infoMain || 'torque';
+        if (SMALL_KEYS[p.key]) { const g = C0.gaugeOf(o, SMALL_KEYS[p.key]); return g ? g.key : SMALL_OWN[p.key] || null; }
+        return null;
+    };
+    const tones = o.tempTone !== 'off', warn = o.shiftWarn === 'on' && OWN_SHIFT.indexOf(L.id) < 0;
+    return list.map((p) => {
+        if (p.kind !== 'text') return p;
+        const k = tones ? readingOf(p) : null;
+        if (k && C0.TEMP_TONES[k] && p.colors) return Object.assign({}, p, { colors: C0.toned(p.colors, k) });
+        if (warn && (p.key === 'speedDigits' || p.key === 'gear') && p.colors) {
+            const base = p.colors;
+            return Object.assign({}, p, { colors: (t, d) => {
+                const c = typeof base === 'function' ? base(t, d) : base;
+                if (!c || !c.color || !C0.isNum(d.rpm) || d.rpm < C0.shiftPoint(o, d).rpm) return c;
+                const red = t.red || '#ff3b30';
+                return Object.assign({}, c, { color: [red, c.color[1]] }, c.glow ? { glow: [red, c.glow[1]] } : {});
+            } });
+        }
+        return p;
+    });
+}
 const { boxBezel, MAP, mCar } = C0;
 
 /*
@@ -115,7 +153,8 @@ function bottomCut(list) {
 
 LAYOUTS.forEach((L) => {
     const own = L.pieces;
-    L.pieces = (o) => {
+    L.pieces = (o) => finish(L, o, built(o));
+    const built = (o) => {
         // over the car's own strip there is no dark box to work round: the stock centre content shows in the
         // map's window, so the layout takes the same form as with the map (its window left clear for it)
         const oo = stripOn(o) && o.centre === 'stock' ? Object.assign({}, o, { centre: 'map' }) : o;
@@ -162,4 +201,11 @@ LAYOUTS.forEach((L) => {
     };
 });
 const byId = (id) => LAYOUTS.find((l) => l.id === id) || LAYOUTS[0];
-module.exports = { LAYOUTS, byId, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, BG_NOTCH_Y, bottomCut };
+/** The layout for the drive mode now (Settings > Layout in Sport / in ECO PRO; 'same': Layout): the car's own drive
+ * mode switch (FES), not the gear selector's S. get(key): the setting; d: the data (its driveMode). */
+function layoutFor(get, d) {
+    const m = (d && d.driveMode) || '';
+    const k = /SPORT|XTRABOOST/.test(m) ? get('layoutSport') : /ECO|ELECTRIC/.test(m) ? get('layoutEco') : null;
+    return k && k !== 'same' && LAYOUTS.some((l) => l.id === k) ? k : get('layout');
+}
+module.exports = { LAYOUTS, byId, layoutFor, M_MOVES, M_ON_DIAL, CUT_Y, BG_Y, BG_NOTCH, BG_NOTCH_Y, bottomCut };

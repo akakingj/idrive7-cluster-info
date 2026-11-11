@@ -43,6 +43,12 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   Digital round, Retro, Classic M, GT3, Track's shift lights).
 - M and Sport: the red zone and the amber zone before it (Amber zone before the red zone, 700 rpm; 0: none) filled
   across the blade / band, not a thin line.
+- Layout in Sport / Layout in ECO PRO: another layout while the car's drive mode switch is in a sport mode or ECO PRO
+  ('Same as Layout' by default), switched once the mode has held 1.5 s; the gear selector's S doesn't switch it.
+- Temperature colours (on): the readouts' and the small gauges' temperatures blue while cold (oil and coolant under
+  60 °C, gearbox oil under 50) and red when too hot (130, 118, 115; intake air from 60).
+- Shift warning (off): the digital speed and the gear red at the shift point, in the layouts without their own
+  (not M, Sport, GT3, Track).
 - Engine power = crankshaft torque (FES statusActualValueTorque2) x rpm / 9549: a calculation; on a tuned car
   (JB4) it may differ from the real power.
 - Accelerator pedal: the engine unit's normalised pedal angle, as Live Data reads it (UDS DID 5814, then 480B, then

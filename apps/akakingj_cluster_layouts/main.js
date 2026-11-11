@@ -21,7 +21,7 @@ const clock = require('./clock');
 const mgu = require('./kit/mgu');
 const { ClusterRender } = require('./cluster_render_client');
 const { startCluster, STALE_MS } = require('./engine');
-const { byId } = require('./layouts');
+const { byId, layoutFor } = require('./layouts');
 const { lookNow } = require('./themes');
 const { startData } = require('./data');
 const presence = require('./presence');
@@ -71,7 +71,7 @@ mgu.run({
         };
         const options = () => ({
             speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), torqueUnit: settings.get('torqueUnit'), pressUnit: settings.get('pressUnit'),
-            powerUnit: settings.get('powerUnit'), infoA: settings.get('infoA'), infoB: settings.get('infoB'), infoMain: settings.get('infoMain'), gaugeSpeed: settings.get('gaugeSpeed'), gaugeRpm: settings.get('gaugeRpm'),
+            powerUnit: settings.get('powerUnit'), infoA: settings.get('infoA'), infoB: settings.get('infoB'), infoMain: settings.get('infoMain'), tempTone: settings.get('tempTone'), shiftWarn: settings.get('shiftWarn'), gaugeSpeed: settings.get('gaugeSpeed'), gaugeRpm: settings.get('gaugeRpm'),
             amberRpm: settings.get('amberRpm'), shiftBefore: settings.get('shiftBefore'), coldGuard: settings.get('coldGuard'), coldLimit: settings.get('coldLimit'), warmOil: settings.get('warmOil'),
             centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),   // (a saved 'pages', retired: Waze)
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
@@ -87,6 +87,8 @@ mgu.run({
             if (car.data().demo) return true;
             return car.subs.some((s) => s.available) || (car.lastCar > 0 && Date.now() - car.lastCar < STALE_MS);
         };
+        // (Settings > Layout, or the one set for the drive mode now: Layout in Sport / in ECO PRO, layouts.layoutFor)
+        const layoutNow = () => byId(layoutFor((k) => settings.get(k), data()));
         let layout = byId(settings.get('layout'));
         /* the colours now: the layout's palette for the look, with pure black behind everything unless the
          * Background setting says tinted. The KOMBI leaves a black box where its own gear readout sits while a
@@ -113,7 +115,7 @@ mgu.run({
         });
         let cluster = start();
         const mapWindow = startMapWindow(log);
-        let lastVehicle = null, lastModeGear = null;
+        let lastVehicle = null, lastModeGear = null, modeWant = null, modeAt = 0;
         // the engine-unit readings the layout shows, read fast while it shows
         setInterval(() => {
             if (showing()) D.want((layout.needs || []).concat(require('./layout_common').focus.needs(options())));
@@ -128,6 +130,12 @@ mgu.run({
             // drive mode and gear changes in the log (timestamped), beside the cluster's target changes: what the
             // KOMBI does to the layout on a mode change (the stock cluster back for a few seconds) shows in one log
             const dn = data(), mg = (dn.driveMode || '-') + ' / ' + (dn.gear == null ? '-' : dn.gear);
+            // the layout for the drive mode: switched once the new mode has held 1.5 s (a mode passed through on the
+            // way to another doesn't switch; the KOMBI shows its own cluster for a moment on a mode change anyway)
+            const wantId = layoutNow().id;
+            if (wantId === layout.id) modeWant = null;
+            else if (modeWant !== wantId) { modeWant = wantId; modeAt = Date.now(); }
+            else if (Date.now() - modeAt >= 1500) { log.info('drive mode ' + (dn.driveMode || '-') + ': layout ' + wantId); layout = byId(wantId); modeWant = null; cluster.rebuild(); }
             if (mg !== lastModeGear) {
                 if (lastModeGear !== null && !dn.demo) log.info('drive mode / gear: ' + lastModeGear + ' -> ' + mg + '   (cluster: ' + JSON.stringify(cluster.status()) + ')');
                 lastModeGear = mg;
@@ -135,8 +143,8 @@ mgu.run({
         }, 500);
         settings.onChange((k) => {
             if (k === 'look' || k === 'background') return cluster.recolour();
-            if (k === 'layout') layout = byId(settings.get('layout'));
-            if (['layout', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'pressUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'powerUnit', 'infoA', 'infoB', 'infoMain', 'gaugeSpeed', 'gaugeRpm', 'amberRpm', 'shiftBefore', 'coldGuard', 'coldLimit', 'warmOil'].indexOf(k) >= 0) cluster.rebuild();
+            if (k === 'layout' || k === 'layoutSport' || k === 'layoutEco') { layout = layoutNow(); modeWant = null; }
+            if (['layout', 'layoutSport', 'layoutEco', 'tempTone', 'shiftWarn', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'pressUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'powerUnit', 'infoA', 'infoB', 'infoMain', 'gaugeSpeed', 'gaugeRpm', 'amberRpm', 'shiftBefore', 'coldGuard', 'coldLimit', 'warmOil'].indexOf(k) >= 0) cluster.rebuild();
         });
 
         /* ---------- the car's range and charge signals, from its own catalog ---------- */

@@ -127,4 +127,39 @@ check('the pedal from the engine unit (as Live Data: 5814 / 480B, OBD 49), asked
     assert(C.focus.needs(o({ gaugeRpm: 'throttle' })).indexOf('pedal') >= 0);
     assert(C.focus.needs(o()).indexOf('pedal') < 0);
 });
+check('the layout for the drive mode: Sport / ECO PRO when set, else Layout; the gear selector\'s S doesn\'t switch', () => {
+    const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
+    const S = { layout: 'analog_sport', layoutSport: 'sport', layoutEco: 'same' }, get = (k) => S[k];
+    assert.strictEqual(L.layoutFor(get, { driveMode: 'COMFORT' }), 'analog_sport');
+    assert.strictEqual(L.layoutFor(get, { driveMode: 'SPORT INDIVIDUAL' }), 'sport');
+    assert.strictEqual(L.layoutFor(get, { driveMode: 'ECO PRO' }), 'analog_sport');
+    assert.strictEqual(L.layoutFor(get, { driveMode: 'COMFORT', mode: 'S' }), 'analog_sport');
+    assert.strictEqual(L.layoutFor(get, {}), 'analog_sport');
+    assert.strictEqual(L.layoutFor((k) => (k === 'layoutSport' ? 'nope' : S[k]), { driveMode: 'SPORT' }), 'analog_sport');
+});
+check('temperatures in colour: blue while cold, red when hot, the piece\'s own colour between; off: as it was', () => {
+    const base = () => ({ color: ['#ffffff', 1], glow: ['#ff7a1a', 0.6] });
+    const c = C.toned(base, 'oil');
+    assert.strictEqual(c({}, { oil: 40 }).color[0], '#4ab4ff');
+    assert.strictEqual(c({}, { oil: 135 }).color[0], '#ff3b30');
+    assert.strictEqual(c({}, { oil: 90 }).color[0], '#ffffff');
+    assert.strictEqual(C.toned(base, 'iat')({}, { iat: 5 }).color[0], '#ffffff');
+    const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
+    const ps = L.byId('analog_sport').pieces(o({ bottomStrip: 'stock', centre: 'info', infoA: 'oil', infoB: 'gearbox', gaugeRpm: 'gearbox' }));
+    const col = (k, d) => ps.find((p) => p.key === k).colors({ red: '#ff0000', text: '#ffb066', glow: '#ff7a1a', dim: '#999999' }, d).color[0];
+    assert.strictEqual(col('clock', { oil: 30 }), '#4ab4ff');
+    assert.strictEqual(col('outside', { gearbox: 120 }), '#ff3b30');
+    assert.strictEqual(col('oilNum', { gearbox: 40 }), '#4ab4ff');
+    const off = L.byId('analog_sport').pieces(o({ bottomStrip: 'stock', centre: 'info', infoA: 'oil', tempTone: 'off' }));
+    assert.notStrictEqual(off.find((p) => p.key === 'clock').colors({ red: '#ff0000', text: '#ffb066', glow: '#ff7a1a' }, { oil: 30 }).color[0], '#4ab4ff');
+});
+check('shift warning (off by default): the digital speed red at the shift point, in the layouts without their own', () => {
+    const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
+    const t = { red: '#ff0000', text: '#ffb066', glow: '#ff7a1a', dim: '#999999' };
+    const sp = (x) => L.byId('analog_sport').pieces(o(Object.assign({ bottomStrip: 'stock', centre: 'info', redline: 6000, rpmMax: 7000 }, x))).find((p) => p.key === 'speedDigits');
+    assert.strictEqual(sp({ shiftWarn: 'on' }).colors(t, { rpm: 5800, oil: 90 }).color[0], '#ff0000');
+    assert.notStrictEqual(sp({ shiftWarn: 'on' }).colors(t, { rpm: 5000, oil: 90 }).color[0], '#ff0000');
+    assert.strictEqual(sp({ shiftWarn: 'on' }).colors(t, { rpm: 4600, oil: 30 }).color[0], '#ff0000');
+    assert.notStrictEqual(sp({}).colors(t, { rpm: 5800, oil: 90 }).color[0], '#ff0000');
+});
 console.log(n + ' passed');

@@ -73,7 +73,8 @@ function startLayouts(set) {
     const clock = req('layouts', 'clock');
     const dap = tryReq('layouts', 'dap');
     clock.setZone(set.timeZone); clock.setTwelve(set.clock !== '24');
-    const layout = byId(set.layout);
+    const { layoutFor } = req('layouts', 'layouts');
+    let layout = byId(set.layout);
     const BLACK = { bg: '#000000', bgTop: '#000000', bgBottom: '#000000', face0: '#000000', face1: '#000000' };
     const o = {
         speedUnit: set.speedUnit, tempUnit: set.tempUnit, torqueUnit: set.torqueUnit, pressUnit: set.pressUnit,
@@ -81,7 +82,7 @@ function startLayouts(set) {
         boxClear: set.boxClear === 'on', cluster: set.cluster === 'm' ? 'm' : 'standard',
         bottomStrip: set.bottomStrip === 'layout' ? 'layout' : 'stock', boxBezel: set.boxBezel === 'on', vehicle: vehicleOf(set),
         tankLitres: num(set, 'tankLitres', 69),
-        powerUnit: set.powerUnit, infoA: set.infoA, infoB: set.infoB, infoMain: set.infoMain, gaugeSpeed: set.gaugeSpeed, gaugeRpm: set.gaugeRpm, amberRpm: set.amberRpm, shiftBefore: set.shiftBefore, coldGuard: set.coldGuard, coldLimit: set.coldLimit, warmOil: set.warmOil,
+        powerUnit: set.powerUnit, infoA: set.infoA, infoB: set.infoB, infoMain: set.infoMain, gaugeSpeed: set.gaugeSpeed, gaugeRpm: set.gaugeRpm, tempTone: set.tempTone, shiftWarn: set.shiftWarn, amberRpm: set.amberRpm, shiftBefore: set.shiftBefore, coldGuard: set.coldGuard, coldLimit: set.coldLimit, warmOil: set.warmOil,
     };
     const st = { data: {}, client: new FakeClient() };
     st.look = () => lookNow(set.look, st.data);
@@ -93,6 +94,9 @@ function startLayouts(set) {
     st.lastLook = st.look();
     st.frame = (data, extra) => {
         st.data = Object.assign({}, data, { dap: extra.dap && dap && dap.DEMO ? dap.DEMO : null, vehicle: o.vehicle });
+        // (the layout for the drive mode: Layout in Sport / in ECO PRO)
+        const want = byId(layoutFor((k) => set[k], st.data));
+        if (want !== layout) { layout = want; st.engine.rebuild(); }
         const look = st.look();
         if (look !== st.lastLook) { st.lastLook = look; st.engine.recolour(); }
         st.engine._tick();

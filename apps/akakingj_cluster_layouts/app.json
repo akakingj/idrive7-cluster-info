@@ -279,6 +279,126 @@
       ]
     },
     {
+      "key": "layoutSport",
+      "label": "Layout in Sport",
+      "type": "choice",
+      "default": "same",
+      "options": [
+        [
+          "same",
+          "Same as Layout"
+        ],
+        [
+          "analog_sport",
+          "Analog sport"
+        ],
+        [
+          "digital_round",
+          "Digital round"
+        ],
+        [
+          "modern_wide",
+          "Modern wide"
+        ],
+        [
+          "digital_dash",
+          "Digital dash"
+        ],
+        [
+          "freedom",
+          "Freedom"
+        ],
+        [
+          "retro",
+          "Retro"
+        ],
+        [
+          "track",
+          "Track"
+        ],
+        [
+          "pulse",
+          "Pulse"
+        ],
+        [
+          "gt3",
+          "GT3"
+        ],
+        [
+          "m",
+          "M"
+        ],
+        [
+          "sport",
+          "Sport"
+        ],
+        [
+          "classic",
+          "Classic M"
+        ]
+      ]
+    },
+    {
+      "key": "layoutEco",
+      "label": "Layout in ECO PRO",
+      "type": "choice",
+      "default": "same",
+      "options": [
+        [
+          "same",
+          "Same as Layout"
+        ],
+        [
+          "analog_sport",
+          "Analog sport"
+        ],
+        [
+          "digital_round",
+          "Digital round"
+        ],
+        [
+          "modern_wide",
+          "Modern wide"
+        ],
+        [
+          "digital_dash",
+          "Digital dash"
+        ],
+        [
+          "freedom",
+          "Freedom"
+        ],
+        [
+          "retro",
+          "Retro"
+        ],
+        [
+          "track",
+          "Track"
+        ],
+        [
+          "pulse",
+          "Pulse"
+        ],
+        [
+          "gt3",
+          "GT3"
+        ],
+        [
+          "m",
+          "M"
+        ],
+        [
+          "sport",
+          "Sport"
+        ],
+        [
+          "classic",
+          "Classic M"
+        ]
+      ]
+    },
+    {
       "key": "look",
       "label": "Colours",
       "type": "choice",
@@ -739,6 +859,38 @@
         [
           "fuel",
           "Fuel level"
+        ]
+      ]
+    },
+    {
+      "key": "tempTone",
+      "label": "Temperature colours",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "On: blue while cold, red when too hot"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ]
+    },
+    {
+      "key": "shiftWarn",
+      "label": "Shift warning (layouts without their own)",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "off",
+          "Off"
+        ],
+        [
+          "on",
+          "On: the digital speed and the gear red at the shift point"
         ]
       ]
     },

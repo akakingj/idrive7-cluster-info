@@ -294,6 +294,20 @@ const READOUTS = {
     timing: { short: 'TIM', long: 'TIMING', num: (o, d) => timingText(d), frac: (d) => (isNum(d.timing) ? (d.timing + 10) / 50 : 0), needs: ['timing'] },
 };
 const readoutOf = (k) => READOUTS[k] || null;
+/*
+ * Temperatures in colour (Settings > Temperature colours): blue while cold, red when too hot, as Cluster Centre's
+ * tiles (readings.js: oil and coolant cold under 60 °C, the gearbox oil under 50; hot from 130, 118, 115; the
+ * intake air from 60). toneOf: 'cold', 'hot' or null for a reading now; toned: a piece's colours with it.
+ */
+const TEMP_TONES = { oil: { cold: 60, hot: 130 }, coolant: { cold: 60, hot: 118 }, gearbox: { cold: 50, hot: 115 }, iat: { hot: 60 } };
+const TONE_RGB = { cold: '#4ab4ff', hot: '#ff3b30' };
+const toneOf = (k, d) => { const r = TEMP_TONES[k], v = d && d[k]; if (!r || !isNum(v)) return null; return isNum(r.hot) && v >= r.hot ? 'hot' : isNum(r.cold) && v < r.cold ? 'cold' : null; };
+const toned = (colors, k) => (t, d) => {
+    const c = typeof colors === 'function' ? colors(t, d) : colors, tone = toneOf(k, d);
+    if (!tone || !c || !c.color) return c;
+    const col = TONE_RGB[tone];
+    return Object.assign({}, c, { color: [col, c.color[1]] }, c.glow ? { glow: [col, Math.min(0.3, c.glow[1])] } : {});
+};
 /**
  * A text piece made to hold its widest figures (READOUT_SAMPLES, below): its glyphs smaller, centred in the same
  * box, where they would run over it (the font sets glyphs at most 15% closer). room: the share of the box's width
@@ -410,5 +424,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, shiftPoint, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, TEMP_TONES, toneOf, toned, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
 };
