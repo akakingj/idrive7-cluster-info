@@ -5,7 +5,7 @@
  */
 require('./scene');
 const path = require('path');
-const C0 = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layout_common'));
+const C0 = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'layout_common'));
 /** What piece p clashes with. o: the layout's options (Settings > Cluster: M car adds the M KOMBI's two boxes). */
 function clashes(p, o) {
     const C = C0, out = [];
@@ -87,7 +87,7 @@ function clashes(p, o) {
 module.exports = { clashes };
 
 if (require.main === module) {
-    const { LAYOUTS } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
+    const { LAYOUTS } = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'layouts'));
     let n = 0;
     LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ice'].forEach((vehicle) => [['standard', 'stock'], ['standard', 'layout'], ['m', 'layout']].forEach(([cluster, bottomStrip]) => {
         const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle, cluster, bottomStrip };

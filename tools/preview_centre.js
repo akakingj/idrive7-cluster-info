@@ -10,7 +10,7 @@ const path = require('path');
 const { FakeClient } = require('./scene');          // (also maps ./kit/ to kit/runtime)
 const { render } = require('./preview');
 
-const APP = path.join(__dirname, '..', 'apps', 'cluster_centre');
+const APP = path.join(__dirname, '..', 'apps', 'akakingj_cluster_centre');
 
 function args(argv) {
     const a = { page: 'temps', fit: 'clear', look: 'native', accent: 'blue', style: 'bar', units: 'us', rpm: 3400, out: 'page.png' };

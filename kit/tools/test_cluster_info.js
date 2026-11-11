@@ -1,6 +1,6 @@
 'use strict';
 
-// Cluster Info (apps/cluster_info) on the kit with stubbed car signals, and a provider (as eDrive Live is on the
+// Cluster Info (apps/akakingj_cluster_info) on the kit with stubbed car signals, and a provider (as eDrive Live is on the
 // car) next to it in a temporary folder: the panel's values come through the folder, the provider writes only
 // while Cluster Info's panel wants them, and the page draws. No SDK or car needed:
 //   node kit/tools/test_cluster_info.js
@@ -25,7 +25,7 @@ Module._load = function (req, parent, isMain) {
     if (req.startsWith('./kit/')) return load.call(this, path.join(KIT, req.slice(6)), parent, isMain);
     return load.call(this, req, parent, isMain);
 };
-const SPEC = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'cluster_info', 'app.json'), 'utf8'));
+const SPEC = JSON.parse(fs.readFileSync(path.join(ROOT, 'apps', 'akakingj_cluster_info', 'app.json'), 'utf8'));
 const themes = require(path.join(KIT, 'themes'));
 const { Recorder: Canvas } = require(path.join(KIT, 'record'));
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -48,7 +48,7 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
         loop: (name, fps, fn) => { loops[name] = fn; },
         theme: () => themes.theme('m_tricolour'), canvas: (w, h) => new Canvas(w, h),
     };
-    require(path.join(ROOT, 'apps', 'cluster_info', 'main.js'));
+    require(path.join(ROOT, 'apps', 'akakingj_cluster_info', 'main.js'));
     await app.start(ctx);
     await sleep(1300);
     const dir = process.env.CLUSTER_INFO_DIR;
@@ -76,7 +76,7 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     }, 200);
     await sleep(700);
     check('Cluster Info reads a provider\'s power, temperature and battery charge', () => {
-        const { startProviders } = require(path.join(ROOT, 'apps', 'cluster_info', 'providers.js'));
+        const { startProviders } = require(path.join(ROOT, 'apps', 'akakingj_cluster_info', 'providers.js'));
         const r = startProviders({ info() {}, warn() {} }, { dir, setInterval: () => 0 });
         const p = r.power(), b = r.value('battery'), soc = r.value('soc');
         assert(p && p.kw === -1.6 && p.app === 'Test provider' && b && b.c === 28.3 && soc && soc.pct === 64.4,
@@ -95,7 +95,7 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     check('panel down: wanted.json goes stale, so the provider stops and removes its file', () => assert(!wanted() && !fs.existsSync(prov.file)));
     clearInterval(prov.timer);
     // the turn signals and day / night as the car sends them (names, from photos of this app's page on a G05)
-    const IND = require(path.join(ROOT, 'apps', 'cluster_info', 'indicators.js'));
+    const IND = require(path.join(ROOT, 'apps', 'akakingj_cluster_info', 'indicators.js'));
     check('turn signals by name: right, left, hazards, off; day / night by name', () => {
         assert.strictEqual(IND.direction('DAUER_BLINKEN_RECHTS_EIN', 'DAUERBLINKEN_RECHTS'), 'right');
         assert.strictEqual(IND.direction('DAUER_BLINKEN_LINKS_EIN', 'DAUERBLINKEN_LINKS'), 'left');

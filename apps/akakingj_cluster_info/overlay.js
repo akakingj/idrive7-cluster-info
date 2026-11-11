@@ -342,7 +342,7 @@ function startOverlay(ctx, lv, opts) {
         if (!CR) {
             try { CR = require('./cluster_render_client').ClusterRender; } catch (e) { warnOnce('no render client: ' + e.message); return null; }
         }
-        cr = new CR('cluster_info');
+        cr = new CR('akakingj_cluster_info');
         // (after a reconnect the client sends each image whole again by itself)
         cr.on('ready', () => tick());
         cr.on('layer', (r, state, reason) => { if (r === ref && state === 'error') warnOnce('layer: ' + (reason || state)); });

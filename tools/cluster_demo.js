@@ -19,7 +19,7 @@ const { FakeClient } = require('./scene');   // (also points the apps' './kit/' 
 
 const DEMO_VERSION = '2.2.0';
 const ROOT = path.join(__dirname, '..');
-const APPS = { layouts: path.join(ROOT, 'apps', 'cluster_layouts'), centre: path.join(ROOT, 'apps', 'cluster_centre'), info: path.join(ROOT, 'apps', 'cluster_info') };
+const APPS = { layouts: path.join(ROOT, 'apps', 'akakingj_cluster_layouts'), centre: path.join(ROOT, 'apps', 'akakingj_cluster_centre'), info: path.join(ROOT, 'apps', 'akakingj_cluster_info') };
 const argv = process.argv.slice(2);
 const argOf = (k, d) => { const i = argv.indexOf(k); return i >= 0 && argv[i + 1] ? argv[i + 1] : d; };
 const PORT = Number(argOf('--port', process.env.PORT || 8765));

@@ -20,7 +20,7 @@ process.on('unhandledRejection', (e) => failures.push(String(e && e.stack || e))
 process.on('uncaughtException', (e) => failures.push(String(e && e.stack || e)));
 
 (async () => {
-    for (const id of ['cluster_layouts', 'cluster_centre']) {
+    for (const id of ['akakingj_cluster_layouts', 'akakingj_cluster_centre']) {
         execFileSync('python3', [path.join(ROOT, 'kit', 'tools', 'build.py'), id], { cwd: ROOT, stdio: 'pipe' });
         const { headUnit } = require(path.join(ROOT, 'kit', 'tools', 'hu-stub.js'));
         let images = 0;

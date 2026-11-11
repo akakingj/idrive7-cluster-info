@@ -100,7 +100,7 @@ mgu.run({
         /* the renderer target: the panel (slot 0x203), where the HMI's own cluster screen goes down and the
          * KOMBI shows its fallback gear box */
         const start = () => startCluster({
-            client: new ClusterRender('cluster_layouts'),
+            client: new ClusterRender('akakingj_cluster_layouts'),
             layout: () => layout,
             // (the glyphs: the layout's own family, M and Sport's wide one, else the bold)
             font: () => layout.font || 'bold',
@@ -162,8 +162,8 @@ mgu.run({
         const squeeze = (txt, full) => {
             if (full) return txt;
             let ours = 0;
-            const kept = String(txt).split('\n').filter((l) => (/^layer \d+ effect of cluster_layouts on panel/.test(l) ? (ours++, false) : true));
-            return kept.join('\n') + (ours ? '\n(' + ours + ' effect layers of cluster_layouts, one line each in the full logs)' : '');
+            const kept = String(txt).split('\n').filter((l) => (/^layer \d+ effect of akakingj_cluster_layouts on panel/.test(l) ? (ours++, false) : true));
+            return kept.join('\n') + (ours ? '\n(' + ours + ' effect layers of akakingj_cluster_layouts, one line each in the full logs)' : '');
         };
         function logBundle(full) {
             const n = (short, long) => (full ? long : short);
@@ -198,8 +198,8 @@ mgu.run({
                 ['cruise control signals', sigList(findSignals({ match: /cruise|tempomat|geschwindigkeitsregel|wunschgeschw|speed.?limit|limiter|set.?speed|target.?speed|abstand|distance.?control|longitudinal.?(control|guid|function|assist)|\bacc\b|acc[A-Z_]|ACC|DCC|FGR/ }), n(30, 300))],
                 ['time and date signals', sigList(findSignals({ match: /time|date|uhrzeit|datum|zone|clock/i }), n(10, 300))],
                 ['cluster-render log', logs.tail(logs.RENDER_LOG, n(50, 1500))],
-                ['this app\'s log', logs.tail(path.join(ctx.dataDir || '.', 'cluster_layouts.log'), n(30, 400))],
-                ['Cluster Centre log', logs.siblingLog(ctx.dataDir || '.', 'cluster_centre', n(20, 300))],
+                ['this app\'s log', logs.tail(path.join(ctx.dataDir || '.', 'akakingj_cluster_layouts.log'), n(30, 400))],
+                ['Cluster Centre log', logs.siblingLog(ctx.dataDir || '.', 'akakingj_cluster_centre', n(20, 300))],
             ]);
         }
         ui.onClick('BTN_LOGS', () => {

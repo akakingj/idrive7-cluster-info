@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """render_cars.py - the car Modern wide's road draws (the driving-assistant view), rendered once here and shipped
-as a small texture atlas (apps/cluster_layouts/car_sprite.js); the cluster only samples it.
+as a small texture atlas (apps/akakingj_cluster_layouts/car_sprite.js); the cluster only samples it.
 
 A generic modern SUV of our own (no maker's design): a signed distance field of rounded boxes (a lower body with
 wheel arches, a cabin narrowing to the roof, the wheels), seen from behind and above as the road's camera sees
@@ -15,7 +15,7 @@ import base64, json, math, os, sys, zlib
 import numpy as np
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-OUT = os.path.join(HERE, '..', 'apps', 'cluster_layouts', 'car_sprite.js')
+OUT = os.path.join(HERE, '..', 'apps', 'akakingj_cluster_layouts', 'car_sprite.js')
 
 W0, H0 = 256, 192          # the largest level's size in the atlas
 SS = int(os.environ.get('SS', 3))   # supersampling

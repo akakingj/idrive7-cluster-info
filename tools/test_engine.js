@@ -123,7 +123,7 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ic
 }))));
 /* Settings > Cluster: M car: the same, with the M KOMBI's two boxes in the middle; only a rev counter's own face
  * (layouts.M_ON_DIAL) may sit under them, since it can't move out of the middle */
-const { M_ON_DIAL } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
+const { M_ON_DIAL } = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'layouts'));
 LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ice'].forEach((vehicle) => check(L.id + ' (' + centre + ', ' + vehicle + ', M car): readings clear of the M KOMBI\'s boxes too', () => {
     const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle, cluster: 'm' };
     const ps = L.pieces(o);
@@ -134,7 +134,7 @@ LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['phev', 'ic
 
 /* Settings > Layout: Bottom strip: the car's own: no background below CUT_Y but the black band, nothing small crossing it, and
  * the same readings clear of the KOMBI's boxes as without it */
-const { CUT_Y, BG_Y, BG_NOTCH, BG_NOTCH_Y } = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts'));
+const { CUT_Y, BG_Y, BG_NOTCH, BG_NOTCH_Y } = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'layouts'));
 LAYOUTS.forEach((L) => ['info', 'map', 'stock'].forEach((centre) => ['standard', 'm'].forEach((cluster) => check(L.id + ' (' + centre + ', ' + cluster + ', stock bottom strip): the layout ends at y ' + CUT_Y, () => {
     const o = { speedUnit: 'mph', tempUnit: 'f', centre, redline: 7000, rpmMax: 8000, vehicle: 'phev', cluster, bottomStrip: 'stock' };
     const ps = L.pieces(o);

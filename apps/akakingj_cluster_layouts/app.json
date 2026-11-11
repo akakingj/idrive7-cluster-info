@@ -1,12 +1,12 @@
 {
-  "id": "cluster_layouts",
-  "title": "Cluster Layouts",
+  "id": "akakingj_cluster_layouts",
+  "title": "Cluster Layouts KR",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
   "version": "0.28.1",
   "startType": "autostart",
   "vendor": "custom",
-  "loggingId": "OA9L",
-  "iconGlyph": "gauge",
+  "loggingId": "AKCL",
+  "iconGlyph": "krgauge-L",
   "signals": {
     "de.bmw.infrastructure.VehicleCondition": {
       "VehicleCondition": "s"
@@ -123,7 +123,7 @@
     {
       "name": "MAIN",
       "kind": "canvas",
-      "title": "Cluster Layouts",
+      "title": "Cluster Layouts KR",
       "buttons": [
         [
           "BTN_SHOW",

@@ -12,7 +12,7 @@ const path = require('path');
 const Module = require('module');
 const { FakeClient, KIT } = require('./scene');
 
-const APP = path.join(__dirname, '..', 'apps', 'cluster_centre');
+const APP = path.join(__dirname, '..', 'apps', 'akakingj_cluster_centre');
 const RESERVED = ['u_mvp', 'u_mv', 'u_m', 'u_v', 'u_p', 'u_normal'];   // the renderer's matrix names (PROTOCOL.md)
 let ok = 0;
 const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };

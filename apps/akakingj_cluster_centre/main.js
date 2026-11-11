@@ -108,7 +108,7 @@ mgu.run({
         let page = enabled()[0] || null, pageAt = Date.now();
         const layout = { id: 'centre', pieces: (o) => pieces(o) };
         const cluster = startCluster({
-            client: new ClusterRender('cluster_centre'),
+            client: new ClusterRender('akakingj_cluster_centre'),
             target: 'map', contend: true, z: 200,
             layout: () => layout, options, log, data: all, onFresh: data.onFresh,
             theme: () => palette(settings.get('accent'), settings.get('look')),

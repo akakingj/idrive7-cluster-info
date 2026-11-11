@@ -59,7 +59,7 @@ const check = async (name, fn) => { await fn(); ok++; console.log('ok   ' + name
     await check('data.js: shown, the car parked: eDrive Live not asked; switched on: asked; the car\'s power meter and cruise speed taken', async () => {
         const handlers = {};
         const log = { info() {}, warn() {}, debug() {} };
-        const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'app.json'), 'utf8'));
+        const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'app.json'), 'utf8'));
         const ctx = {
             log, spec,
             settings: { get: () => undefined },

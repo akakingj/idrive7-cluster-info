@@ -116,7 +116,7 @@ if (require.main === module) {
     const a = args(process.argv.slice(2));
     const s = makeScene({ layout: a.layout, look: a.look, black: !!a.black, options: { centre: a.centre, speedUnit: a.kmh ? 'kmh' : 'mph', vehicle: a.engine ? 'ice' : 'phev', cluster: a.mcar ? 'm' : 'standard', bottomStrip: a.strip ? 'stock' : 'layout' },
         data: { speed: a.speed * (a.kmh ? 1 : 1.609344), rpm: a.rpm, gear: a.gear, stage: a.stage, mode: a.mode, driveMode: a.drive, oil: a.oil, coolant: a.coolant, outside: a.outside, soc: a.soc, kw: a.kw, erange: a.erange, frange: a.frange,
-            gearbox: a.gearbox, iat: a.iat, battTemp: a.batt, boostActual: a.boost, torque: 312, timing: 14.5, hpfp: 205, boostTarget: 0.9, engineOn: a.rpm > 300, tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } }, fuelPct: a.fuel, pdDrive: 62, pdClimate: 24, pdSeats: 14, dap: a.dap ? require('../apps/cluster_layouts/dap').DEMO : null } });
+            gearbox: a.gearbox, iat: a.iat, battTemp: a.batt, boostActual: a.boost, torque: 312, timing: 14.5, hpfp: 205, boostTarget: 0.9, engineOn: a.rpm > 300, tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } }, fuelPct: a.fuel, pdDrive: 62, pdClimate: 24, pdSeats: 14, dap: a.dap ? require('../apps/akakingj_cluster_layouts/dap').DEMO : null } });
     // let the needles ease to their readings
     // two minutes first, on a made-up clock, so trend lines have a past
     const base = Object.assign({}, s.data()), now = Date.now;
@@ -135,7 +135,7 @@ if (require.main === module) {
     const scene = s.scene();
     s.stop();
     scene.time = a.time || 0;
-    render(scene, a.out, a.centre === 'map' && (require('../apps/cluster_layouts/layouts').byId(a.layout).mapWindow || true), a.mcar ? require('../apps/cluster_layouts/layout_common').M_BOXES : []).then((errors) => {
+    render(scene, a.out, a.centre === 'map' && (require('../apps/akakingj_cluster_layouts/layouts').byId(a.layout).mapWindow || true), a.mcar ? require('../apps/akakingj_cluster_layouts/layout_common').M_BOXES : []).then((errors) => {
         if (errors.length) { console.error(errors.join('\n')); process.exit(1); }
         console.log('wrote ' + path.resolve(a.out) + ' (' + scene.quads.length + ' layers)');
         process.exit(0);

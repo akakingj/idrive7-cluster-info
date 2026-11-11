@@ -3,6 +3,18 @@
 원작: eroobeeroo/idrive7-cluster-info (PolyForm Noncommercial 1.0.0, 비상업 용도로만 수정·공유 가능)
 포함: PR #8 (lb-ft, 압력 단위 설정)
 
+## 앱 ID (원작과 따로 설치됨)
+| 원작 | 개인판 ID | 이름 |
+|---|---|---|
+| cluster_layouts | akakingj_cluster_layouts | Cluster Layouts KR |
+| cluster_centre | akakingj_cluster_centre | Cluster Centre KR |
+| cluster_info | akakingj_cluster_info | Cluster Info KR |
+
+아이콘: 게이지 + M 색 포인트 + L / C / I (각 앱 폴더의 icon.png, kit/tools/make_icon.js `krgauge-L`)
+
+MGU Store: Settings → Add source → `akakingj/idrive7-cluster-info` → 브랜치 `personal-kr` 선택.
+원작 Cluster Layouts / Centre / Info와 같이 쓰면 둘 다 계기판에 그리려 하므로, 원작은 지우거나 Show를 꺼 둘 것.
+
 ## 기본값 변경
 | 앱 | 항목 | 원작 기본값 → 개인판 |
 |---|---|---|

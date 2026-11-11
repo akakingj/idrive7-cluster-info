@@ -8,9 +8,9 @@ const assert = require('assert');
 const path = require('path');
 const ROOT = path.join(__dirname, '..');
 require('./scene');   // (./kit/ as kit/runtime, as on the car)
-const C = require(path.join(ROOT, 'apps', 'cluster_layouts', 'layout_common.js'));
-const R = require(path.join(ROOT, 'apps', 'cluster_centre', 'readings.js'));
-const SPEC = require(path.join(ROOT, 'apps', 'cluster_layouts', 'app.json'));
+const C = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layout_common.js'));
+const R = require(path.join(ROOT, 'apps', 'akakingj_cluster_centre', 'readings.js'));
+const SPEC = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'app.json'));
 
 let n = 0;
 const check = (name, fn) => { fn(); n++; console.log('ok   ' + name); };
@@ -106,7 +106,7 @@ check('shift point and red zone as the Redline app: the red line less 300, lower
     assert.deepStrictEqual(r({ coldGuard: 'off' }, 30), { rpm: 6200, red: 6500, cold: false });
     assert.deepStrictEqual(r({ shiftBefore: 500, coldLimit: 4000, warmOil: 70 }, 50), { rpm: 5000, red: 5500, cold: true });
     assert.strictEqual(r({}, undefined).cold, false);
-    const B = require(path.join(ROOT, 'apps', 'cluster_layouts', 'bimmer.js'));
+    const B = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'bimmer.js'));
     assert(B.shiftNow(o({ redline: 6500 }), { rpm: 6200, oil: 90 }) && !B.shiftNow(o({ redline: 6500 }), { rpm: 6100, oil: 90 }));
     assert(B.shiftNow(o({ redline: 6500 }), { rpm: 4600, oil: 30 }));
     assert(Math.abs(B.redMarks(o({ redline: 6500 }), 8000, { oil: 30 })[0] - 4800 / 8000) < 1e-9);

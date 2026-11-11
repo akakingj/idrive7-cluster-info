@@ -23,6 +23,18 @@ if (glyph === 'gauge') {
     c.line(70, 76, nx, ny, 6, W);
     c.circle(70, 76, 9, W);
     c.fillRect(44, 112, 52, 6, W);
+} else if (/^krgauge-/.test(glyph)) {
+    // the personal build's (akakingj): the gauge with an M-coloured accent and the app's letter under it
+    const letter = glyph.slice(8);
+    c.arc(70, 66, 44, 52, -135, 135, W, { round: true });
+    c.arc(70, 66, 44, 52, 60, 85, '#7ec8ff', { round: true });
+    c.arc(70, 66, 44, 52, 88, 110, B, { round: true });
+    c.arc(70, 66, 44, 52, 113, 135, A, { round: true });
+    for (let a = -135; a <= 135; a += 45) { const [x0, y0] = pt(70, 66, 32, a), [x1, y1] = pt(70, 66, 38, a); c.line(x0, y0, x1, y1, 4, W); }
+    const [nx, ny] = pt(70, 66, 38, 40);
+    c.line(70, 66, nx, ny, 6, W);
+    c.circle(70, 66, 8, W);
+    c.text(letter, 70, 132, 34, W, { font: 'bold', align: 'center' });
 } else if (glyph === 'home') {
     // a house with a car's signal arcs in it
     c.line(18, 66, 70, 22, 7, W); c.line(70, 22, 122, 66, 7, W);

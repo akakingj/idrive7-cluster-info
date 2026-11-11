@@ -1,6 +1,6 @@
 'use strict';
 /**
- * test_app.js - the whole app (apps/cluster_layouts/main.js) on the kit with stubbed car signals and a
+ * test_app.js - the whole app (apps/akakingj_cluster_layouts/main.js) on the kit with stubbed car signals and a
  * recording stand-in for the cluster render client: off by default, on with the page's button, the car's
  * readings reach the cluster as needle values and glyph codes, and the page draws. No SDK or car needed:
  *   node tools/test_app.js

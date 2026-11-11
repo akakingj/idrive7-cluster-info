@@ -1,6 +1,6 @@
 'use strict';
 
-// Cluster Info's panel over the Waze map (apps/cluster_info/overlay.js) against a fake cluster render client and a status.json
+// Cluster Info's panel over the Waze map (apps/akakingj_cluster_info/overlay.js) against a fake cluster render client and a status.json
 // in a temp folder: where the badge goes on each target, that it shows only while the map shows and a reading
 // exists, and that updates carry only what changed. Also writes a preview of the badge:
 //   node kit/tools/test_cluster_info_overlay.js [preview.png]
@@ -18,7 +18,7 @@ Module._load = function (req, parent, isMain) {
     if (req.startsWith('./kit/')) return load.call(this, path.join(KIT, req.slice(6)), parent, isMain);
     return load.call(this, req, parent, isMain);
 };
-const { startOverlay, mapRect, badgeRect, drawBadge, changed, parseStatus, underStrip } = require(path.join(ROOT, 'apps', 'cluster_info', 'overlay.js'));
+const { startOverlay, mapRect, badgeRect, drawBadge, changed, parseStatus, underStrip } = require(path.join(ROOT, 'apps', 'akakingj_cluster_info', 'overlay.js'));
 const { Canvas } = require(path.join(KIT, 'canvas'));
 const themes = require(path.join(KIT, 'themes'));
 const theme = themes.theme('m_tricolour');
@@ -111,7 +111,7 @@ class FakeCR extends EventEmitter {
     await wait();
     const cr = FakeCR.last;
     check('map showing on the cluster: an overlay layer at its bottom, shown, fast reads asked', () => {
-        assert(cr && cr.app === 'cluster_info');
+        assert(cr && cr.app === 'akakingj_cluster_info');
         const l = [...cr.layers.values()][0];
         assert.strictEqual(l.target, 'map'); assert.strictEqual(l.klass, 'overlay');
         assert.deepStrictEqual([l.x, l.y, l.w, l.h], [440, 376, 208, 72]);

@@ -1,12 +1,12 @@
 'use strict';
 /**
- * test_dap.js - the driving assistant's feed for Modern wide's road (apps/cluster_layouts/dap.js): the cruise
+ * test_dap.js - the driving assistant's feed for Modern wide's road (apps/akakingj_cluster_layouts/dap.js): the cruise
  * control, the steering assist, the warnings and the object list decoded from names or numbers however the
  * binding wraps them, the cars picked for the picture, and the subscriptions: node tools/test_dap.js
  */
 const assert = require('assert');
 const path = require('path');
-const D = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'dap.js'));
+const D = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'dap.js'));
 let ok = 0;
 const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
 
@@ -43,7 +43,7 @@ check('the picture: the cruise target followed, else the nearest in the lane; th
     assert.strictEqual(p.lead.id, 9, 'no lane assignment: by its offset');
 });
 check('subscriptions: the four events, declared in app.json; the state dropped 3 s after the last event', () => {
-    const app = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'app.json'));
+    const app = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'app.json'));
     Object.keys(D.SERVICES).forEach((i) => assert.deepStrictEqual(app.signals[i]._broadcasts, [D.SERVICES[i]], i));
     const handlers = {};
     const ctx = { spec: { config: app.config }, signals: { watch: (iface, inst, h) => { Object.assign(handlers, h); return Promise.resolve({}); } } };
@@ -60,7 +60,7 @@ check('subscriptions: the four events, declared in app.json; the state dropped 3
 });
 check('the road moves with the car: the dashes by the distance driven, the cars glide between updates', () => {
     require('./scene');   // (the kit's runtime for the layouts)
-    const L = require(path.join(__dirname, '..', 'apps', 'cluster_layouts', 'layouts.js')).byId('modern_wide');
+    const L = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'layouts.js')).byId('modern_wide');
     const road = L.pieces({ centre: 'info', bottomStrip: 'stock', vehicle: 'phev', speedUnit: 'mph' }).find((p) => p.key === 'road');
     assert(road && typeof road.frame === 'function', 'a frame hook');
     const f = road.frame, D0 = Object.assign({}, D.DEMO);
