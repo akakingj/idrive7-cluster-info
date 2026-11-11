@@ -174,7 +174,7 @@ module.exports = {
         // coolant on a petrol or diesel car)
         const tu = '°' + (o.tempUnit === 'c' ? 'C' : 'F');
         const halves = engine
-            ? [{ icon: 'turbo', txt: (d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual) ? (us ? (d.boostActual * 14.5038).toFixed(1) : d.boostActual.toFixed(2)) : '--'), unit: us ? 'PSI' : 'bar' },
+            ? [{ icon: 'turbo', txt: (d) => (d.engineOn === false ? 'OFF' : C.pressNum(o, d.boostActual)), unit: C.pressUnitOf(o) === 'psi' ? 'PSI' : C.pressLabel(o) },
                 { icon: 'therm', txt: (d) => (isNum(d.coolant) ? String(Math.round(C.tempIn(o, d.coolant))) : '--'), unit: tu }]
             : [{ icon: 'battery', txt: (d) => (isNum(d.soc) ? String(Math.round(d.soc)) : '--'), unit: '%' },
                 { icon: 'bolt', txt: (d) => (isNum(d.kw) ? (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : String(Math.round(d.kw))) : '--'), unit: 'kW' }];

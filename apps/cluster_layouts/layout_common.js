@@ -221,13 +221,29 @@ const erangeText = (o, d) => (isNum(d.erange) && d.erangeEst ? '~' : '') + distT
  * -> boost against its target. Each helper takes o and gives the reading for the choice.
  */
 const engineFocus = (o) => !!o && (o.vehicle === 'ice' || o.focus === 'engine');
-const boostIn = (o, bar0) => (o.speedUnit === 'kmh' ? bar0 : bar0 * 14.5038);
-const boostText = (o, d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual)
-    ? (o.speedUnit === 'kmh' ? boostIn(o, d.boostActual).toFixed(2) + ' bar' : boostIn(o, d.boostActual).toFixed(1) + ' psi') : '--');
-/** Engine torque (Nm) in Settings > Torque unit: Nm, or kgm (to a tenth). */
-const torqueKgm = (o) => !!o && o.torqueUnit === 'kgm';
-const torqueNum = (o, nm) => (!isNum(nm) ? '--' : torqueKgm(o) ? (nm / 9.80665).toFixed(1) : String(Math.round(nm)));
-const torqueUnit = (o) => (torqueKgm(o) ? 'kgm' : 'Nm');
+/**
+ * Pressures (boost and fuel rail, bar in the data) in Settings > Pressure unit: psi, bar or kPa, or (the
+ * default, 'auto') with the speed unit as before: psi with mph, bar with km/h. Only the figures change: every
+ * bar, gauge and range works in bar, so a full bar means the same in any unit.
+ */
+const pressUnitOf = (o) => (o && (o.pressUnit === 'psi' || o.pressUnit === 'bar' || o.pressUnit === 'kpa') ? o.pressUnit
+    : o && o.speedUnit === 'kmh' ? 'bar' : 'psi');
+const pressIn = (o, bar) => (pressUnitOf(o) === 'psi' ? bar * 14.5038 : pressUnitOf(o) === 'kpa' ? bar * 100 : bar);
+/** a pressure's figures: bar to a hundredth (whole from 10, the rail), psi to a tenth (whole from 100), kPa whole */
+const pressNum = (o, bar) => {
+    if (!isNum(bar)) return '--';
+    const u = pressUnitOf(o), v = pressIn(o, bar);
+    if (u === 'bar') return Math.abs(v) < 10 ? v.toFixed(2) : String(Math.round(v));
+    if (u === 'psi') return Math.abs(v) < 100 ? v.toFixed(1) : String(Math.round(v));
+    return String(Math.round(v));
+};
+const pressLabel = (o) => ({ psi: 'psi', bar: 'bar', kpa: 'kPa' })[pressUnitOf(o)];
+const boostText = (o, d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual) ? pressNum(o, d.boostActual) + ' ' + pressLabel(o) : '--');
+/** Engine torque (Nm) in Settings > Torque unit: Nm, kgm (to a tenth) or lb-ft. */
+const torqueOf = (o) => (o && (o.torqueUnit === 'kgm' || o.torqueUnit === 'lbft') ? o.torqueUnit : 'nm');
+const torqueNum = (o, nm) => (!isNum(nm) ? '--' : torqueOf(o) === 'kgm' ? (nm / 9.80665).toFixed(1)
+    : String(Math.round(torqueOf(o) === 'lbft' ? nm * 0.737562 : nm)));
+const torqueUnit = (o) => ({ nm: 'Nm', kgm: 'kgm', lbft: 'lb-ft' })[torqueOf(o)];
 const torqueText = (o) => (d) => (isNum(d.torque) ? torqueNum(o, d.torque) + ' ' + torqueUnit(o) : '--');
 const timingText = (d) => (isNum(d.timing) ? d.timing.toFixed(1) + '°' : '--');
 /** Boost (bar over atmosphere) 0..1.6 as 0..1. */
@@ -280,5 +296,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
 };

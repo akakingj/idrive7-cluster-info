@@ -95,7 +95,8 @@ function revBar(o, x, y, w, h) {
         colors: (t) => ({ track: t.track, fill0: t.text, fill1: t.accent, redc: t.red, tip: t.accent, tick: t.dim, num: t.num }),
         value: (d) => (isNum(d.rpm) ? d.rpm / 1000 / r.max : 0), max: 1, sweep: true };
 }
-const pressIn = (o, bar) => (o.speedUnit === 'kmh' ? bar.toFixed(1) : String(Math.round(bar * 14.5038)));
+/** a tyre's pressure in Settings > Pressure unit: bar to a tenth, psi and kPa whole */
+const pressIn = (o, bar) => (C.pressUnitOf(o) === 'bar' ? bar.toFixed(1) : String(Math.round(C.pressUnitOf(o) === 'psi' ? bar * 14.5038 : bar * 100)));
 /** The four tyres in a box: pressure, large, and temperature at each corner. */
 function tyres(o, x, y, w, h) {
     const cw = (w - 28) / 2, rh = (h - 34) / 2;
@@ -106,7 +107,7 @@ function tyres(o, x, y, w, h) {
             C.text('tyreT' + k, i % 2 ? cx : cx + cw * 0.55, cy + rh * 0.3, cw * 0.45 - 6, rh * 0.55, (d) => (d.tyres && isNum(d.tyres.t[k]) ? C.tempText(o, d.tyres.t[k]) : ''), lbl, { align: i % 2 ? 0 : 1 }),
         ];
     };
-    return [].concat(box('tyres', x, y, w, h, 'TYRES ' + (o.speedUnit === 'kmh' ? 'BAR' : 'PSI')), ...['FL', 'FR', 'RL', 'RR'].map((k, i) => {
+    return [].concat(box('tyres', x, y, w, h, 'TYRES ' + C.pressLabel(o).toUpperCase()), ...['FL', 'FR', 'RL', 'RR'].map((k, i) => {
         const c = cell(k, i);
         // (the right column's pressure right-aligned, its temperature to the left of it)
         if (i % 2) { c[0] = Object.assign({}, c[0], { x: x + w - 14 - cw * 0.55 }); c[1] = Object.assign({}, c[1], { x: x + w / 2 + 4 }); }
@@ -135,7 +136,7 @@ module.exports = {
         const hot = (k, lim) => (t, d) => ({ color: [isNum(d[k]) && d[k] >= lim ? t.red : t.text, 1], glow: [t.glow, 0.1] });
         const kwC = (t, d) => ({ color: [isNum(d.kw) && d.kw < -0.3 ? t.regen : t.ev, 1], glow: [t.ev, 0.2] });
         const power = engine || ice
-            ? { label: kmh ? 'BOOST BAR' : 'BOOST PSI', value: (d) => (d.engineOn === false ? 'OFF' : isNum(d.boostActual) ? (kmh ? d.boostActual.toFixed(2) : (d.boostActual * 14.5038).toFixed(1)) : '--'), c: white }
+            ? { label: 'BOOST ' + C.pressLabel(o).toUpperCase(), value: (d) => (d.engineOn === false ? 'OFF' : C.pressNum(o, d.boostActual)), c: white }
             : { label: 'BATTERY KW', value: (d) => (isNum(d.kw) ? (Math.abs(d.kw) < 10 ? d.kw.toFixed(1) : String(Math.round(d.kw))) : '--'), c: kwC };
         const second = ice || engine
             ? { label: 'SHIFT AT', value: (d) => String(shiftPoint(o, d.oil).rpm), c: (t, d) => (shiftPoint(o, d.oil).cold ? { color: [t.cold, 1], glow: [t.cold, 0.2] } : acc(t)) }
