@@ -8,6 +8,9 @@ const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_rou
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
 const C0 = require('./layout_common');
+/** A readout put in the time's or the outside temperature's place, two side by side: made to hold its widest
+ * figures ('TRANS 140°') with a gap to the other (layout_common.fitText). */
+const fitted = (L, p) => C0.fitText(p, L.font, 0.8);
 const { boxBezel, MAP, mCar } = C0;
 
 /*
@@ -130,7 +133,13 @@ LAYOUTS.forEach((L) => {
             const ice = o.vehicle === 'ice' || C0.engineFocus(o);
             const hasGbox = has(/^gbox$/) && (!ice || (o.infoB || 'gearbox') === 'gearbox'), hasBatt = o.vehicle !== 'ice' && !C0.engineFocus(o) && has(/^(battT|c_battV|batt)$/);
             list = list.filter((p) => !((p.key === 'outside' && hasGbox) || (p.key === 'clock' && hasBatt)))
-                .map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o, p) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB(o, p) }) : p));
+                .map((p) => (p.key === 'clock' ? fitted(L, Object.assign({}, p, { text: C0.stripInfoA(o, p) })) : p.key === 'outside' ? fitted(L, Object.assign({}, p, { text: C0.stripInfoB(o, p) })) : p));
+            // (the two side by side at one size: the smaller of the two)
+            const pair = list.filter((p) => p.key === 'clock' || p.key === 'outside');
+            if (pair.length === 2 && pair[0].h !== pair[1].h && Math.abs(pair[0].y + pair[0].h / 2 - pair[1].y - pair[1].h / 2) < 4) {
+                const h = Math.min(pair[0].h, pair[1].h);
+                list = list.map((p) => (pair.indexOf(p) >= 0 && p.h > h ? Object.assign({}, p, { y: p.y + Math.round((p.h - h) / 2), h }) : p));
+            }
             // the gauges above everything but the backgrounds
             // (only with the readings in the centre: with the map or the stock centre the side columns reach
             // down to the strip, and keep their own charge and fuel bars)

@@ -173,9 +173,11 @@ module.exports = {
             ...box('secondB', R.x, y2, R.w, h2, second.label),
             C.text('second', R.x + 14, y2 + 32, R.w - 28, h2 - 38, second.value, second.c, { align: 1 }));
         if (map) {
+            // (each half no taller than holds three figures, '104°': the narrow tile ran them over its edges)
+            const tw = (R.w - 28) / 2, th = Math.min(h3 - 42, Math.floor(tw / 1.45)), ty = y3 + 34 + Math.round((h3 - 42 - th) / 2);
             list.push(...box('temps', R.x, y3, R.w, h3, 'COOLANT  ·  OIL'),
-                C.text('coolant', R.x + 14, y3 + 34, (R.w - 28) / 2, h3 - 42, (d) => C.tempText(o, d.coolant), hot('coolant', 118), { align: 0 }),
-                C.text('oil', R.x + R.w / 2, y3 + 34, (R.w - 28) / 2, h3 - 42, (d) => C.tempText(o, d.oil), hot('oil', 130), { align: 1 }));
+                C.text('coolant', R.x + 14, ty, tw, th, (d) => C.tempText(o, d.coolant), hot('coolant', 118), { align: 0 }),
+                C.text('oil', R.x + R.w / 2, ty, tw, th, (d) => C.tempText(o, d.oil), hot('oil', 130), { align: 1 }));
         } else {
             list.push(...box('lastB', R.x, y3, R.w, h3, 'LAST SHIFT'),
                 C.text('lastGears', R.x + R.w - 120, y3 + 6, 106, 18, () => (score.last ? score.last.from + '-' + score.last.to : ''), lbl, { align: 1 }),

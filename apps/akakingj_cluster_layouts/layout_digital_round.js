@@ -44,7 +44,8 @@ function tempArc(key, x, y, which, redC, o) {
                 colors: (t) => ({ track: t.track, fill0: t.accent, fill1: t.accent, redc: t.red, tip: t.glow, tick: t.dim, num: t.num }),
                 value: g.frac, max: 1, sweep: true,
             },
-            C.text(key + 'Txt', x, y + 64, 200, 40, g.txt, (t, d) => ({ color: [g.hot(d) ? t.red : t.text, 1], glow: [t.glow, 0] })),
+            // (inside the arc: its widest figures, '51.0 kgm', clear of the arc's ends)
+            C.fitText(C.text(key + 'Txt', x + 30, y + 64, 140, 40, g.txt, (t, d) => ({ color: [g.hot(d) ? t.red : t.text, 1], glow: [t.glow, 0] }))),
             C.text(key + 'Lbl', x, y + 112, 200, 16, g.label, lbl, { tracking: 0.16 }),
         ];
     }

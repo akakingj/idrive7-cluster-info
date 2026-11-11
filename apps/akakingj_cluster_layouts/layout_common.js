@@ -266,7 +266,8 @@ const torqueNum = (o, nm) => (!isNum(nm) ? '--' : torqueOf(o) === 'kgm' ? (nm / 
     : String(Math.round(torqueOf(o) === 'lbft' ? nm * 0.737562 : nm)));
 const torqueUnit = (o) => ({ nm: 'Nm', kgm: 'kgm', lbft: 'lb-ft' })[torqueOf(o)];
 const torqueText = (o) => (d) => (isNum(d.torque) ? torqueNum(o, d.torque) + ' ' + torqueUnit(o) : '--');
-const timingText = (d) => (isNum(d.timing) ? d.timing.toFixed(1) + '°' : '--');
+/** Ignition timing: a tenth under 10 degrees, whole from 10 ('24°': '24.0°' ran over Track's tile). */
+const timingText = (d) => (isNum(d.timing) ? (Math.abs(d.timing) < 10 ? d.timing.toFixed(1) : String(Math.round(d.timing))) + '°' : '--');
 /** Boost (bar over atmosphere) 0..1.6 as 0..1. */
 const boostFrac = (d) => (d.engineOn === false || !isNum(d.boostActual) ? 0 : Math.max(0, Math.min(1, d.boostActual / 1.6)));
 /** The engine's power (kW, data.js: its torque x its speed) in Settings > Power unit: hp (the default), PS or kW. */
@@ -293,6 +294,26 @@ const READOUTS = {
     timing: { short: 'TIM', long: 'TIMING', num: (o, d) => timingText(d), frac: (d) => (isNum(d.timing) ? (d.timing + 10) / 50 : 0), needs: ['timing'] },
 };
 const readoutOf = (k) => READOUTS[k] || null;
+/**
+ * A text piece made to hold its widest figures (READOUT_SAMPLES, below): its glyphs smaller, centred in the same
+ * box, where they would run over it (the font sets glyphs at most 15% closer). room: the share of the box's width
+ * to fill (under 1: a gap kept, for two texts side by side). fam: the layout's glyph family.
+ */
+function fitText(p, fam, room) {
+    const a = require('./font').atlas(fam || 'bold');
+    const width = (t) => Array.from(t).reduce((x, ch) => { const c = a.code(ch); return x + (c < 0 ? 0.3 : ch === ' ' ? Math.max(a.adv[c], 0.32) : a.adv[c]); }, 0);
+    const texts = READOUT_SAMPLES.map((d) => { try { return String(typeof p.text === 'function' ? p.text(d) : p.text); } catch (e) { return ''; } });
+    const need = Math.max(0, ...texts.map(width)) * 0.85, w = p.w * (room || 1);
+    if (!need || need * p.h <= w) return p;
+    const h = Math.max(10, Math.floor(w / need));
+    return Object.assign({}, p, { y: p.y + Math.round((p.h - h) / 2), h });
+}
+/** The readings at their widest figures (three-figure temperatures, the most negative timing and boost ...): what a
+ * readout's box is sized to hold (layouts.js), and what tools/check_fit.js measures every text with. */
+const READOUT_SAMPLES = [
+    { oil: 150, coolant: 130, iat: 79, gearbox: 140, boostActual: 1.6, enginePower: 199, torque: 449, pedal: 100, timing: -10, fuelPct: 100, rpm: 7000, speed: 250, engineOn: true, outside: -20 },
+    { oil: 8, coolant: 8, iat: -9, gearbox: 8, boostActual: -0.65, enginePower: 0, torque: 0, pedal: 0, timing: 8.5, fuelPct: 5, rpm: 800, speed: 0, engineOn: true, outside: 9 },
+];
 const nameOf = (r, o, long) => { const n = long ? r.long : r.short; return typeof n === 'function' ? n(o) : n; };
 /** A readout on one line, its name first: 'IAT 31°', 'BST 14.5' ('INTAKE AIR 31°', 'BOOST 14.5 psi' where it
  * fits: a box with room for its longest form). key 'off': nothing. */
@@ -389,5 +410,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, shiftPoint, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
 };
