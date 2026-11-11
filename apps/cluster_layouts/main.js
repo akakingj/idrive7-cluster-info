@@ -72,7 +72,7 @@ mgu.run({
         const options = () => ({
             speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), torqueUnit: settings.get('torqueUnit'), pressUnit: settings.get('pressUnit'),
             powerUnit: settings.get('powerUnit'), infoA: settings.get('infoA'), infoB: settings.get('infoB'), infoMain: settings.get('infoMain'), gaugeSpeed: settings.get('gaugeSpeed'), gaugeRpm: settings.get('gaugeRpm'),
-            shiftBefore: settings.get('shiftBefore'), coldGuard: settings.get('coldGuard'), coldLimit: settings.get('coldLimit'), warmOil: settings.get('warmOil'),
+            amberRpm: settings.get('amberRpm'), shiftBefore: settings.get('shiftBefore'), coldGuard: settings.get('coldGuard'), coldLimit: settings.get('coldLimit'), warmOil: settings.get('warmOil'),
             centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),   // (a saved 'pages', retired: Waze)
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
             boxClear: settings.get('boxClear') === 'on',
@@ -136,7 +136,7 @@ mgu.run({
         settings.onChange((k) => {
             if (k === 'look' || k === 'background') return cluster.recolour();
             if (k === 'layout') layout = byId(settings.get('layout'));
-            if (['layout', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'pressUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'powerUnit', 'infoA', 'infoB', 'infoMain', 'gaugeSpeed', 'gaugeRpm', 'shiftBefore', 'coldGuard', 'coldLimit', 'warmOil'].indexOf(k) >= 0) cluster.rebuild();
+            if (['layout', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'pressUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'powerUnit', 'infoA', 'infoB', 'infoMain', 'gaugeSpeed', 'gaugeRpm', 'amberRpm', 'shiftBefore', 'coldGuard', 'coldLimit', 'warmOil'].indexOf(k) >= 0) cluster.rebuild();
         });
 
         /* ---------- the car's range and charge signals, from its own catalog ---------- */

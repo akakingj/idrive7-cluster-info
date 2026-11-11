@@ -70,6 +70,8 @@ check('the settings offer every readout, and the defaults are this build\'s', ()
     ['infoA', 'infoB', 'infoMain'].forEach((k) => Object.keys(C.READOUTS).forEach((r) => assert(s(k).options.some((x) => x[0] === r), k + ' ' + r)));
     const want = { vehicle: 'ice', tankLitres: 59, speedUnit: 'kmh', tempUnit: 'c', torqueUnit: 'kgm', pressUnit: 'psi', powerUnit: 'hp', timeZone: 'utc+9', infoA: 'iat', infoB: 'gearbox', infoMain: 'torque', redline: 6000, rpmMax: 7000 };
     Object.keys(want).forEach((k) => assert.strictEqual(s(k).default, want[k], k));
+    // (a number setting is a drop-down on the car: its steps, the default among them)
+    SPEC.settings.filter((x) => x.type === 'number').forEach((x) => assert(Array.isArray(x.steps) && x.steps.indexOf(x.default) >= 0, x.key));
 });
 check('Cluster Centre: engine power and the pedal as readings', () => {
     const u = { temp: 'c', press: 'psi', speed: 'kmh', torque: 'kgm', power: 'hp' };
@@ -108,5 +110,8 @@ check('shift point and red zone as the Redline app: the red line less 300, lower
     assert(B.shiftNow(o({ redline: 6500 }), { rpm: 6200, oil: 90 }) && !B.shiftNow(o({ redline: 6500 }), { rpm: 6100, oil: 90 }));
     assert(B.shiftNow(o({ redline: 6500 }), { rpm: 4600, oil: 30 }));
     assert(Math.abs(B.redMarks(o({ redline: 6500 }), 8000, { oil: 30 })[0] - 4800 / 8000) < 1e-9);
+    assert(Math.abs(B.redMarks(o({ redline: 6000 }), 8000, { oil: 90 })[1] - 5300 / 8000) < 1e-9);
+    assert(Math.abs(B.redMarks(o({ redline: 6000, amberRpm: 1500 }), 8000, { oil: 90 })[1] - 4500 / 8000) < 1e-9);
+    assert.strictEqual(B.redMarks(o({ redline: 6000, amberRpm: 0 }), 8000, { oil: 90 })[1], 2);
 });
 console.log(n + ' passed');

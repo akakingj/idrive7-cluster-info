@@ -776,10 +776,37 @@
       ]
     },
     {
-      "key": "shiftBefore",
-      "label": "Shift point before redline (rpm; the gear and M's blades turn red there)",
+      "key": "amberRpm",
+      "label": "Amber zone before the red zone (M and Sport)",
       "type": "number",
-      "default": 300
+      "unit": "rpm",
+      "default": 700,
+      "steps": [
+        0,
+        300,
+        500,
+        700,
+        1000,
+        1500,
+        2000
+      ]
+    },
+    {
+      "key": "shiftBefore",
+      "label": "Shift point before redline (the gear and M's blades turn red there)",
+      "type": "number",
+      "unit": "rpm",
+      "default": 300,
+      "steps": [
+        0,
+        100,
+        200,
+        300,
+        400,
+        500,
+        700,
+        1000
+      ]
     },
     {
       "key": "coldGuard",
@@ -799,15 +826,35 @@
     },
     {
       "key": "coldLimit",
-      "label": "Cold rev limit (rpm, with the oil at 30 °C)",
+      "label": "Cold rev limit (with the oil at 30 °C)",
       "type": "number",
-      "default": 4500
+      "unit": "rpm",
+      "default": 4500,
+      "steps": [
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500
+      ]
     },
     {
       "key": "warmOil",
-      "label": "Oil warm at (°C)",
+      "label": "Oil warm at",
       "type": "number",
-      "default": 80
+      "unit": "°C",
+      "default": 80,
+      "steps": [
+        60,
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100
+      ]
     },
     {
       "key": "sweep",

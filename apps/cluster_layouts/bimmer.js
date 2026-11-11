@@ -53,7 +53,9 @@ function scaleFrac(v, marks) {
 function redMarks(o, max, d) {
     // (the red zone where the shift point puts it now, layout_common.shiftPoint: lower while the oil is cold)
     const redFrom = Math.min(C.shiftPoint(o, d || {}).red, max - 500) / max;
-    return [redFrom, redFrom - 700 / max];
+    // the amber run-up below it: Settings > Amber zone before the red zone (700 rpm; 0: none)
+    const a = o && o.amberRpm !== undefined && o.amberRpm !== '' && isFinite(Number(o.amberRpm)) ? Math.max(0, Number(o.amberRpm)) : 700;
+    return [redFrom, a > 0 ? redFrom - a / max : 2];
 }
 /** At the shift point now (theirs: the red line less 300 rpm). */
 const shiftNow = (o, d) => C.isNum(d.rpm) && d.rpm >= C.shiftPoint(o, d).rpm;
