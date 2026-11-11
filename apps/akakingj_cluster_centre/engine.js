@@ -127,7 +127,12 @@ function startCluster(opts) {
     function build(keep) {
         const L = opts.layout(), o = opts.options();
         const a = font.atlas(fam());
-        if (fontRef && fontFam !== a.fam) { pieces.forEach((p) => cr.drop(p.ref)); pieces = []; cr.drop(fontRef); fontRef = 0; }
+        // another glyph family (a switch to or from M or Sport): a new atlas beside the old one, and the old
+        // pieces (drawn with the old one) go only once the new ones are up, as on any switch. Dropping them all
+        // first left the target empty for a moment, and the KOMBI took it back to the stock HMI: the cluster
+        // flashed between the stock gauges and the layout.
+        let oldFont = 0;
+        if (fontRef && fontFam !== a.fam) { oldFont = fontRef; fontRef = 0; keep = false; }
         if (!fontRef) {
             fontFam = a.fam;
             fontRef = cr.asset({ target: TARGET, format: 'r8', w: a.w, h: a.h, sampling: 'bilinear' });
@@ -175,6 +180,7 @@ function startCluster(opts) {
             pieces.push(p);
         });
         old.forEach((p) => cr.drop(p.ref));
+        if (oldFont) cr.drop(oldFont);
         built = true;
         // drawing order: what was kept stays where its z puts it, among the new ones
         update(true);

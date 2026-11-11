@@ -249,5 +249,35 @@ check('fail-safe: hidden while the car data is not live, shown again when it is;
     s.stop();
 });
 
+check('a switch of layout never leaves the target empty, to another glyph family too (no flash of the stock HMI)', () => {
+    const { startCluster } = require(path.join(APP, 'engine'));
+    const { byId } = require(path.join(APP, 'layouts'));
+    const { FakeClient } = require('./scene');
+    // bold -> wide (Sport) -> orb (M) -> bold, and the same family as a control
+    for (const [from, to] of [['analog_sport', 'sport'], ['sport', 'm'], ['m', 'analog_sport'], ['analog_sport', 'retro'], ['digital_dash', 'gt3']]) {
+        const client = new FakeClient();
+        let L = byId(from), watching = false, fewest = Infinity;
+        const shownNow = () => Array.from(client.layers.values()).filter((l) => l.kind === 'effect' && l.opts.visible !== false).length;
+        ['effect', 'drop', 'set', 'asset'].forEach((k) => {
+            const fn = client[k].bind(client);
+            client[k] = (...a) => { const r = fn(...a); if (watching) fewest = Math.min(fewest, shownNow()); return r; };
+        });
+        const e = startCluster({
+            client, log: { info() {}, warn() {}, error() {} }, layout: () => L, font: () => L.font || 'bold', settleMs: 0,
+            options: () => ({ speedUnit: 'kmh', tempUnit: 'c', centre: 'info', vehicle: 'ice', bottomStrip: 'stock' }),
+            theme: () => L.palette('comfort'), sweep: () => false, data: () => ({ speed: 40, rpm: 2000, engineOn: true }),
+            live: () => true, enabled: () => true,
+        });
+        e._tick();
+        assert(shownNow() > 0, from + ' shows');
+        watching = true; L = byId(to); e.rebuild(); e._tick(); watching = false;
+        assert(fewest >= 1, from + ' -> ' + to + ': the target went empty during the switch');
+        assert(shownNow() > 0, to + ' shows');
+        const atlases = Array.from(client.layers.values()).filter((l) => l.kind === 'asset' && l.opts.format === 'r8').length;
+        assert.strictEqual(atlases, 1, from + ' -> ' + to + ': one glyph atlas left after the switch');
+        e.stop();
+    }
+});
+
 console.log(ok + ' passed');
 process.exit(0);
