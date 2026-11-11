@@ -145,7 +145,7 @@ const bc = typeof BroadcastChannel === 'function' ? new BroadcastChannel('cluste
 const KO = {
   vehicle: '차량', tankLitres: '연료탱크 용량', layout: '레이아웃', look: '색상 / 모양', background: '배경', cluster: '계기판 종류', bottomStrip: '하단 줄',
   boxClear: '기어 박스 주변 그리기', boxBezel: '기어 박스 뒤 프레임', centre: '가운데 영역', speedUnit: '속도 단위', tempUnit: '온도 단위', torqueUnit: '토크 단위',
-  pressUnit: '압력 단위', powerUnit: '마력 단위', infoA: '가운데 표시: 위 왼쪽', infoB: '가운데 표시: 위 오른쪽', infoMain: '가운데 표시: 속도 아래', gaugeSpeed: '속도계 안 작은 게이지', gaugeRpm: 'rpm계 안 작은 게이지', layoutSport: '스포츠 모드 레이아웃', layoutEco: 'ECO PRO 모드 레이아웃', tempGauge: '온도 게이지 (C-H / 눈금)', tempTone: '온도 색 (차가움 파랑, 과열 빨강)', shiftWarn: '변속 경고 (속도·기어 빨강)', redline: '레드존 시작', amberRpm: '노란 구간 폭 (레드존 앞 rpm, 0 = 없음)', shiftBefore: '변속 시점 (레드라인 몇 rpm 전)', coldGuard: '냉간 회전 제한', warmOil: '오일 예열 완료 온도', rpmMax: 'rpm 눈금 최대', timeZone: '시간대', clock: '시계',
+  pressUnit: '압력 단위', powerUnit: '마력 단위', infoA: '가운데 표시: 위 왼쪽', infoB: '가운데 표시: 위 오른쪽', infoMain: '가운데 표시: 속도 아래', infoLow: '가운데 표시: 아래 줄 (Classic M)', gaugeSpeed: '속도계 안 작은 게이지', gaugeRpm: 'rpm계 안 작은 게이지', layoutSport: '스포츠 모드 레이아웃', layoutEco: 'ECO PRO 모드 레이아웃', tempGauge: '온도 게이지 (C-H / 눈금)', tempTone: '온도 색 (차가움 파랑, 과열 빨강)', shiftWarn: '변속 경고 (속도·기어 빨강)', redline: '레드존 시작', amberRpm: '노란 구간 폭 (레드존 앞 rpm, 0 = 없음)', shiftBefore: '변속 시점 (레드라인 몇 rpm 전)', coldGuard: '냉간 회전 제한', warmOil: '오일 예열 완료 온도', rpmMax: 'rpm 눈금 최대', timeZone: '시간대', clock: '시계',
   rotate: '페이지 자동 전환', fit: '가운데 크기', style: '기본 페이지 타일 모양', accent: '색상', size: '숫자 크기', shift: '시프트 라이트·기어 표시',
   shiftFrom: '시프트 라이트 시작', shiftAt: '시프트 라이트 깜빡임', badge: '쿨다운 카운트다운 (모든 페이지)', warmTarget: '워밍업 완료 오일 온도',
   coldLimit: '냉간 rpm 한계', hardRpm: '쿨다운: 고부하 기준 rpm', oilHigh: '경고: 오일 상한', coolantHigh: '경고: 냉각수 상한', iatHigh: '경고: 흡기온 상한',
@@ -167,12 +167,12 @@ const SLIDERS = [
   ['speed', '속도', 0, 260, 1, 'km/h'], ['rpm', 'rpm', 0, 8000, 50, ''], ['gear', '기어 단수', 0, 8, 1, ''],
   ['boostActual', '부스트', -0.8, 1.6, 0.01, 'bar'], ['torque', '토크', 0, 500, 1, 'Nm'], ['timing', '점화시기', -5, 40, 0.5, '°'],
   ['hpfp', '고압 연료', 0, 350, 1, 'bar'], ['lpfp', '저압 연료', 0, 8, 0.1, 'bar'], ['oil', '오일', 20, 150, 1, '°C'], ['coolant', '냉각수', 20, 130, 1, '°C'],
-  ['gearbox', '미션오일', 20, 130, 1, '°C'], ['iat', '흡기온', -10, 80, 1, '°C'], ['pedal', '가속 페달', 0, 100, 1, '%'], ['outside', '외기온', -20, 45, 1, '°C'],
+  ['gearbox', '미션오일', 20, 130, 1, '°C'], ['iat', '흡기온', -10, 80, 1, '°C'], ['pedal', '가속 페달', 0, 100, 1, '%'], ['throttle', '스로틀', 0, 100, 1, '%'], ['outside', '외기온', -20, 45, 1, '°C'],
   ['fuelPct', '연료', 0, 100, 1, '%'], ['frange', '주행가능거리', 0, 900, 5, 'km'], ['steer', '조향각', -450, 450, 5, '°'], ['yaw', '요레이트', -40, 40, 1, '°/s'],
   ['gLat', '횡G', -1.2, 1.2, 0.01, 'g'], ['gLong', '종G', -1.2, 1.2, 0.01, 'g'], ['tyreP', '타이어 공기압', 1.6, 3.2, 0.01, 'bar'], ['tyreT', '타이어 온도', 0, 90, 1, '°C'],
   ['soc', '(PHEV) 배터리', 0, 100, 1, '%'], ['kw', '(PHEV) 배터리 출력', -60, 100, 0.5, 'kW'], ['battTemp', '(PHEV) 배터리 온도', -5, 50, 1, '°C'], ['erange', '(PHEV) 전기 주행거리', 0, 80, 1, 'km'],
 ];
-const DATA0 = { pedal: 0, speed: 0, rpm: 750, gear: 0, stage: 'P', driveMode: 'COMFORT', boostActual: -0.6, torque: 20, timing: 10, hpfp: 60, lpfp: 5.2,
+const DATA0 = { pedal: 0, throttle: 3, speed: 0, rpm: 750, gear: 0, stage: 'P', driveMode: 'COMFORT', boostActual: -0.6, torque: 20, timing: 10, hpfp: 60, lpfp: 5.2,
   oil: 96, coolant: 90, gearbox: 78, iat: 31, outside: 20, fuelPct: 55, frange: 520, steer: 0, yaw: 0, gLat: 0, gLong: 0, tyreP: 2.5, tyreT: 25, soc: 70, kw: 0, battTemp: 26, erange: 30 };
 const EXTRA0 = { dap: false, waze: 'cluster', indicator: 'off', night: false, edrive: false, hudPct: 70 };
 const STAGES = ['P', 'R', 'N', 'D', 'S', 'M'];
@@ -403,24 +403,24 @@ $('drive').onclick = () => { autoDrive = !autoDrive; $('drive').classList.toggle
 function stepAuto(dt) {
   auto.t += dt;
   const d = data, near = (v, to, rate) => v + Math.max(-rate * dt, Math.min(rate * dt, to - v)), prev = d.speed;
-  if (auto.phase === 'idle') { Object.assign(d, { stage: 'P', gear: 0, speed: 0 }); d.rpm = near(d.rpm, 750, 3000); d.boostActual = near(d.boostActual, -0.6, 2); d.torque = near(d.torque, 20, 300); d.pedal = 0;
+  if (auto.phase === 'idle') { Object.assign(d, { stage: 'P', gear: 0, speed: 0 }); d.rpm = near(d.rpm, 750, 3000); d.boostActual = near(d.boostActual, -0.6, 2); d.torque = near(d.torque, 20, 300); d.pedal = 0; d.throttle = 3;
     if (auto.t > 2) { auto = { phase: 'accel', t: 0 }; d.stage = 'D'; d.gear = 1; } }
   else if (auto.phase === 'accel') {
     d.rpm = Math.min(6300, d.rpm + 2600 * dt / Math.max(1, d.gear * 0.55)); d.speed = d.rpm / 1000 * KMH_PER_1000[d.gear];
-    d.boostActual = near(d.boostActual, 1.15, 3); d.torque = near(d.torque, 350, 900); d.pedal = near(d.pedal, 100, 400); d.timing = near(d.timing, 6, 20); d.hpfp = near(d.hpfp, 250, 400);
+    d.boostActual = near(d.boostActual, 1.15, 3); d.torque = near(d.torque, 350, 900); d.pedal = near(d.pedal, 100, 400); d.throttle = near(d.throttle, 100, 300); d.timing = near(d.timing, 6, 20); d.hpfp = near(d.hpfp, 250, 400);
     if (d.rpm >= 6200 && d.gear < 8) { d.gear++; d.rpm = d.speed / KMH_PER_1000[d.gear] * 1000; }
     if (d.speed >= 150) auto = { phase: 'cruise', t: 0 };
   } else if (auto.phase === 'cruise') {
     while (d.gear < 8 && d.speed / KMH_PER_1000[d.gear] * 1000 > 2600) d.gear++;
     d.speed = near(d.speed, 120, 15); d.rpm = d.speed / KMH_PER_1000[d.gear] * 1000;
-    d.boostActual = near(d.boostActual, 0.05, 2); d.torque = near(d.torque, 90, 600); d.pedal = near(d.pedal, 22, 200); d.timing = near(d.timing, 24, 20); d.hpfp = near(d.hpfp, 90, 300);
+    d.boostActual = near(d.boostActual, 0.05, 2); d.torque = near(d.torque, 90, 600); d.pedal = near(d.pedal, 22, 200); d.throttle = near(d.throttle, 14, 200); d.timing = near(d.timing, 24, 20); d.hpfp = near(d.hpfp, 90, 300);
     d.steer = 60 * Math.sin(auto.t * 1.3); d.yaw = 6 * Math.sin(auto.t * 1.3); d.gLat = 0.35 * Math.sin(auto.t * 1.3);
     if (auto.t > 5) auto = { phase: 'brake', t: 0 };
   } else if (auto.phase === 'brake') {
     d.speed = Math.max(0, d.speed - 32 * dt);
     while (d.gear > 1 && d.speed / KMH_PER_1000[d.gear] * 1000 < 1200) d.gear--;
     d.rpm = Math.max(750, d.speed / KMH_PER_1000[d.gear] * 1000);
-    d.boostActual = near(d.boostActual, -0.65, 2); d.torque = near(d.torque, 0, 600); d.pedal = 0; d.timing = near(d.timing, 14, 20);
+    d.boostActual = near(d.boostActual, -0.65, 2); d.torque = near(d.torque, 0, 600); d.pedal = 0; d.throttle = 2; d.timing = near(d.timing, 14, 20);
     d.steer = near(d.steer, 0, 120); d.yaw = near(d.yaw, 0, 20); d.gLat = near(d.gLat, 0, 1);
     if (d.speed <= 0) auto = { phase: 'idle', t: 0 };
   }

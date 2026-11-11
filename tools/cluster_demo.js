@@ -82,7 +82,7 @@ function startLayouts(set) {
         boxClear: set.boxClear === 'on', cluster: set.cluster === 'm' ? 'm' : 'standard',
         bottomStrip: set.bottomStrip === 'layout' ? 'layout' : 'stock', boxBezel: set.boxBezel === 'on', vehicle: vehicleOf(set),
         tankLitres: num(set, 'tankLitres', 69),
-        powerUnit: set.powerUnit, infoA: set.infoA, infoB: set.infoB, infoMain: set.infoMain, gaugeSpeed: set.gaugeSpeed, gaugeRpm: set.gaugeRpm, tempGauge: set.tempGauge, tempTone: set.tempTone, shiftWarn: set.shiftWarn, amberRpm: set.amberRpm, shiftBefore: set.shiftBefore, coldGuard: set.coldGuard, coldLimit: set.coldLimit, warmOil: set.warmOil,
+        powerUnit: set.powerUnit, infoA: set.infoA, infoB: set.infoB, infoMain: set.infoMain, infoLow: set.infoLow, gaugeSpeed: set.gaugeSpeed, gaugeRpm: set.gaugeRpm, tempGauge: set.tempGauge, tempTone: set.tempTone, shiftWarn: set.shiftWarn, amberRpm: set.amberRpm, shiftBefore: set.shiftBefore, coldGuard: set.coldGuard, coldLimit: set.coldLimit, warmOil: set.warmOil,
     };
     const st = { data: {}, client: new FakeClient() };
     st.look = () => lookNow(set.look, st.data);

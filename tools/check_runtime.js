@@ -21,7 +21,7 @@ const asOptions = (s) => Object.assign({}, s, {
 });
 
 const full = { speed: 88, rpm: 3400, gear: 4, stage: 'D', engineOn: true, oil: 96, coolant: 90, gearbox: 78, iat: 33, outside: 9, boostActual: 0.9, boostTarget: 1.0,
-    torque: 310, enginePower: 110, pedal: 64, timing: 12.5, hpfp: 220, lpfp: 5.2, fuelPct: 55, frange: 420, mode: 'SPORT', driveMode: 'SPORT', gLong: 0.2, gLat: 0.1,
+    torque: 310, enginePower: 110, pedal: 64, throttle: 48, timing: 12.5, hpfp: 220, lpfp: 5.2, fuelPct: 55, frange: 420, mode: 'SPORT', driveMode: 'SPORT', gLong: 0.2, gLat: 0.1,
     tyres: { p: { FL: 2.4, FR: 2.4, RL: 2.5, RR: 2.5 }, t: { FL: 30, FR: 31, RL: 32, RR: 31 } } };
 const DATA = {
     'no data yet': {},
@@ -33,10 +33,10 @@ const DATA = {
     'strings and nulls': Object.assign({}, full, { oil: '96', rpm: null, gearbox: undefined, iat: NaN, boostActual: 'x', torque: Infinity, pedal: null, enginePower: NaN }),
     'plug-in hybrid': Object.assign({}, full, { soc: 64, kw: -12, kwOut: 80, kwIn: 40, erange: 31, battTemp: 27, mode: 'ELECTRIC' }),
 };
-const READ = ['iat', 'gearbox', 'oil', 'coolant', 'boost', 'power', 'torque', 'throttle', 'timing'];
-const GAUGE = ['auto', 'coolant', 'oil', 'iat', 'gearbox', 'boost', 'power', 'torque', 'throttle', 'timing', 'fuel'];
+const READ = ['iat', 'gearbox', 'oil', 'coolant', 'boost', 'power', 'torque', 'throttle', 'pedal', 'timing'];
+const GAUGE = ['auto', 'coolant', 'oil', 'iat', 'gearbox', 'boost', 'power', 'torque', 'throttle', 'pedal', 'timing', 'fuel'];
 const SETS = [{ tag: 'defaults' }];
-READ.forEach((k, i) => SETS.push({ tag: 'readouts ' + k, infoA: k, infoB: READ[(i + 3) % READ.length], infoMain: READ[(i + 5) % READ.length], gaugeSpeed: GAUGE[i + 1], gaugeRpm: GAUGE[(i + 4) % GAUGE.length] }));
+READ.forEach((k, i) => SETS.push({ tag: 'readouts ' + k, infoLow: READ[(i + 7) % READ.length], infoA: k, infoB: READ[(i + 3) % READ.length], infoMain: READ[(i + 5) % READ.length], gaugeSpeed: GAUGE[i + 1], gaugeRpm: GAUGE[(i + 4) % GAUGE.length] }));
 SETS.push({ tag: 'off, fuel', infoA: 'off', infoB: 'off', gaugeSpeed: 'fuel', gaugeRpm: 'auto' });
 SETS.push({ tag: 'imperial', speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'lbft', pressUnit: 'kpa', powerUnit: 'kw', gaugeSpeed: 'boost', gaugeRpm: 'gearbox' });
 SETS.push({ tag: 'no cold guard, no amber', coldGuard: 'off', amberRpm: 0, shiftBefore: 0 });

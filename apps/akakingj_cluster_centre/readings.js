@@ -24,6 +24,7 @@ const READINGS = {
     torque: { title: 'Engine torque', short: 'TORQUE', icon: 11, kind: 'nm', min: 0, max: 600 },
     enginePower: { title: 'Engine power', short: 'POWER', icon: 11, kind: 'enginePower', min: 0, max: 200 },
     pedal: { title: 'Accelerator pedal', short: 'PEDAL', icon: 13, kind: 'pct', min: 0, max: 100 },
+    throttle: { title: 'Throttle (valve opening)', short: 'THROTTLE', icon: 13, kind: 'pct', min: 0, max: 100 },
     gLat: { title: 'Lateral g', short: 'LAT G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     gLong: { title: 'Longitudinal g', short: 'LONG G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     soc: { title: 'Battery charge', short: 'CHARGE', icon: 6, kind: 'pct', min: 0, max: 100, warnLow: 10 },

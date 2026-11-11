@@ -122,7 +122,9 @@ function display(o, X, Y, W, H, gear) {
         C.text('speedDigits', X + 10, at(102) + Math.round((hh(150) - hS) / 2), W - 20, hS, (d) => C.speedText(o, d), amber),
         C.text('speedDigitsUnit', X + 10, at(252), W - 20, hh(24), C.speedUnit(o), amberDim, { tracking: 0.2 }),
         Object.assign(C.flat('lcdRule1', X + 16, at(290), W - 32, 2, 'lcdRule'), { z: 1 }),
-        C.text('socTxt', X + 14, at(302), W - 28, hh(46), engine ? (d) => 'COOLANT ' + C.tempText(o, d.coolant) : (d) => 'CHARGE ' + C.socText(d), amber),
+        // (a petrol or diesel car: the reading picked in Settings > Centre readout: bottom line, the coolant by default)
+        engine ? C.fitText(C.text('socTxt', X + 14, at(302), W - 28, hh(46), C.readout(o, o.infoLow || 'coolant', { w: W - 28, h: hh(46) }, true) || '', amber))
+            : C.text('socTxt', X + 14, at(302), W - 28, hh(46), (d) => 'CHARGE ' + C.socText(d), amber),
     ];
     if (gear) out.push(C.text('gear', X + W - 92, at(14), 74, hh(66), C.gearText, (t, d) => (C.gearText(d) === 'R' ? { color: [t.red, 1], glow: [t.red, 0.3] } : amber(t)), { align: 1 }));
     return out;

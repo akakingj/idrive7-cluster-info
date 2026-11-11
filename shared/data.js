@@ -31,7 +31,9 @@ const Awake = require('./kit/awake');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
-const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs', 'pedal'];
+const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs', 'pedal', 'throttle'];
+/* (read twice a round while shown: they move with the right foot) */
+const FAST_KEYS = ['pedal', 'throttle'];
 
 /*
  * The driving mode, as the car's FES service sends it: BMW's FES mode table (TAB_FES_MODUS_ARG in the G05's
@@ -360,7 +362,9 @@ function startData(ctx, opts) {
         const v = await rd.value(k, dme[k]);
         // (the pedal: the engine unit's own normalised pedal angle, as Live Data reads it; the car's pedal signal's
         // scaling is unconfirmed, its value kept apart and used only when the engine unit has none)
-        if (v !== null) put(k === 'egs' ? 'gearbox' : k === 'pedal' ? 'pedalDme' : k, k === 'pedal' ? Math.max(0, Math.min(100, v)) : v);
+        // (the throttle: the throttle valve's opening, its lower stop 0 %, as Live Data reads it - not the pedal)
+        const pct = k === 'pedal' || k === 'throttle';
+        if (v !== null) put(k === 'egs' ? 'gearbox' : pct ? k + 'Dme' : k, pct ? Math.max(0, Math.min(100, v)) : v);
         return v;
     }
     let slowAt = 0, queue = [];
@@ -380,6 +384,9 @@ function startData(ctx, opts) {
              * Each read is a request through the car's gateway, the one eDrive Live's battery reads go through. */
             const engineOff = car.data().engineOn === false;
             queue = wantedNow && !engineOff ? wanted.filter((k) => DME_KEYS.indexOf(k) >= 0) : [];
+            // the pedal and the throttle (when shown) twice a round: at its start and half way
+            const fast = queue.filter((k) => FAST_KEYS.indexOf(k) >= 0), rest = queue.filter((k) => FAST_KEYS.indexOf(k) < 0);
+            if (fast.length && rest.length > 1) { const h = Math.ceil(rest.length / 2); queue = fast.concat(rest.slice(0, h), fast, rest.slice(h)); }
             if (wantedNow && now - slowAt > 10000) { slowAt = now; DME_KEYS.forEach((k) => { if (queue.indexOf(k) < 0) queue.push(k); }); }
             queue = queue.filter(usable);
         }
@@ -463,7 +470,8 @@ function startData(ctx, opts) {
             if (!isNum(o.boostActual) && !d.demo && fresh('boostCar', 5000)) o.boostActual = x.boostCar;
             // (the engine unit's only: the car's pedal signal's scaling is unconfirmed - Redline saw 60-96 % at a light
             // touch with it - so its value goes to the log alone, never on the cluster)
-            if (!d.demo) o.pedal = fresh('pedalDme', 3000) ? x.pedalDme : undefined;
+            // (kept 8 s: a round of the engine unit's readings can take 3 s or more while driving, its replies slower)
+            if (!d.demo) { o.pedal = fresh('pedalDme', 8000) ? x.pedalDme : undefined; o.throttle = fresh('throttleDme', 8000) ? x.throttleDme : undefined; }
             if (d.demo) Object.assign(o, demo(d));
             if (isNum(o.iat) && isNum(o.outside)) o.iatRise = o.iat - o.outside;
             if (isNum(o.battTemp) === false && p.battery !== undefined) o.battTemp = p.battery;
@@ -505,11 +513,11 @@ function demo(d) {
     const t = Date.now() / 1000, rpm = d.rpm || 1500;
     return {
         outside: 9, gearbox: 72 + 4 * Math.sin(t / 50), iat: 34 + 6 * Math.sin(t / 20), hpfp: 50 + rpm / 40, lpfp: 5.2 + 0.2 * Math.sin(t),
-        timing: 18 - rpm / 800, pedal: Math.max(0, Math.min(100, (isNum(d.torque) ? d.torque : 40) / 4.2)), boostTarget: Math.max(0, (rpm - 1500) / 4000), boostActual: Math.max(0, (rpm - 1600) / 4100),
+        timing: 18 - rpm / 800, pedal: Math.max(0, Math.min(100, (isNum(d.torque) ? d.torque : 40) / 4.2)), throttle: Math.max(0, Math.min(100, (isNum(d.torque) ? d.torque : 40) / 4.6 + 3)), boostTarget: Math.max(0, (rpm - 1500) / 4000), boostActual: Math.max(0, (rpm - 1600) / 4100),
         battTemp: 27, battMin: 25, battMax: 29, soc: 64, kw: -12 + 25 * Math.sin(t / 7), pdDrive: 60, pdClimate: 25, pdSeats: 15,
         erange: 29, frange: 520, fuelLevel: 38,
         tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } },
     };
 }
 
-module.exports = { startData, DME_KEYS, entries, modeOf, rangesOf, FES_MODES };
+module.exports = { startData, DME_KEYS, FAST_KEYS, entries, modeOf, rangesOf, FES_MODES };

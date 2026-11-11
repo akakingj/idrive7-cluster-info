@@ -33,7 +33,8 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
 ## Added
 - Layouts > Readout 1 / Readout 2 / Main readout (petrol or diesel): the centre display's top left and right (where the
   time and outside temperature were over the car's own bottom strip) and the line under the digital speed: intake
-  air, gearbox oil (TRANS), oil, coolant, boost, engine power, torque, accelerator pedal, timing. Short names where
+  air, gearbox oil (TRANS), oil, coolant, boost, engine power, torque, throttle, accelerator pedal, timing.
+  Classic M: Centre readout: bottom line (the coolant by default). Short names where
   the box is narrow (IAT 31°, TRANS 78°, BST 14.5, HP 211).
 - Layouts > Speedometer gauge / Tach gauge: the small gauge in the analog dials (Analog sport, Digital round, Retro,
   Classic M): the layout's own, or any of the readings above, or fuel.
@@ -54,9 +55,10 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   (not M, Sport, GT3, Track).
 - Engine power = crankshaft torque (FES statusActualValueTorque2) x rpm / 9549: a calculation; on a tuned car
   (JB4) it may differ from the real power.
-- Accelerator pedal: the engine unit's normalised pedal angle, as Live Data reads it (UDS DID 5814, then 480B, then
-  OBD PID 0x49), read only while a readout or gauge shows it. The car's `AcceleratorPedal` signal is not used (its
-  scaling unconfirmed: Redline's notes saw 60-96 % at a light touch). Check against Live Data.
+- Accelerator pedal and throttle, apart (the pedal is the driver's request, the throttle the valve's opening): both
+  from the engine unit as Live Data reads them (pedal: DIDs 5814, 480B, OBD 0x49; throttle: 4600, 5858, OBD 0x11),
+  read twice a round while shown and kept 8 s (a round can take 3 s or more while driving). The car's
+  `AcceleratorPedal` signal is not used (its scaling unconfirmed). Check against Live Data.
 - Centre: engine power and the accelerator pedal for the custom pages' slots.
 
 ## Demo

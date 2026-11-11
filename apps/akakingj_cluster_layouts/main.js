@@ -71,7 +71,7 @@ mgu.run({
         };
         const options = () => ({
             speedUnit: settings.get('speedUnit'), tempUnit: settings.get('tempUnit'), torqueUnit: settings.get('torqueUnit'), pressUnit: settings.get('pressUnit'),
-            powerUnit: settings.get('powerUnit'), infoA: settings.get('infoA'), infoB: settings.get('infoB'), infoMain: settings.get('infoMain'), tempGauge: settings.get('tempGauge'), tempTone: settings.get('tempTone'), shiftWarn: settings.get('shiftWarn'), gaugeSpeed: settings.get('gaugeSpeed'), gaugeRpm: settings.get('gaugeRpm'),
+            powerUnit: settings.get('powerUnit'), infoA: settings.get('infoA'), infoB: settings.get('infoB'), infoMain: settings.get('infoMain'), infoLow: settings.get('infoLow'), tempGauge: settings.get('tempGauge'), tempTone: settings.get('tempTone'), shiftWarn: settings.get('shiftWarn'), gaugeSpeed: settings.get('gaugeSpeed'), gaugeRpm: settings.get('gaugeRpm'),
             amberRpm: settings.get('amberRpm'), shiftBefore: settings.get('shiftBefore'), coldGuard: settings.get('coldGuard'), coldLimit: settings.get('coldLimit'), warmOil: settings.get('warmOil'),
             centre: settings.get('centre') === 'pages' ? 'map' : settings.get('centre'),   // (a saved 'pages', retired: Waze)
             redline: Number(settings.get('redline')) || 7000, rpmMax: Number(settings.get('rpmMax')) || 8000,
@@ -144,7 +144,7 @@ mgu.run({
         settings.onChange((k) => {
             if (k === 'look' || k === 'background') return cluster.recolour();
             if (k === 'layout' || k === 'layoutSport' || k === 'layoutEco') { layout = layoutNow(); modeWant = null; }
-            if (['layout', 'layoutSport', 'layoutEco', 'tempGauge', 'tempTone', 'shiftWarn', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'pressUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'powerUnit', 'infoA', 'infoB', 'infoMain', 'gaugeSpeed', 'gaugeRpm', 'amberRpm', 'shiftBefore', 'coldGuard', 'coldLimit', 'warmOil'].indexOf(k) >= 0) cluster.rebuild();
+            if (['layout', 'layoutSport', 'layoutEco', 'tempGauge', 'tempTone', 'shiftWarn', 'centre', 'speedUnit', 'tempUnit', 'torqueUnit', 'pressUnit', 'redline', 'rpmMax', 'boxClear', 'boxBezel', 'cluster', 'bottomStrip', 'vehicle', 'tankLitres', 'powerUnit', 'infoA', 'infoB', 'infoMain', 'infoLow', 'gaugeSpeed', 'gaugeRpm', 'amberRpm', 'shiftBefore', 'coldGuard', 'coldLimit', 'warmOil'].indexOf(k) >= 0) cluster.rebuild();
         });
 
         /* ---------- the car's range and charge signals, from its own catalog ---------- */
@@ -282,7 +282,8 @@ mgu.run({
                 ['Car data', (d.demo ? 'demo   ·   ' : live() ? 'live   ·   ' : 'not live   ·   ') + spd + '   ·   ' + (isNum(d.rpm) ? Math.round(d.rpm) + ' rpm' : '-- rpm')
                     + '   ·   gear ' + layout.gearText(d) + '   ·   oil ' + tmp(d.oil) + '   ·   coolant ' + tmp(d.coolant) + '   ·   outside ' + tmp(d.outside)],
                 // a petrol or diesel car: what the engine unit answers (and from which identifier), to check against Live Data
-                o.vehicle === 'ice' ? ['Engine unit', 'diagnostic link ' + D.status().diag + '   ·   pedal ' + (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--') + (D.status().dme.pedal ? ' (' + D.status().dme.pedal + ')' : '')
+                o.vehicle === 'ice' ? ['Engine unit', 'link ' + D.status().diag + '   ·   pedal ' + (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--') + (D.status().dme.pedal ? ' (' + D.status().dme.pedal + ')' : '')
+                    + '   ·   throttle ' + (isNum(d.throttle) ? Math.round(d.throttle) + '%' : '--') + (D.status().dme.throttle ? ' (' + D.status().dme.throttle + ')' : '')
                     + '   ·   boost ' + LC.pressNum(o, d.boostActual) + ' ' + LC.pressLabel(o) + '   ·   intake ' + tmp(d.iat) + '   ·   gearbox ' + tmp(d.gearbox) + '   ·   power ' + LC.powerNum(o, d.enginePower) + ' ' + LC.powerUnitText(o)]
                     : ['Shared by apps', D.status().providers + '   ·   diagnostic link ' + D.status().diag + '   ·   charge ' + (isNum(d.soc) ? Math.round(d.soc) + '%' : '--') + '   ·   power ' + (isNum(d.kw) ? d.kw.toFixed(1) + ' kW' : '--')],
                 ['Drive mode (car)', (d.driveMode || '-') + '   ·   raw: ' + rawOf('statusFESVehicleDynamicSwitchHMI') + '  ' + rawOf('statusSwitchDriveDynamicSport2')],

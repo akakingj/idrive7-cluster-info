@@ -290,7 +290,8 @@ const READOUTS = {
     boost: { short: 'BST', long: 'BOOST', num: numOrOff((o, d) => pressNum(o, d.boostActual)), unit: (o) => pressLabel(o), frac: (d) => boostFrac(d), needs: ['boostActual', 'boostTarget'] },
     power: { short: (o) => powerUnitText(o).toUpperCase(), long: 'ENGINE POWER', num: (o, d) => powerNum(o, d.enginePower), unit: (o) => powerUnitText(o), frac: (d) => (isNum(d.enginePower) ? d.enginePower / 200 : 0) },
     torque: { short: 'TQ', long: 'ENGINE TORQUE', num: (o, d) => torqueNum(o, d.torque), unit: (o) => torqueUnit(o), frac: (d) => (isNum(d.torque) ? d.torque / 450 : 0) },
-    throttle: { short: 'THR', long: 'THROTTLE', num: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), frac: (d) => (isNum(d.pedal) ? d.pedal / 100 : 0), needs: ['pedal'] },
+    throttle: { short: 'THR', long: 'THROTTLE', num: (o, d) => (isNum(d.throttle) ? Math.round(d.throttle) + '%' : '--'), frac: (d) => (isNum(d.throttle) ? d.throttle / 100 : 0), needs: ['throttle'] },
+    pedal: { short: 'PDL', long: 'PEDAL', num: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), frac: (d) => (isNum(d.pedal) ? d.pedal / 100 : 0), needs: ['pedal'] },
     timing: { short: 'TIM', long: 'TIMING', num: (o, d) => timingText(d), frac: (d) => (isNum(d.timing) ? (d.timing + 10) / 50 : 0), needs: ['timing'] },
 };
 const readoutOf = (k) => READOUTS[k] || null;
@@ -348,18 +349,18 @@ function fitText(p, fam, room) {
 /** The readings at their widest figures (three-figure temperatures, the most negative timing and boost ...): what a
  * readout's box is sized to hold (layouts.js), and what tools/check_fit.js measures every text with. */
 const READOUT_SAMPLES = [
-    { oil: 150, coolant: 130, iat: 79, gearbox: 140, boostActual: 1.6, enginePower: 199, torque: 449, pedal: 100, timing: -10, fuelPct: 100, rpm: 7000, speed: 250, engineOn: true, outside: -20 },
-    { oil: 8, coolant: 8, iat: -9, gearbox: 8, boostActual: -0.65, enginePower: 0, torque: 0, pedal: 0, timing: 8.5, fuelPct: 5, rpm: 800, speed: 0, engineOn: true, outside: 9 },
+    { oil: 150, coolant: 130, iat: 79, gearbox: 140, boostActual: 1.6, enginePower: 199, torque: 449, pedal: 100, throttle: 100, timing: -10, fuelPct: 100, rpm: 7000, speed: 250, engineOn: true, outside: -20 },
+    { oil: 8, coolant: 8, iat: -9, gearbox: 8, boostActual: -0.65, enginePower: 0, torque: 0, pedal: 0, throttle: 0, timing: 8.5, fuelPct: 5, rpm: 800, speed: 0, engineOn: true, outside: 9 },
 ];
 const nameOf = (r, o, long) => { const n = long ? r.long : r.short; return typeof n === 'function' ? n(o) : n; };
 /** A readout on one line, its name first: 'IAT 31°', 'BST 14.5' ('INTAKE AIR 31°', 'BOOST 14.5 psi' where it
  * fits: a box with room for its longest form). key 'off': nothing. */
-function readout(o, key, box) {
+function readout(o, key, box, longAlways) {
     const r = readoutOf(key);
     if (!r) return '';
     // (about 0.6 of the height a character, as the bold face sets capitals and figures)
     const room = box && box.w && box.h ? box.w / (box.h * 0.6) : 0;
-    const long = room >= nameOf(r, o, true).length + 10;
+    const long = longAlways || room >= nameOf(r, o, true).length + 10;
     return (d) => nameOf(r, o, long) + ' ' + r.num(o, d) + (long && r.unit && r.num(o, d) !== '--' && r.num(o, d) !== 'OFF' ? ' ' + r.unit(o) : '');
 }
 /*
@@ -375,7 +376,8 @@ const GAUGES = {
     boost: { label: 'BOOST', min: 0, max: 1.6, red: null, v: (d) => (d.engineOn === false ? 0 : d.boostActual), text: (o, d) => { const n = numOrOff((o2, d2) => pressNum(o2, d2.boostActual))(o, d); return n === '--' || n === 'OFF' ? n : n + ' ' + pressLabel(o); }, needs: ['boostActual', 'boostTarget'] },
     power: { label: 'POWER', min: 0, max: 200, red: null, v: (d) => d.enginePower, text: (o, d) => { const n = powerNum(o, d.enginePower); return n === '--' ? n : n + ' ' + powerUnitText(o); } },
     torque: { label: 'TORQUE', min: 0, max: 450, red: null, v: (d) => d.torque, text: (o, d) => { const n = torqueNum(o, d.torque); return n === '--' ? n : n + ' ' + torqueUnit(o); } },
-    throttle: { label: 'THROTTLE', min: 0, max: 100, red: null, v: (d) => d.pedal, text: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), needs: ['pedal'] },
+    throttle: { label: 'THROTTLE', min: 0, max: 100, red: null, v: (d) => d.throttle, text: (o, d) => (isNum(d.throttle) ? Math.round(d.throttle) + '%' : '--'), needs: ['throttle'] },
+    pedal: { label: 'PEDAL', min: 0, max: 100, red: null, v: (d) => d.pedal, text: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), needs: ['pedal'] },
     timing: { label: 'TIMING', min: -10, max: 40, red: null, v: (d) => d.timing, text: (o, d) => timingText(d), needs: ['timing'] },
     fuel: { label: 'FUEL', min: 0, max: 100, red: null, v: (d) => d.fuelPct, text: (o, d) => (isNum(d.fuelPct) ? Math.round(d.fuelPct) + '%' : '--') },
 };
@@ -411,7 +413,7 @@ const focus = {
     both: (o) => (engineFocus(o) ? (d) => boostText(o, d) + '  ' + timingText(d) : (d) => erangeText(o, d) + '  ' + socText(d)),
     bar: (o) => (engineFocus(o) ? boostFrac : (d) => (isNum(d.soc) ? d.soc / 100 : 0)),
     /** what the engine readings need read from the engine unit */
-    needs: (o) => (engineFocus(o) ? ['boostActual', 'boostTarget', 'timing', 'hpfp'].concat(...[o.infoA || 'iat', o.infoB || 'gearbox', mainKey(o)].map((k) => (readoutOf(k) && readoutOf(k).needs) || []),
+    needs: (o) => (engineFocus(o) ? ['boostActual', 'boostTarget', 'timing', 'hpfp'].concat(...[o.infoA || 'iat', o.infoB || 'gearbox', mainKey(o), o.infoLow || 'coolant'].map((k) => (readoutOf(k) && readoutOf(k).needs) || []),
         ...[o.gaugeSpeed, o.gaugeRpm].map((k) => (GAUGES[k] && GAUGES[k].needs) || [])) : []),
 };
 /** Outside temperature with its unit letter: '48°F'. */

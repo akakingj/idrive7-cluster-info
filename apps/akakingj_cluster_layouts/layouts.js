@@ -29,6 +29,7 @@ function finish(L, o, list) {
         if (strip && p.key === 'clock') return o.infoA || 'iat';
         if (strip && p.key === 'outside') return o.infoB || 'gearbox';
         if (MAIN_KEYS.indexOf(p.key) >= 0) return o.infoMain || 'torque';
+        if (L.id === 'classic' && p.key === 'socTxt') return o.infoLow || 'coolant';
         if (SMALL_KEYS[p.key]) { const g = C0.gaugeOf(o, SMALL_KEYS[p.key]); return g ? g.key : SMALL_OWN[p.key] || null; }
         return null;
     };

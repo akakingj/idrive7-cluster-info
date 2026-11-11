@@ -16,7 +16,7 @@ let n = 0;
 const check = (name, fn) => { fn(); n++; console.log('ok   ' + name); };
 const o = (x) => Object.assign({ vehicle: 'ice', speedUnit: 'kmh', tempUnit: 'c', torqueUnit: 'kgm', pressUnit: 'psi', powerUnit: 'hp' }, x || {});
 // 2.0 l petrol at 5000 rpm: 300 Nm is 157 kW, 211 hp
-const d = { iat: 31, gearbox: 78, oil: 98, coolant: 90, boostActual: 1.0, torque: 300, rpm: 5000, enginePower: 300 * 5000 / 9549.3, pedal: 85.4, timing: 6, engineOn: true };
+const d = { iat: 31, gearbox: 78, oil: 98, coolant: 90, boostActual: 1.0, torque: 300, rpm: 5000, enginePower: 300 * 5000 / 9549.3, pedal: 85.4, throttle: 72.6, timing: 6, engineOn: true };
 const narrow = { w: 120, h: 30 }, wide = { w: 500, h: 34 };
 
 check('readout 1 and 2: the defaults are intake air and gearbox oil, short where narrow', () => {
@@ -32,7 +32,8 @@ check('readouts: every choice, short', () => {
     assert.strictEqual(t('boost'), 'BST 14.5');
     assert.strictEqual(t('power'), 'HP 211');
     assert.strictEqual(t('torque'), 'TQ 30.6');
-    assert.strictEqual(t('throttle'), 'THR 85%');
+    assert.strictEqual(t('throttle'), 'THR 73%');
+    assert.strictEqual(t('pedal'), 'PDL 85%');
     assert.strictEqual(t('oil'), 'OIL 98°');
     assert.strictEqual(t('coolant'), 'CLT 90°');
     assert.strictEqual(t('timing'), 'TIM 6.0°');
@@ -49,11 +50,12 @@ check('main readout: the engine torque by default, else the one picked, with its
     assert.strictEqual(C.focus.powerLabel(o({ infoMain: 'power' }), true), 'ENGINE POWER');
     assert.strictEqual(C.focus.powerLabel(o({ infoMain: 'power' }), false), 'POWER');
     assert.strictEqual(C.focus.power(o({ infoMain: 'boost' }))(d), '14.5 psi');
-    assert.strictEqual(C.focus.power(o({ infoMain: 'throttle' }))(d), '85%');
+    assert.strictEqual(C.focus.power(o({ infoMain: 'pedal' }))(d), '85%');
+    assert.strictEqual(C.focus.power(o({ infoMain: 'throttle' }))(d), '73%');
     assert.strictEqual(C.focus.power(o({ infoMain: 'iat' }))(d), '31°');
     assert.strictEqual(C.focus.power(o({ infoMain: 'boost' }))(Object.assign({}, d, { engineOn: false })), 'OFF');
     assert.strictEqual(C.focus.power(o({ infoMain: 'power' }))({}), '--');
-    assert(Math.abs(C.focus.mainFrac(o({ infoMain: 'throttle' }))(d) - 0.854) < 1e-9);
+    assert(Math.abs(C.focus.mainFrac(o({ infoMain: 'pedal' }))(d) - 0.854) < 1e-9);
 });
 check('a plug-in hybrid keeps its battery readings', () => {
     const p = o({ vehicle: 'phev', infoA: 'boost', infoMain: 'power' });
@@ -123,8 +125,10 @@ check('the pedal from the engine unit (as Live Data: 5814 / 480B, OBD 49), asked
         // raw 0x2000 (8192) x 0.01220703 = 100 % (100 / 8192 a bit)
         assert(Math.abs(8192 * c[0].factor - 100) < 0.01);
     });
-    assert(C.focus.needs(o({ infoMain: 'throttle' })).indexOf('pedal') >= 0);
-    assert(C.focus.needs(o({ gaugeRpm: 'throttle' })).indexOf('pedal') >= 0);
+    assert(C.focus.needs(o({ infoMain: 'pedal' })).indexOf('pedal') >= 0);
+    assert(C.focus.needs(o({ gaugeRpm: 'pedal' })).indexOf('pedal') >= 0);
+    assert(C.focus.needs(o({ infoLow: 'throttle' })).indexOf('throttle') >= 0);
+    assert(C.focus.needs(o({ infoA: 'throttle' })).indexOf('pedal') < 0);
     assert(C.focus.needs(o()).indexOf('pedal') < 0);
 });
 check('the layout for the drive mode: Sport / ECO PRO when set, else Layout; the gear selector\'s S doesn\'t switch', () => {
@@ -176,5 +180,19 @@ check('temperature gauges as the car\'s (C-H, the default): the needle in the mi
         const keys = L.byId(id).pieces(o({ bottomStrip: 'stock', centre: 'info', gaugeSpeed: 'coolant', gaugeRpm: 'oil' })).map((p) => p.key);
         assert(keys.some((k) => /ChH$|Sub2$/.test(k)), id + ': ' + keys.join(','));
     });
+});
+check('the throttle (the valve, as Live Data: 4600 / 5858, OBD 11) apart from the pedal; both read twice a round', () => {
+    const { DME_KEYS, FAST_KEYS } = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'data.js'));
+    assert(DME_KEYS.indexOf('throttle') >= 0 && FAST_KEYS.indexOf('pedal') >= 0 && FAST_KEYS.indexOf('throttle') >= 0);
+    ['akakingj_cluster_layouts', 'akakingj_cluster_centre'].forEach((a) => {
+        const c = require(path.join(ROOT, 'apps', a, 'app.json')).config.dme.throttle;
+        assert.deepStrictEqual(c.map((x) => x.did || 'OBD ' + x.obd), ['4600', '5858', 'OBD 11'], a);
+        assert(Math.abs(12800 * c[0].factor - 100) < 0.01);
+    });
+    const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
+    const low = (x) => L.byId('classic').pieces(o(Object.assign({ bottomStrip: 'stock', centre: 'info' }, x))).find((p) => p.key === 'socTxt');
+    assert.strictEqual(low({}).text({ coolant: 90 }), 'COOLANT 90°');
+    assert.strictEqual(low({ infoLow: 'throttle' }).text({ throttle: 40 }), 'THROTTLE 40%');
+    assert.strictEqual(low({ infoLow: 'boost' }).text({ boostActual: 1, engineOn: true }), 'BOOST 14.5 psi');
 });
 console.log(n + ' passed');

@@ -19,7 +19,7 @@ const base = { vehicle: 'ice', speedUnit: 'kmh', tempUnit: 'c', torqueUnit: 'kgm
 const KEYS = Object.keys(C.GAUGES), RKEYS = Object.keys(C.READOUTS);
 const variants = [];
 KEYS.forEach((k) => variants.push({ gaugeSpeed: k, gaugeRpm: k, tag: 'gauge ' + k }));
-RKEYS.forEach((k) => variants.push({ infoA: k, infoB: k, infoMain: k, tag: 'readout ' + k }));
+RKEYS.forEach((k) => variants.push({ infoA: k, infoB: k, infoMain: k, infoLow: k, tag: 'readout ' + k }));
 ['psi', 'bar', 'kpa'].forEach((p) => variants.push({ pressUnit: p, gaugeSpeed: 'boost', gaugeRpm: 'boost', infoA: 'boost', infoB: 'boost', infoMain: 'boost', tag: 'boost in ' + p }));
 ['hp', 'ps', 'kw'].forEach((p) => variants.push({ powerUnit: p, gaugeSpeed: 'power', gaugeRpm: 'power', infoA: 'power', infoB: 'power', infoMain: 'power', tag: 'power in ' + p }));
 ['nm', 'kgm', 'lbft'].forEach((p) => variants.push({ torqueUnit: p, gaugeSpeed: 'torque', gaugeRpm: 'torque', infoA: 'torque', infoB: 'torque', infoMain: 'torque', tag: 'torque in ' + p }));
