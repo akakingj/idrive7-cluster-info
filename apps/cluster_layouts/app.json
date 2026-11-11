@@ -643,6 +643,110 @@
       ]
     },
     {
+      "key": "gaugeSpeed",
+      "label": "Speedometer gauge (the small gauge in or under it: Analog sport, Digital round, Retro, Classic M)",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "The layout's own"
+        ],
+        [
+          "coolant",
+          "Coolant temperature"
+        ],
+        [
+          "oil",
+          "Engine oil temperature"
+        ],
+        [
+          "iat",
+          "Intake air temperature"
+        ],
+        [
+          "gearbox",
+          "Gearbox oil temperature"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "power",
+          "Engine power"
+        ],
+        [
+          "torque",
+          "Engine torque"
+        ],
+        [
+          "throttle",
+          "Accelerator pedal (0 - 100 %)"
+        ],
+        [
+          "timing",
+          "Ignition timing"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ]
+      ]
+    },
+    {
+      "key": "gaugeRpm",
+      "label": "Tach gauge (the small gauge in or under it: Analog sport, Digital round, Retro, Classic M)",
+      "type": "choice",
+      "default": "auto",
+      "options": [
+        [
+          "auto",
+          "The layout's own"
+        ],
+        [
+          "coolant",
+          "Coolant temperature"
+        ],
+        [
+          "oil",
+          "Engine oil temperature"
+        ],
+        [
+          "iat",
+          "Intake air temperature"
+        ],
+        [
+          "gearbox",
+          "Gearbox oil temperature"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "power",
+          "Engine power"
+        ],
+        [
+          "torque",
+          "Engine torque"
+        ],
+        [
+          "throttle",
+          "Accelerator pedal (0 - 100 %)"
+        ],
+        [
+          "timing",
+          "Ignition timing"
+        ],
+        [
+          "fuel",
+          "Fuel level"
+        ]
+      ]
+    },
+    {
       "key": "redline",
       "label": "Red zone from",
       "type": "number",

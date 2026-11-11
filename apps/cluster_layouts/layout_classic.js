@@ -40,7 +40,9 @@ function dial(o, which, cx, cy, size) {
      * its limit, numbered in round steps (eDrive Live's ends: kwRange, kwDialScale) */
     const elec = (d) => !speed && C.electric(o, d);
     const kwS = (d) => C.kwDialScale(C.kwRange(d).out);
-    const subv = (d) => (speed ? [isNum(d.fuelPct) ? Math.round(Math.max(0, Math.min(1, d.fuelPct / 100)) * 200) / 200 : 0]
+    // Settings > Speedometer gauge / Tach gauge: another reading in the small gauge (its name and figures by it)
+    const g = C.gaugeOf(o, which);
+    const subv = (d) => (g ? [Math.round(g.frac(d) * 200) / 200] : speed ? [isNum(d.fuelPct) ? Math.round(Math.max(0, Math.min(1, d.fuelPct / 100)) * 200) / 200 : 0]
         : [isNum(d.oil) ? Math.round(Math.max(0, Math.min(1, (d.oil - 50) / 100)) * 200) / 200 : 0]);
     const out = [{
         key: which, kind: 'e9x', x: cx - R, y: cy - R, w: size, h: size,
@@ -62,6 +64,15 @@ function dial(o, which, cx, cy, size) {
     const at = (a, r) => { const u = dir(a); return [pv[0] + u[0] * r, pv[1] + u[1] * r]; };
     const lab = (key, a, r, txt, w) => { const [x, y] = at(a, r); return C.text(key, Math.round(x - w / 2), Math.round(y - h / 2), w, h, txt, white); };
     const tl = (c) => String(Math.round(C.tempIn(o, c) / 10) * 10);
+    if (g) {
+        // the picked reading: its name above the pivot, its figures below it (red in its red zone)
+        const [x, y] = at(180, lr * 1.04);
+        out.push(C.text(which + 'SubLbl', Math.round(cx - 0.3 * R), Math.round(pv[1] - 0.17 * R), Math.round(0.6 * R), Math.round(22 * k), g.label, white, { tracking: 0.08 }),
+            C.text(which + 'Sub1', Math.round(x - 0.3 * R), Math.round(y - h / 2), Math.round(0.6 * R), h, g.txt, (t, d) => (g.hot(d) ? { color: [t.red, 1], glow: [t.red, 0] } : white(t))));
+        if (!speed) out.push(C.text('rpmUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), (d) => (elec(d) ? 'kW' : '1/min x 1000'), white));
+        else out.push(C.text('speedUnit', Math.round(cx - 0.4 * R), Math.round(cy - 0.45 * R), Math.round(0.8 * R), Math.round(22 * k), kmh ? 'km/h' : 'mph', white));
+        return out;
+    }
     const labels = speed ? ['0', '1/2', '1'] : [tl(50), tl(100), tl(150)];
     out.push(lab(which + 'Sub0', SUB[0] + 4, lr, labels[0], Math.round(70 * k)), lab(which + 'Sub1', 180, lr * 1.04, labels[1], Math.round(70 * k)),
         lab(which + 'Sub2', SUB[1] - 4, lr, labels[2], Math.round(70 * k)));

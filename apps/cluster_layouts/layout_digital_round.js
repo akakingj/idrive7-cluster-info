@@ -32,8 +32,22 @@ const txt = (t) => ({ color: [t.text, 1], glow: [t.glow, 0.25] });
 const evTxt = (t) => ({ color: [t.ev, 1], glow: [t.ev, 0.3] });
 const barColours = (t) => ({ track: t.track, fill0: t.ev, fill1: t.ev, redc: t.red, tip: t.glow, tick: t.dim, num: t.num });
 
-/** A small arc gauge for a temperature (40-140 °C) with its digits and label. */
+/** A small arc gauge for a temperature (40-140 °C) with its digits and label: the coolant's the speedometer's,
+ * the oil's the tach's, or the reading picked for that dial (Settings > Speedometer gauge / Tach gauge). */
 function tempArc(key, x, y, which, redC, o) {
+    const g = C.gaugeOf(o, which === 'coolant' ? 'speed' : 'rpm');
+    if (g) {
+        return [
+            {
+                key, kind: 'band', x, y, w: 200, h: 112,
+                params: { u_geo: [100, 104, 76, 12], u_span: [-90, 90, 20, 0.22], u_marks: [4, 0, 0, -1], u_red: [g.redFrac] },
+                colors: (t) => ({ track: t.track, fill0: t.accent, fill1: t.accent, redc: t.red, tip: t.glow, tick: t.dim, num: t.num }),
+                value: g.frac, max: 1, sweep: true,
+            },
+            C.text(key + 'Txt', x, y + 64, 200, 40, g.txt, (t, d) => ({ color: [g.hot(d) ? t.red : t.text, 1], glow: [t.glow, 0] })),
+            C.text(key + 'Lbl', x, y + 112, 200, 16, g.label, lbl, { tracking: 0.16 }),
+        ];
+    }
     return [
         {
             key, kind: 'band', x, y, w: 200, h: 112,

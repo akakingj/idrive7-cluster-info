@@ -72,11 +72,14 @@ function dialSet(o, which, cx, size, cy) {
     // km/h: 14 numerals, most of three figures (mph: 9); at mph's size 100-160 ran together, so smaller and further out
     const dense = which === 'speed' && o.speedUnit === 'kmh';
     const sub = Math.round(176 * k), subY = cy + Math.round(170 * k);
-    const subPiece = which === 'speed'
+    // Settings > Speedometer gauge / Tach gauge: another reading in the small gauge (its scale 0..100 here)
+    const g = C.gaugeOf(o, which);
+    const subPiece = g ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, Math.min(101, g.redFrac * 100)], [-110, 110], (d) => g.frac(d) * 100)
+        : which === 'speed'
         // fuel: full at the right, empty at the left, the reserve (the last eighth) red; read as 100 - level
         ? small('fuelDial', cx, subY, sub, [100, 25, 12.5, 87.5], [110, -110], (d) => (C.isNum(d.fuelPct) ? 100 - d.fuelPct : 100))
         : econDial(o, 'econDial', cx, subY, sub);
-    const subLbl = which === 'speed' ? 'FUEL' : C.engineFocus(o) ? 'BOOST' : 'kW';
+    const subLbl = g ? g.label : which === 'speed' ? 'FUEL' : C.engineFocus(o) ? 'BOOST' : 'kW';
     const engineOffKw = (d) => C.electric(o, d);   // the tach reads kW (its unit says so)
     return [
         Object.assign({
@@ -94,7 +97,7 @@ function dialSet(o, which, cx, size, cy) {
             which === 'speed' ? lbl : (t, d) => (engineOffKw(d) ? (C.isNum(d.kw) && d.kw < -0.3 ? regenTxt : lit(t)) : lbl(t)), { tracking: 0.08 }),
         Object.assign(C.text(which + 'SubLbl', cx - 60, subY + Math.round(22 * k), 120, Math.max(13, Math.round(19 * k)), subLbl, lbl, { tracking: 0.12 }),
             which === 'speed' || C.engineFocus(o) || o.vehicle === 'ice' ? {} : { visible: (d) => !engineOffKw(d) }),
-    ];
+    ].concat(g ? [C.text(which + 'SubNum', cx - 70, subY + Math.round(44 * k), 140, Math.max(14, Math.round(24 * k)), g.txt, (t, d) => (g.hot(d) ? { color: [t.red, 1], glow: [t.red, 0.4] } : lit(t)))] : []);
 }
 
 module.exports = {

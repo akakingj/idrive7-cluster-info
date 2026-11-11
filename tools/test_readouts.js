@@ -78,4 +78,21 @@ check('Cluster Centre: engine power and the pedal as readings', () => {
     const p = R.view('pedal', d, u);
     assert.strictEqual(p.text + p.unit, '85%');
 });
+check('small gauges: the layout\'s own by default; any reading on its own scale, red zone and figures', () => {
+    assert.strictEqual(C.gaugeOf(o({ gaugeSpeed: 'auto' }), 'speed'), null);
+    assert.strictEqual(C.gaugeOf(o(), 'rpm'), null);
+    const b = C.gaugeOf(o({ gaugeRpm: 'boost' }), 'rpm');
+    assert.strictEqual(b.label, 'BOOST');
+    assert.strictEqual(b.txt(d), '14.5 psi');
+    assert(Math.abs(b.frac(d) - 1 / 1.6) < 1e-9 && b.redFrac > 1);
+    const i = C.gaugeOf(o({ gaugeSpeed: 'iat' }), 'speed');
+    assert.strictEqual(i.txt(d), '31°');
+    assert(Math.abs(i.redFrac - 0.75) < 1e-9 && !i.hot(d) && i.hot({ iat: 65 }));
+    assert.strictEqual(C.gaugeOf(o({ gaugeSpeed: 'power' }), 'speed').txt(d), '211 hp');
+    assert.strictEqual(C.gaugeOf(o({ gaugeSpeed: 'throttle' }), 'speed').frac({}), 0);
+    assert(C.focus.needs(o({ gaugeSpeed: 'timing', gaugeRpm: 'boost' })).indexOf('timing') >= 0);
+    const s = SPEC.settings.find((x) => x.key === 'gaugeRpm');
+    Object.keys(C.GAUGES).forEach((k) => assert(s.options.some((x) => x[0] === k), k));
+    assert.strictEqual(s.default, 'auto');
+});
 console.log(n + ' passed');

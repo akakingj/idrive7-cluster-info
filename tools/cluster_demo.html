@@ -145,7 +145,7 @@ const bc = typeof BroadcastChannel === 'function' ? new BroadcastChannel('cluste
 const KO = {
   vehicle: '차량', tankLitres: '연료탱크 용량', layout: '레이아웃', look: '색상 / 모양', background: '배경', cluster: '계기판 종류', bottomStrip: '하단 줄',
   boxClear: '기어 박스 주변 그리기', boxBezel: '기어 박스 뒤 프레임', centre: '가운데 영역', speedUnit: '속도 단위', tempUnit: '온도 단위', torqueUnit: '토크 단위',
-  pressUnit: '압력 단위', powerUnit: '마력 단위', infoA: '가운데 표시: 위 왼쪽', infoB: '가운데 표시: 위 오른쪽', infoMain: '가운데 표시: 속도 아래', redline: '레드존 시작', rpmMax: 'rpm 눈금 최대', timeZone: '시간대', clock: '시계',
+  pressUnit: '압력 단위', powerUnit: '마력 단위', infoA: '가운데 표시: 위 왼쪽', infoB: '가운데 표시: 위 오른쪽', infoMain: '가운데 표시: 속도 아래', gaugeSpeed: '속도계 안 작은 게이지', gaugeRpm: 'rpm계 안 작은 게이지', redline: '레드존 시작', rpmMax: 'rpm 눈금 최대', timeZone: '시간대', clock: '시계',
   rotate: '페이지 자동 전환', fit: '가운데 크기', style: '기본 페이지 타일 모양', accent: '색상', size: '숫자 크기', shift: '시프트 라이트·기어 표시',
   shiftFrom: '시프트 라이트 시작', shiftAt: '시프트 라이트 깜빡임', badge: '쿨다운 카운트다운 (모든 페이지)', warmTarget: '워밍업 완료 오일 온도',
   coldLimit: '냉간 rpm 한계', hardRpm: '쿨다운: 고부하 기준 rpm', oilHigh: '경고: 오일 상한', coolantHigh: '경고: 냉각수 상한', iatHigh: '경고: 흡기온 상한',
@@ -155,7 +155,7 @@ const KO = {
 };
 const KO_PAGE = { temps: '온도', fuel: '연료·부스트', warmup: '워밍업', cooldown: '터보 쿨다운', edrive: 'eDrive', engine: '엔진 on/off', steering: '조향', timer: '0-100 / 400m', custom1: '커스텀 1', custom2: '커스텀 2' };
 const GROUPS = {
-  layouts: [['레이아웃·모양', /^(layout|look|background|cluster|bottomStrip|boxClear|boxBezel|centre)$/], ['가운데 표시 항목', /^info/], ['차량', /^(vehicle|tankLitres|redline|rpmMax)$/], ['단위·시계', /Unit$|^(timeZone|clock)$/]],
+  layouts: [['레이아웃·모양', /^(layout|look|background|cluster|bottomStrip|boxClear|boxBezel|centre)$/], ['가운데 표시 항목', /^info/], ['작은 게이지', /^gauge/], ['차량', /^(vehicle|tankLitres|redline|rpmMax)$/], ['단위·시계', /Unit$|^(timeZone|clock)$/]],
   centre: [['페이지', /^(page_|rotate)/], ['모양', /^(look|fit|style|accent|size|badge)$/], ['시프트 라이트', /^shift/], ['워밍업·쿨다운', /^(warmTarget|coldLimit|redline|hardRpm)$/],
     ['커스텀 페이지 1', /^c1/], ['커스텀 페이지 2', /^c2/], ['경고 기준', /(High|Low)$/], ['차량', /^(vehicle|tankLitres)$/], ['단위·시계', /Unit$|^(timeZone|clock)$/]],
   info: [['표시', /^(show|place|slot\d|bar|underline)$/], ['HUD', /^(turnSignals|hudBrightness|nightDim)$/], ['모양·단위', /./]],
