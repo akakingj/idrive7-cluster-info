@@ -35,6 +35,8 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
 (async () => {
     const S = {};
     SPEC.settings.forEach((s) => { S[s.key] = s.default; });
+    // (the personal build's defaults are Korean and petrol; these checks are written for the original's)
+    Object.assign(S, { tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'auto', slot1: 'power', slot2: 'battery', slot3: 'oil' });
     const handlers = {}, warns = [], loops = {};
     const ctx = {
         app: {}, ui: { onClick() {}, text() {}, image: async () => {} },

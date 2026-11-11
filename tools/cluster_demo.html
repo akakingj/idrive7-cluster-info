@@ -1,0 +1,528 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>계기판 앱 데모 (Layouts · Centre · Info)</title>
+<style>
+  :root { --bg: #101317; --panel: #181c22; --line: #2a3039; --text: #e6e9ee; --dim: #8b95a3; --acc: #4ea3ff; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 "Segoe UI", "Malgun Gothic", system-ui, sans-serif; }
+  header { display: flex; align-items: center; gap: 12px; padding: 10px 16px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+  header h1 { font-size: 16px; margin: 0 8px 0 0; font-weight: 600; }
+  .tabs { display: flex; gap: 4px; }
+  .tabs button { padding: 7px 16px; font-weight: 600; }
+  .stat { color: var(--dim); font-size: 12px; }
+  .spacer { flex: 1; }
+  button { background: #222831; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+  button:hover { border-color: var(--acc); }
+  button.on { background: var(--acc); border-color: var(--acc); color: #04111f; font-weight: 600; }
+  #stages { display: flex; gap: 12px; padding: 12px 16px 0; align-items: flex-start; }
+  .stageBox { flex: 1 1 auto; min-width: 0; }
+  .stageBox .cap { font-size: 12px; color: var(--dim); margin: 0 0 4px 2px; }
+  #hudBox { flex: 0 0 34%; display: none; }
+  .stage { position: relative; width: 100%; background: #000; border-radius: 10px; overflow: hidden; outline: 1px solid var(--line); }
+  #cluster { aspect-ratio: 1920 / 720; }
+  #hud { aspect-ratio: 800 / 480; background: radial-gradient(ellipse at 50% 60%, #0d1621, #000 70%); }
+  .stage > * { position: absolute; }
+  .full { left: 0; top: 0; width: 100%; height: 100%; }
+  .map { display: none; align-items: center; justify-content: center; color: #6f7f92; font: 600 14px sans-serif; background-color: #1b222b;
+    background-image: linear-gradient(28deg, transparent 47%, #3a4656 47%, #3a4656 53%, transparent 53%), linear-gradient(-62deg, transparent 48%, #2f3a48 48%, #2f3a48 52%, transparent 52%),
+      linear-gradient(90deg, transparent 30%, #4ea3ff 30%, #4ea3ff 31.4%, transparent 31.4%);
+    background-size: 24% 42%, 31% 62%, 100% 100%; }
+  #strip { left: 0; width: 100%; bottom: 0; display: none; align-items: center; justify-content: center; gap: 6%; color: #c9ced6; font: 600 1.5vw "Segoe UI", sans-serif;
+    background: linear-gradient(#0c0e11, #050607); border-top: 1px solid #1f242b; pointer-events: none; }
+  #strip small { color: #6c7684; font-size: 0.5em; font-weight: 400; }
+  .mbox { background: #020202; outline: 1px solid #2a2a2a; }
+  #hudSpeed { left: 18%; top: 38%; font: 600 3.4vw "Segoe UI", sans-serif; color: #e9f3ff; opacity: 0.85; }
+  #hudSpeed small { display: block; font-size: 0.35em; color: #9fb2c8; text-align: center; }
+  #err { margin: 8px 16px 0; color: #ff8a80; white-space: pre-wrap; font: 12px monospace; display: none; max-height: 160px; overflow: auto; }
+  #pageBar { padding: 10px 16px 0; display: none; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #pageBar .lbl { color: var(--dim); font-size: 13px; margin-right: 4px; }
+  main { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 12px 16px 24px; }
+  @media (max-width: 1100px) { main { grid-template-columns: 1fr; } #stages { flex-direction: column; } #hudBox { flex-basis: auto; width: 60%; } }
+  section { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  section h2 { font-size: 14px; margin: 0 0 10px; display: flex; align-items: center; gap: 8px; }
+  h3 { font-size: 12px; color: var(--acc); margin: 14px 0 6px; font-weight: 600; letter-spacing: 0.02em; }
+  h3:first-child { margin-top: 0; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 8px 14px; }
+  label.f { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--dim); }
+  label.f b { color: var(--text); font-weight: 500; font-size: 13px; }
+  label.f .en { color: #5d6672; font-size: 11px; }
+  select { background: #0f1216; color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 6px; font: inherit; width: 100%; }
+  .row { display: grid; grid-template-columns: 120px 1fr 78px; align-items: center; gap: 8px; font-size: 13px; }
+  .row input[type=range] { width: 100%; accent-color: var(--acc); }
+  .row output { text-align: right; font-variant-numeric: tabular-nums; }
+  .sliders { display: grid; gap: 5px; }
+  .seg { display: flex; gap: 4px; flex-wrap: wrap; }
+  .seg button { padding: 4px 10px; }
+  .note { color: var(--dim); font-size: 12px; margin-top: 8px; }
+  .only { display: none; }
+  #link { font-size: 12px; padding: 3px 8px; border-radius: 10px; background: #2a1d1d; color: #ff9b8f; }
+  #link.ok { background: #13281c; color: #6fe0a0; }
+  /* two windows: ?view=display (the screens alone) and ?view=controls (everything else) */
+  body.view-display header, body.view-display main, body.view-display #pageBar { display: none !important; }
+  body.view-display #stages { padding: 8px; height: 100vh; align-items: center; justify-content: center; }
+  body.view-display #cluster { width: min(100%, calc((100vh - 40px) * 1920 / 720)); margin: 0 auto; }
+  body.view-display .stageBox:first-child { flex: 1 1 auto; }
+  body.view-display #err { position: fixed; left: 8px; bottom: 8px; right: 8px; margin: 0; background: #000c; }
+  #dispHint { display: none; position: fixed; right: 12px; top: 10px; color: #56606d; font-size: 12px; }
+  body.view-display #dispHint { display: block; }
+  body.view-controls #stages, body.view-controls #err, body.view-controls #cap { display: none !important; }
+  body:not(.view-controls) #openDisp, body:not(.view-controls) #link { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>계기판 앱 데모</h1>
+  <div class="tabs" id="tabs">
+    <button data-app="layouts">Cluster Layouts</button>
+    <button data-app="centre">Cluster Centre</button>
+    <button data-app="info">Cluster Info</button>
+  </div>
+  <span class="stat" id="ver"></span>
+  <span class="stat" id="stat"></span>
+  <span id="link">디스플레이 창 없음</span>
+  <span class="spacer"></span>
+  <button id="openDisp">🖥 디스플레이 창 열기</button>
+  <button id="drive">▶ 자동 주행</button>
+  <button id="shot">📷 스크린샷</button>
+</header>
+
+<div id="stages">
+  <div class="stageBox">
+    <div class="cap" id="cap">계기판 (1920×720)</div>
+    <div class="stage" id="cluster">
+      <canvas id="mock" class="full" width="1920" height="720"></canvas>
+      <div id="map" class="map">지도 자리 (Waze / 순정 지도)</div>
+      <canvas id="glMain" class="full" width="1920" height="720"></canvas>
+      <canvas id="glCentre" width="1088" height="480"></canvas>
+      <canvas id="ovl" class="full" width="1920" height="720"></canvas>
+      <div id="strip"><span id="sTime">--:--</span><span id="sGear">P</span><span id="sTemp">20°C</span><span id="sFuel">FUEL</span><small>순정 하단 줄 (계기판이 직접 그리는 영역, 모형)</small></div>
+    </div>
+  </div>
+  <div class="stageBox" id="hudBox">
+    <div class="cap">HUD (800×480)</div>
+    <div class="stage" id="hud">
+      <div id="hudMap" class="map">Waze (HUD)</div>
+      <div id="hudSpeed">0<small>km/h</small></div>
+      <canvas id="hudOvl" class="full" width="800" height="480"></canvas>
+    </div>
+  </div>
+</div>
+<div id="pageBar"><span class="lbl">페이지</span><span class="seg" id="pages"></span><span class="stat" id="rot"></span></div>
+<div id="err"></div>
+<div id="dispHint">더블클릭: 전체 화면</div>
+
+<main>
+  <section>
+    <h2>앱 설정 <span id="appName" class="stat"></span><span class="spacer"></span><button id="resetSet">이 앱 설정 초기화</button></h2>
+    <div id="settings"></div>
+    <div class="note">차의 앱 설정 화면과 같은 항목입니다(앱의 app.json에서 읽음). 바꾸면 바로 반영됩니다.</div>
+  </section>
+  <section>
+    <h2>차량 값 <span class="spacer"></span><button id="resetData">값 초기화</button></h2>
+    <div class="row" style="margin-bottom:6px"><span>기어</span><div class="seg" id="stageSeg"></div><span></span></div>
+    <div class="row" style="margin-bottom:6px"><span>주행 모드</span><div class="seg" id="modeSeg"></div><span></span></div>
+    <div class="row only" data-for="layouts" style="margin-bottom:6px"><span>운전 보조 (앞차·차선)</span><div class="seg" id="dapSeg"></div><span></span></div>
+    <div class="only" data-for="info">
+      <div class="row" style="margin-bottom:6px"><span>Waze 지도 표시</span><div class="seg" id="wazeSeg"></div><span></span></div>
+      <div class="row" style="margin-bottom:6px"><span>방향지시등</span><div class="seg" id="indSeg"></div><span></span></div>
+      <div class="row" style="margin-bottom:6px"><span>낮 / 밤</span><div class="seg" id="nightSeg"></div><span></span></div>
+      <div class="row" style="margin-bottom:6px"><span>eDrive Live 앱</span><div class="seg" id="edSeg"></div><span></span></div>
+    </div>
+    <div class="sliders" id="sliders"></div>
+    <div class="note">자동 주행: 출발 → 가속(변속) → 정속 → 감속을 반복합니다. 슬라이더나 버튼을 건드리면 멈춥니다.</div>
+  </section>
+</main>
+
+<script>
+'use strict';
+const $ = (id) => document.getElementById(id);
+const VIEW = new URLSearchParams(location.search).get('view') || 'both';   // 'display' | 'controls' | 'both'
+document.body.classList.add('view-' + VIEW);
+const bc = typeof BroadcastChannel === 'function' ? new BroadcastChannel('cluster-demo') : null;
+/* ---------- names in Korean (the English from app.json under each) ---------- */
+const KO = {
+  vehicle: '차량', tankLitres: '연료탱크 용량', layout: '레이아웃', look: '색상 / 모양', background: '배경', cluster: '계기판 종류', bottomStrip: '하단 줄',
+  boxClear: '기어 박스 주변 그리기', boxBezel: '기어 박스 뒤 프레임', centre: '가운데 영역', speedUnit: '속도 단위', tempUnit: '온도 단위', torqueUnit: '토크 단위',
+  pressUnit: '압력 단위', powerUnit: '마력 단위', infoA: '가운데 표시: 위 왼쪽', infoB: '가운데 표시: 위 오른쪽', infoMain: '가운데 표시: 속도 아래', redline: '레드존 시작', rpmMax: 'rpm 눈금 최대', timeZone: '시간대', clock: '시계',
+  rotate: '페이지 자동 전환', fit: '가운데 크기', style: '기본 페이지 타일 모양', accent: '색상', size: '숫자 크기', shift: '시프트 라이트·기어 표시',
+  shiftFrom: '시프트 라이트 시작', shiftAt: '시프트 라이트 깜빡임', badge: '쿨다운 카운트다운 (모든 페이지)', warmTarget: '워밍업 완료 오일 온도',
+  coldLimit: '냉간 rpm 한계', hardRpm: '쿨다운: 고부하 기준 rpm', oilHigh: '경고: 오일 상한', coolantHigh: '경고: 냉각수 상한', iatHigh: '경고: 흡기온 상한',
+  gearboxHigh: '경고: 미션오일 상한', battTempHigh: '경고: 배터리 온도 상한', lpfpLow: '경고: 저압 연료 하한',
+  show: '패널 표시', place: '패널 위치', slot1: '패널 항목 1', slot2: '패널 항목 2', slot3: '패널 항목 3', bar: 'kW 막대', underline: '아래 얇은 kW 막대',
+  turnSignals: 'HUD 방향지시등 화살표', hudBrightness: 'HUD 밝기', nightDim: 'HUD 밤에 어둡게', theme: '색상 테마',
+};
+const KO_PAGE = { temps: '온도', fuel: '연료·부스트', warmup: '워밍업', cooldown: '터보 쿨다운', edrive: 'eDrive', engine: '엔진 on/off', steering: '조향', timer: '0-100 / 400m', custom1: '커스텀 1', custom2: '커스텀 2' };
+const GROUPS = {
+  layouts: [['레이아웃·모양', /^(layout|look|background|cluster|bottomStrip|boxClear|boxBezel|centre)$/], ['가운데 표시 항목', /^info/], ['차량', /^(vehicle|tankLitres|redline|rpmMax)$/], ['단위·시계', /Unit$|^(timeZone|clock)$/]],
+  centre: [['페이지', /^(page_|rotate)/], ['모양', /^(look|fit|style|accent|size|badge)$/], ['시프트 라이트', /^shift/], ['워밍업·쿨다운', /^(warmTarget|coldLimit|redline|hardRpm)$/],
+    ['커스텀 페이지 1', /^c1/], ['커스텀 페이지 2', /^c2/], ['경고 기준', /(High|Low)$/], ['차량', /^(vehicle|tankLitres)$/], ['단위·시계', /Unit$|^(timeZone|clock)$/]],
+  info: [['표시', /^(show|place|slot\d|bar|underline)$/], ['HUD', /^(turnSignals|hudBrightness|nightDim)$/], ['모양·단위', /./]],
+};
+const store = { k: 'clusterDemo.v3', get() { try { return JSON.parse(localStorage.getItem(this.k) || 'null'); } catch (e) { return null; } }, set(v) { try { localStorage.setItem(this.k, JSON.stringify(v)); } catch (e) { /* none */ } } };
+
+/* ---------- the car ---------- */
+const SLIDERS = [
+  ['speed', '속도', 0, 260, 1, 'km/h'], ['rpm', 'rpm', 0, 8000, 50, ''], ['gear', '기어 단수', 0, 8, 1, ''],
+  ['boostActual', '부스트', -0.8, 1.6, 0.01, 'bar'], ['torque', '토크', 0, 500, 1, 'Nm'], ['timing', '점화시기', -5, 40, 0.5, '°'],
+  ['hpfp', '고압 연료', 0, 350, 1, 'bar'], ['lpfp', '저압 연료', 0, 8, 0.1, 'bar'], ['oil', '오일', 20, 150, 1, '°C'], ['coolant', '냉각수', 20, 130, 1, '°C'],
+  ['gearbox', '미션오일', 20, 130, 1, '°C'], ['iat', '흡기온', -10, 80, 1, '°C'], ['pedal', '가속 페달', 0, 100, 1, '%'], ['outside', '외기온', -20, 45, 1, '°C'],
+  ['fuelPct', '연료', 0, 100, 1, '%'], ['frange', '주행가능거리', 0, 900, 5, 'km'], ['steer', '조향각', -450, 450, 5, '°'], ['yaw', '요레이트', -40, 40, 1, '°/s'],
+  ['gLat', '횡G', -1.2, 1.2, 0.01, 'g'], ['gLong', '종G', -1.2, 1.2, 0.01, 'g'], ['tyreP', '타이어 공기압', 1.6, 3.2, 0.01, 'bar'], ['tyreT', '타이어 온도', 0, 90, 1, '°C'],
+  ['soc', '(PHEV) 배터리', 0, 100, 1, '%'], ['kw', '(PHEV) 배터리 출력', -60, 100, 0.5, 'kW'], ['battTemp', '(PHEV) 배터리 온도', -5, 50, 1, '°C'], ['erange', '(PHEV) 전기 주행거리', 0, 80, 1, 'km'],
+];
+const DATA0 = { pedal: 0, speed: 0, rpm: 750, gear: 0, stage: 'P', driveMode: 'COMFORT', boostActual: -0.6, torque: 20, timing: 10, hpfp: 60, lpfp: 5.2,
+  oil: 96, coolant: 90, gearbox: 78, iat: 31, outside: 20, fuelPct: 55, frange: 520, steer: 0, yaw: 0, gLat: 0, gLong: 0, tyreP: 2.5, tyreT: 25, soc: 70, kw: 0, battTemp: 26, erange: 30 };
+const EXTRA0 = { dap: false, waze: 'cluster', indicator: 'off', night: false, edrive: false, hudPct: 70 };
+const STAGES = ['P', 'R', 'N', 'D', 'S', 'M'];
+const MODES = [['COMFORT', 'Comfort'], ['SPORT', 'Sport'], ['SPORT+', 'Sport+'], ['ECO PRO', 'Eco Pro']];
+
+let lastMap = { x: 416, y: 120 };
+let META = null, app = 'layouts', settingsByApp = { layouts: {}, centre: {}, info: {} }, data = Object.assign({}, DATA0), extra = Object.assign({}, EXTRA0), autoDrive = false, wantPage = null;
+const saved = store.get();
+if (saved) { app = saved.app || app; Object.assign(settingsByApp, saved.settings || {}); Object.assign(data, saved.data || {}); Object.assign(extra, saved.extra || {}); }
+function publish() { if (bc && VIEW === 'controls') bc.postMessage({ type: 'state', app, settings: settingsByApp, data, extra, wantPage }); }
+const save = () => { if (VIEW !== 'display') store.set({ app, settings: settingsByApp, data, extra }); publish(); };
+const settings = () => settingsByApp[app];
+
+/* ---------- controls ---------- */
+function buildSettings() {
+  const box = $('settings'); box.innerHTML = '';
+  const m = META.apps[app];
+  if (!m || m.error) { box.textContent = '이 앱을 읽지 못했습니다: ' + (m && m.error); return; }
+  $('appName').textContent = (m.title || '') + ' v' + m.version;
+  const set = settings();
+  m.list.forEach((s) => { if (set[s.key] === undefined) set[s.key] = s.default; });
+  const used = new Set();
+  (GROUPS[app] || [['설정', /./]]).forEach(([title, re]) => {
+    const items = m.list.filter((s) => !used.has(s.key) && re.test(s.key));
+    if (!items.length) return;
+    const h = document.createElement('h3'); h.textContent = title; box.appendChild(h);
+    const g = document.createElement('div'); g.className = 'grid'; box.appendChild(g);
+    items.forEach((s) => {
+      used.add(s.key);
+      const l = document.createElement('label'); l.className = 'f'; l.dataset.key = s.key;
+      const cm = s.key.match(/^c(\d)(Count|Style|s(\d))$/);
+      const ko = s.key.startsWith('page_') ? '페이지: ' + (KO_PAGE[s.key.slice(5)] || s.key.slice(5))
+        : cm ? '커스텀 ' + cm[1] + ': ' + (cm[2] === 'Count' ? '칸 수' : cm[2] === 'Style' ? '타일 모양' : cm[3] + '번 칸') : KO[s.key] || s.label;
+      l.innerHTML = '<b>' + ko + '</b><span class="en">' + s.label + '</span>';
+      const sel = document.createElement('select');
+      const opts = s.type === 'choice' ? s.options : (s.steps || []).map((v) => [v, v + (s.unit ? ' ' + s.unit : '')]);
+      opts.forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.appendChild(o); });
+      sel.value = String(set[s.key]);
+      sel.onchange = () => { set[s.key] = s.type === 'number' ? Number(sel.value) : sel.value; save(); };
+      l.appendChild(sel); g.appendChild(l);
+    });
+  });
+}
+const sliderEls = {};
+function seg(id, items, get, setv) {
+  const box = $(id); box.innerHTML = '';
+  items.forEach(([v, t]) => { const b = document.createElement('button'); b.textContent = t; b.dataset.v = v; b.onclick = () => { stopAuto(); setv(v); sync(); save(); }; box.appendChild(b); });
+  box._get = get;
+}
+function buildData() {
+  seg('stageSeg', STAGES.map((s) => [s, s]), () => data.stage, (v) => { data.stage = v; data.gear = v === 'D' || v === 'S' || v === 'M' ? Math.max(1, data.gear || 1) : 0; });
+  seg('modeSeg', MODES, () => data.driveMode, (v) => { data.driveMode = v; });
+  seg('dapSeg', [[false, '끔'], [true, '데모 (앞차·옆차·차선)']], () => extra.dap, (v) => { extra.dap = v; });
+  seg('wazeSeg', [['off', '안 함'], ['cluster', '계기판에'], ['hud', 'HUD에']], () => extra.waze, (v) => { extra.waze = v; });
+  seg('indSeg', [['off', '끔'], ['left', '왼쪽'], ['right', '오른쪽'], ['both', '비상등']], () => extra.indicator, (v) => { extra.indicator = v; });
+  seg('nightSeg', [[false, '낮'], [true, '밤']], () => extra.night, (v) => { extra.night = v; });
+  seg('edSeg', [[false, '없음'], [true, '있음 (kW·배터리 제공)']], () => extra.edrive, (v) => { extra.edrive = v; });
+  const box = $('sliders'); box.innerHTML = '';
+  SLIDERS.forEach(([k, t, min, max, step, u]) => {
+    const row = document.createElement('div'); row.className = 'row';
+    row.innerHTML = '<span>' + t + '</span><input type="range" min="' + min + '" max="' + max + '" step="' + step + '"><output></output>';
+    const inp = row.querySelector('input'), out = row.querySelector('output');
+    inp.oninput = () => { stopAuto(); data[k] = Number(inp.value); sync(); save(); };
+    sliderEls[k] = { inp, out, u, step };
+    box.appendChild(row);
+  });
+  sync();
+}
+function sync() {
+  for (const k in sliderEls) {
+    const e = sliderEls[k], v = data[k];
+    if (document.activeElement !== e.inp) e.inp.value = v;
+    e.out.textContent = (e.step < 1 ? Number(v).toFixed(e.step < 0.1 ? 2 : 1) : Math.round(v)) + (e.u ? ' ' + e.u : '');
+  }
+  document.querySelectorAll('.seg').forEach((box) => { if (box._get) box.querySelectorAll('button').forEach((b) => b.classList.toggle('on', String(box._get()) === b.dataset.v)); });
+}
+function showApp() {
+  document.querySelectorAll('#tabs button').forEach((b) => b.classList.toggle('on', b.dataset.app === app));
+  document.querySelectorAll('.only').forEach((e) => { e.style.display = e.dataset.for !== app ? 'none' : e.classList.contains('row') ? 'grid' : 'block'; });
+  $('hudBox').style.display = app === 'info' ? 'block' : 'none';
+  $('pageBar').style.display = app === 'centre' ? 'flex' : 'none';
+  $('glMain').style.display = app === 'layouts' ? '' : 'none';
+  $('glCentre').style.display = app === 'centre' ? '' : 'none';
+  $('cap').textContent = app === 'layouts' ? '계기판 (1920×720): 레이아웃이 화면 전체를 덮음'
+    : app === 'centre' ? '계기판 (1920×720): 순정 계기판(모형)의 가운데 지도 자리(1088×480)에 페이지'
+    : '계기판 (1920×720): 순정 계기판(모형) + Waze 지도 위 패널';
+  buildSettings(); drawMock();
+}
+document.querySelectorAll('#tabs button').forEach((b) => { b.onclick = () => { app = b.dataset.app; save(); showApp(); }; });
+
+/* ---------- the stock cluster around the centre and Info (a sketch: the app draws only the middle) ---------- */
+function drawMock() {
+  const c = $('mock').getContext('2d');
+  c.clearRect(0, 0, 1920, 720);
+  if (app === 'layouts') return;
+  c.fillStyle = '#000'; c.fillRect(0, 0, 1920, 720);
+  const dial = (cx, label, max, step) => {
+    c.save(); c.translate(cx, 345);
+    c.strokeStyle = '#26323f'; c.lineWidth = 5; c.beginPath(); c.arc(0, 0, 178, Math.PI * 0.75, Math.PI * 2.25); c.stroke();
+    c.fillStyle = '#556678'; c.font = '600 24px Segoe UI, sans-serif'; c.textAlign = 'center'; c.textBaseline = 'middle';
+    for (let v = 0; v <= max; v += step) { const a = Math.PI * 0.75 + (v / max) * Math.PI * 1.5; c.fillText(String(v), Math.cos(a) * 142, Math.sin(a) * 142); }
+    c.fillStyle = '#3a4757'; c.font = '17px Segoe UI, sans-serif'; c.fillText(label, 0, 110);
+    c.restore();
+  };
+  dial(208, '순정 속도계 (모형)', 260, 40); dial(1712, '순정 rpm (모형)', 8, 1);
+}
+
+/* ---------- WebGL: one renderer per canvas ---------- */
+const VS = '#version 100\nattribute vec2 a_position;\nuniform mat4 u_mvp;\nvarying vec2 v_uv;\nvoid main() {\n    v_uv = vec2(a_position.x, 1.0 - a_position.y);\n    gl_Position = u_mvp * vec4(a_position, 0.0, 1.0);\n}';
+const fsSrc = [];
+const errors = new Set();
+function renderer(cv) {
+  const gl = cv.getContext('webgl', { premultipliedAlpha: false, preserveDrawingBuffer: true, alpha: true });
+  const sh = (type, src) => { const s = gl.createShader(type); gl.shaderSource(s, src); gl.compileShader(s);
+    if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) errors.add(gl.getShaderInfoLog(s) + '\n' + src.slice(0, 160)); return s; };
+  const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([0, 0, 1, 0, 0, 1, 1, 1]), gl.STATIC_DRAW);
+  const vs = sh(gl.VERTEX_SHADER, VS);
+  const progs = []; let tex = {}; const R = { assetVer: -1 };
+  const program = (id) => {
+    if (progs[id]) return progs[id];
+    const p = gl.createProgram(); gl.attachShader(p, vs); gl.attachShader(p, sh(gl.FRAGMENT_SHADER, fsSrc[id])); gl.linkProgram(p);
+    if (!gl.getProgramParameter(p, gl.LINK_STATUS)) { errors.add('link: ' + gl.getProgramInfoLog(p)); return (progs[id] = { bad: true }); }
+    return (progs[id] = { p, aloc: gl.getAttribLocation(p, 'a_position'), locs: {}, mvp: gl.getUniformLocation(p, 'u_mvp'), time: gl.getUniformLocation(p, 'u_time') });
+  };
+  const loc = (pr, n, arr) => { const k = n + (arr ? '[]' : ''); if (!(k in pr.locs)) pr.locs[k] = gl.getUniformLocation(pr.p, arr ? n + '[0]' : n) || gl.getUniformLocation(pr.p, n); return pr.locs[k]; };
+  R.assets = (assets, ver) => {
+    for (const k in tex) gl.deleteTexture(tex[k]);
+    tex = {};
+    for (const k in assets) {
+      const a = assets[k], bin = atob(a.px), px = new Uint8Array(bin.length);
+      for (let i = 0; i < bin.length; i++) px[i] = bin.charCodeAt(i);
+      const t = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, t); gl.pixelStorei(gl.UNPACK_ALIGNMENT, 1);
+      const fmt = a.rgba ? gl.RGBA : gl.LUMINANCE;
+      gl.texImage2D(gl.TEXTURE_2D, 0, fmt, a.w, a.h, 0, fmt, gl.UNSIGNED_BYTE, px);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      tex[k] = t;
+    }
+    R.assetVer = ver;
+  };
+  R.draw = (sc, clearAlpha) => {
+    const W = sc.w, H = sc.h;
+    gl.viewport(0, 0, W, H); gl.clearColor(0, 0, 0, clearAlpha); gl.clear(gl.COLOR_BUFFER_BIT);
+    gl.enable(gl.BLEND); gl.blendFuncSeparate(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA, gl.ONE, gl.ONE_MINUS_SRC_ALPHA);
+    const T = performance.now() / 1000;
+    for (const [x, y, w, h, id, uniforms, binds] of sc.quads) {
+      const pr = program(id); if (pr.bad) continue;
+      gl.useProgram(pr.p);
+      gl.enableVertexAttribArray(pr.aloc); gl.vertexAttribPointer(pr.aloc, 2, gl.FLOAT, false, 0, 0);
+      gl.uniformMatrix4fv(pr.mvp, false, new Float32Array([2 * w / W, 0, 0, 0, 0, 2 * h / H, 0, 0, 0, 0, 1, 0, 2 * x / W - 1, 1 - 2 * (y + h) / H, 0, 1]));
+      for (const n in uniforms) {
+        const u = uniforms[n], v = u.v, t = u.type, l = loc(pr, n, !!t); if (!l) continue;
+        const ww = t === 'vec4' ? 4 : t === 'vec3' ? 3 : t === 'vec2' ? 2 : v.length;
+        if (ww === 1) gl.uniform1fv(l, v); else if (ww === 2) gl.uniform2fv(l, v); else if (ww === 3) gl.uniform3fv(l, v); else gl.uniform4fv(l, v);
+      }
+      if (pr.time) gl.uniform1f(pr.time, T);
+      let unit = 0;
+      for (const s in binds) { gl.activeTexture(gl.TEXTURE0 + unit); gl.bindTexture(gl.TEXTURE_2D, tex[binds[s]]); gl.uniform1i(loc(pr, s), unit); unit++; }
+      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+    }
+  };
+  return R;
+}
+const RMain = renderer($('glMain')), RCentre = renderer($('glCentre'));
+
+/* ---------- Cluster Info's images (RGBA from its own canvas) ---------- */
+function blit(ctx, img, ox, oy, k) {
+  const bin = atob(img.px), px = new Uint8ClampedArray(bin.length);
+  for (let i = 0; i < bin.length; i++) px[i] = bin.charCodeAt(i);
+  const tmp = document.createElement('canvas'); tmp.width = img.w; tmp.height = img.h;
+  tmp.getContext('2d').putImageData(new ImageData(px, img.w, img.h), 0, 0);
+  ctx.save(); ctx.globalAlpha = img.opacity == null ? 1 : img.opacity;
+  ctx.drawImage(tmp, ox + img.x * k, oy + img.y * k, img.w * k, img.h * k); ctx.restore();
+}
+const pct = (v, of) => (v / of * 100) + '%';
+function place(el, r, W, H) { Object.assign(el.style, { left: pct(r.x, W), top: pct(r.y, H), width: pct(r.w, W), height: pct(r.h, H) }); }
+
+/* ---------- each frame ---------- */
+function overlays(f) {
+  const mapR = f.mapRect; lastMap = mapR;
+  place($('glCentre'), mapR, 1920, 720);
+  const strip = app !== 'layouts' || f.strip;
+  const st = $('strip'); st.style.display = strip ? 'flex' : 'none';
+  if (strip) {
+    st.style.top = (f.stripY / 720 * 100) + '%';
+    const c = settings().tempUnit === 'c', n = new Date(), hh = n.getHours(), mm = String(n.getMinutes()).padStart(2, '0');
+    $('sTime').textContent = settings().clock === '24' ? hh + ':' + mm : ((hh + 11) % 12 + 1) + ':' + mm;
+    $('sGear').textContent = data.stage === 'D' || data.stage === 'S' || data.stage === 'M' ? data.stage + (data.gear || '') : data.stage;
+    $('sTemp').textContent = (c ? Math.round(data.outside) : Math.round(data.outside * 9 / 5 + 32)) + (c ? '°C' : '°F');
+    $('sFuel').textContent = 'FUEL ' + Math.round(data.fuelPct) + '%';
+  }
+  const map = $('map');
+  const showMap = (app === 'layouts' && f.map) || (app === 'info' && extra.waze === 'cluster');
+  map.style.display = showMap ? 'flex' : 'none';
+  if (showMap) place(map, mapR, 1920, 720);
+  document.querySelectorAll('.mbox').forEach((e) => e.remove());
+  (f.mBoxes || []).forEach((b) => { const e = document.createElement('div'); e.className = 'mbox'; place(e, b, 1920, 720); $('cluster').appendChild(e); });
+  const o = $('ovl').getContext('2d'); o.clearRect(0, 0, 1920, 720);
+  const h = $('hudOvl').getContext('2d'); h.clearRect(0, 0, 800, 480);
+  if (app === 'info' && f.info) {
+    const I = f.info;
+    if (I.cluster) blit(o, I.cluster, mapR.x, mapR.y, 1);
+    const hm = $('hudMap'); hm.style.display = extra.waze === 'hud' ? 'flex' : 'none';
+    if (I.hudMap) place(hm, I.hudMap, 800, 480);
+    if (I.hud) blit(h, I.hud, 0, 0, 1);
+    (I.arrows || []).forEach((a) => blit(h, a, 0, 0, 1));
+    $('hudSpeed').innerHTML = Math.round(data.speed) + '<small>km/h</small>';
+  }
+  if (app === 'centre') pageButtons(f);
+}
+function pageButtons(f) {
+  const box = $('pages');
+  const key = (f.pages || []).join(',');
+  if (box._key !== key) {
+    box._key = key; box.innerHTML = '';
+    (f.pages || []).forEach((p) => { const b = document.createElement('button'); b.textContent = KO_PAGE[p] || p; b.dataset.v = p; b.onclick = () => { wantPage = p; publish(); }; box.appendChild(b); });
+  }
+  box.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === (wantPage || f.page)));
+  $('rot').textContent = f.rotate ? '(' + f.rotate + '초마다 자동 전환)' : '';
+}
+
+/* ---------- automatic drive ---------- */
+const KMH_PER_1000 = [0, 9, 15, 23, 31, 39, 48, 57, 66];
+let auto = { phase: 'idle', t: 0 };
+function stopAuto() { if (autoDrive) { autoDrive = false; $('drive').classList.remove('on'); $('drive').textContent = '▶ 자동 주행'; } }
+$('drive').onclick = () => { autoDrive = !autoDrive; $('drive').classList.toggle('on', autoDrive); $('drive').textContent = autoDrive ? '■ 자동 주행 멈춤' : '▶ 자동 주행'; if (autoDrive) auto = { phase: 'idle', t: 0 }; };
+function stepAuto(dt) {
+  auto.t += dt;
+  const d = data, near = (v, to, rate) => v + Math.max(-rate * dt, Math.min(rate * dt, to - v)), prev = d.speed;
+  if (auto.phase === 'idle') { Object.assign(d, { stage: 'P', gear: 0, speed: 0 }); d.rpm = near(d.rpm, 750, 3000); d.boostActual = near(d.boostActual, -0.6, 2); d.torque = near(d.torque, 20, 300); d.pedal = 0;
+    if (auto.t > 2) { auto = { phase: 'accel', t: 0 }; d.stage = 'D'; d.gear = 1; } }
+  else if (auto.phase === 'accel') {
+    d.rpm = Math.min(6300, d.rpm + 2600 * dt / Math.max(1, d.gear * 0.55)); d.speed = d.rpm / 1000 * KMH_PER_1000[d.gear];
+    d.boostActual = near(d.boostActual, 1.15, 3); d.torque = near(d.torque, 350, 900); d.pedal = near(d.pedal, 100, 400); d.timing = near(d.timing, 6, 20); d.hpfp = near(d.hpfp, 250, 400);
+    if (d.rpm >= 6200 && d.gear < 8) { d.gear++; d.rpm = d.speed / KMH_PER_1000[d.gear] * 1000; }
+    if (d.speed >= 150) auto = { phase: 'cruise', t: 0 };
+  } else if (auto.phase === 'cruise') {
+    while (d.gear < 8 && d.speed / KMH_PER_1000[d.gear] * 1000 > 2600) d.gear++;
+    d.speed = near(d.speed, 120, 15); d.rpm = d.speed / KMH_PER_1000[d.gear] * 1000;
+    d.boostActual = near(d.boostActual, 0.05, 2); d.torque = near(d.torque, 90, 600); d.pedal = near(d.pedal, 22, 200); d.timing = near(d.timing, 24, 20); d.hpfp = near(d.hpfp, 90, 300);
+    d.steer = 60 * Math.sin(auto.t * 1.3); d.yaw = 6 * Math.sin(auto.t * 1.3); d.gLat = 0.35 * Math.sin(auto.t * 1.3);
+    if (auto.t > 5) auto = { phase: 'brake', t: 0 };
+  } else if (auto.phase === 'brake') {
+    d.speed = Math.max(0, d.speed - 32 * dt);
+    while (d.gear > 1 && d.speed / KMH_PER_1000[d.gear] * 1000 < 1200) d.gear--;
+    d.rpm = Math.max(750, d.speed / KMH_PER_1000[d.gear] * 1000);
+    d.boostActual = near(d.boostActual, -0.65, 2); d.torque = near(d.torque, 0, 600); d.pedal = 0; d.timing = near(d.timing, 14, 20);
+    d.steer = near(d.steer, 0, 120); d.yaw = near(d.yaw, 0, 20); d.gLat = near(d.gLat, 0, 1);
+    if (d.speed <= 0) auto = { phase: 'idle', t: 0 };
+  }
+  d.gLong = Math.max(-1.2, Math.min(1.2, ((d.speed - prev) / 3.6 / Math.max(dt, 0.001)) / 9.81));
+  d.oil = near(d.oil, auto.phase === 'accel' ? 108 : 98, 0.6); d.coolant = near(d.coolant, auto.phase === 'accel' ? 96 : 90, 0.4);
+  d.iat = near(d.iat, auto.phase === 'accel' ? 42 : 30, 1.5); d.tyreT = near(d.tyreT, auto.phase === 'accel' ? 45 : 35, 0.5);
+  d.kw = auto.phase === 'accel' ? near(d.kw, 45, 60) : auto.phase === 'brake' ? near(d.kw, -25, 60) : near(d.kw, 3, 40);
+}
+
+/* ---------- the loop ---------- */
+let last = performance.now(), frames = 0, fpsT = last, fps = 0, lastStatus = 0;
+function carData() {
+  const d = Object.assign({}, data, { engineOn: data.rpm > 300, enginePower: data.rpm > 300 ? data.torque * data.rpm / 9549.3 : 0, boostTarget: Math.max(0, data.boostActual + 0.05), iatRise: Math.max(0, data.iat - data.outside),
+    kwOut: Math.max(0, data.kw), kwIn: Math.max(0, -data.kw), battMin: data.battTemp - 1, battMax: data.battTemp + 1, erangeEst: data.erange });
+  const P = data.tyreP, T = data.tyreT;
+  d.tyres = { p: { FL: P - 0.02, FR: P, RL: P + 0.1, RR: P + 0.08 }, t: { FL: T - 1, FR: T, RL: T + 2, RR: T + 1 } };
+  delete d.tyreP; delete d.tyreT;
+  return d;
+}
+async function loop() {
+  const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (autoDrive && VIEW !== 'display') { stepAuto(dt); sync(); }
+  const R = app === 'centre' ? RCentre : RMain;
+  try {
+    const body = { app, settings: settings(), data: carData(), extra: Object.assign({}, extra, { page: wantPage }), assetVer: R.assetVer, fsKnown: fsSrc.length };
+    const r = await fetch('/frame', { method: 'POST', body: JSON.stringify(body) });
+    if (!r.ok) throw new Error(await r.text());
+    const f = await r.json();
+    if (f.app !== app) { requestAnimationFrame(loop); return; }
+    if (wantPage && f.page === wantPage) wantPage = null;
+    if (f.fsNew) f.fsNew.forEach((src, i) => { fsSrc[f.fsFrom + i] = src; });
+    if (f.scene) { if (f.scene.assets) R.assets(f.scene.assets, f.scene.assetVer); R.draw(f.scene, app === 'layouts' && f.map ? 0 : app === 'layouts' ? 1 : 0); }
+    overlays(f);
+    frames++; if (now - fpsT > 1000) { fps = frames; frames = 0; fpsT = now; }
+    $('stat').textContent = (f.look ? '색상: ' + f.look + ' · ' : '') + (f.layers != null ? '레이어 ' + f.layers + ' · ' : '') + fps + ' fps';
+    const e = $('err'); if (errors.size) { e.style.display = 'block'; e.textContent = '셰이더 오류:\n' + Array.from(errors).join('\n\n'); } else e.style.display = 'none';
+    if (bc && VIEW === 'display' && now - lastStatus > 200) {
+      lastStatus = now;
+      bc.postMessage({ type: 'status', app: f.app, page: f.page, pages: f.pages, rotate: f.rotate, look: f.look, layers: f.layers, fps, err: errors.size ? Array.from(errors).join('\n').slice(0, 300) : '' });
+    }
+  } catch (err) {
+    const e = $('err'); e.style.display = 'block'; e.textContent = '데모 서버 오류: ' + (err && err.message || err) + '\n(창을 닫았다면 cluster_demo.bat을 다시 실행하세요)';
+    await new Promise((res) => setTimeout(res, 1000));
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ---------- buttons ---------- */
+function shot() {
+  const out = document.createElement('canvas'); out.width = 1920; out.height = 720;
+  const c = out.getContext('2d'); c.fillStyle = '#000'; c.fillRect(0, 0, 1920, 720);
+  c.drawImage($('mock'), 0, 0);
+  if (app === 'layouts') c.drawImage($('glMain'), 0, 0);
+  if (app === 'centre') c.drawImage($('glCentre'), lastMap.x, lastMap.y);
+  c.drawImage($('ovl'), 0, 0);
+  out.toBlob((b) => { const a = document.createElement('a'); a.href = URL.createObjectURL(b);
+    a.download = app + '_' + (settings().layout || '') + '_' + new Date().toISOString().slice(0, 19).replace(/[:T]/g, '-') + '.png'; a.click(); });
+}
+$('shot').onclick = () => { if (VIEW === 'controls') { if (bc) bc.postMessage({ type: 'shot' }); } else shot(); };
+$('openDisp').onclick = () => { window.open(location.pathname + '?view=display', 'clusterDisplay', 'width=1700,height=760'); };
+
+/* ---------- the two windows talking ---------- */
+let lastSeen = 0;
+if (bc) bc.onmessage = (ev) => {
+  const m = ev.data || {};
+  if (VIEW === 'display') {
+    if (m.type === 'state') {
+      const appChanged = m.app !== app;
+      app = m.app; settingsByApp = m.settings || settingsByApp; data = m.data || data; extra = m.extra || extra;
+      if (m.wantPage) wantPage = m.wantPage;
+      if (appChanged && META) showApp();
+    } else if (m.type === 'shot') shot();
+    else if (m.type === 'hello') lastStatus = 0;
+  } else if (VIEW === 'controls' && m.type === 'status') {
+    lastSeen = performance.now();
+    if (m.app !== app) return;
+    if (wantPage && m.page === wantPage) wantPage = null;
+    if (app === 'centre') pageButtons(m);
+    $('stat').textContent = (m.look ? '색상: ' + m.look + ' · ' : '') + (m.layers != null ? '레이어 ' + m.layers + ' · ' : '') + m.fps + ' fps' + (m.err ? ' · 셰이더 오류 (디스플레이 창 확인)' : '');
+  }
+};
+/* the controls window: the automatic drive runs here, and every change goes to the display window */
+function controlsLoop() {
+  const now = performance.now(), dt = Math.min(0.1, (now - last) / 1000); last = now;
+  if (autoDrive) { stepAuto(dt); sync(); publish(); }
+  const ok = now - lastSeen < 1500, l = $('link');
+  l.classList.toggle('ok', ok); l.textContent = ok ? '디스플레이 창 연결됨' : '디스플레이 창 없음 — 🖥 버튼으로 여세요';
+  requestAnimationFrame(controlsLoop);
+}
+setInterval(() => { if (VIEW === 'controls') publish(); }, 1000);   // (a display window opened later gets the state)
+$('stages').addEventListener('dblclick', () => { if (VIEW === 'display') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen().catch(() => {}); } });
+$('resetSet').onclick = () => { settingsByApp[app] = {}; buildSettings(); save(); };
+$('resetData').onclick = () => { stopAuto(); data = Object.assign({}, DATA0); extra = Object.assign({}, EXTRA0); sync(); save(); };
+
+fetch('/meta').then((r) => r.json()).then((m) => {
+  META = m;
+  const a = m.apps;
+  $('ver').textContent = 'Layouts ' + (a.layouts.version || '?') + ' · Centre ' + (a.centre.version || '?') + ' · Info ' + (a.info.version || '?') + ' · 데모 ' + m.demo;
+  buildData(); showApp(); save();
+  if (VIEW === 'controls') { if (bc) bc.postMessage({ type: 'hello' }); controlsLoop(); } else loop();
+  document.title = VIEW === 'display' ? '계기판 디스플레이 (데모)' : VIEW === 'controls' ? '계기판 데모 — 설정' : document.title;
+});
+</script>
+</body>
+</html>

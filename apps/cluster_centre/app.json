@@ -84,6 +84,10 @@
     "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
       "_optional": "the cruise control's set speed",
       "functionalLibraryData": "rs"
+    },
+    "de.bmw.powertrain.AcceleratorPedal": {
+      "_optional": "the accelerator pedal",
+      "AngleAcceleratorPedal": "s"
     }
   },
   "screens": [
@@ -120,7 +124,7 @@
       "key": "vehicle",
       "label": "Vehicle",
       "type": "choice",
-      "default": "auto",
+      "default": "ice",
       "options": [
         [
           "auto",
@@ -141,7 +145,7 @@
       "label": "Fuel tank size",
       "type": "number",
       "unit": "L",
-      "default": 69,
+      "default": 59,
       "steps": [
         40,
         42,
@@ -613,7 +617,7 @@
       "key": "tempUnit",
       "label": "Temperature unit",
       "type": "choice",
-      "default": "f",
+      "default": "c",
       "options": [
         [
           "f",
@@ -649,7 +653,7 @@
       "key": "speedUnit",
       "label": "Speed and distance unit",
       "type": "choice",
-      "default": "mph",
+      "default": "kmh",
       "options": [
         [
           "mph",
@@ -665,7 +669,7 @@
       "key": "torqueUnit",
       "label": "Torque unit",
       "type": "choice",
-      "default": "lbft",
+      "default": "kgm",
       "options": [
         [
           "lbft",
@@ -678,6 +682,26 @@
         [
           "kgm",
           "kgm"
+        ]
+      ]
+    },
+    {
+      "key": "powerUnit",
+      "label": "Power unit (the engine's power)",
+      "type": "choice",
+      "default": "hp",
+      "options": [
+        [
+          "hp",
+          "hp"
+        ],
+        [
+          "ps",
+          "PS"
+        ],
+        [
+          "kw",
+          "kW"
         ]
       ]
     },
@@ -886,6 +910,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -980,6 +1012,14 @@
         [
           "torque",
           "Engine torque"
+        ],
+        [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
         ],
         [
           "gLat",
@@ -1078,6 +1118,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -1172,6 +1220,14 @@
         [
           "torque",
           "Engine torque"
+        ],
+        [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
         ],
         [
           "gLat",
@@ -1270,6 +1326,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -1364,6 +1428,14 @@
         [
           "torque",
           "Engine torque"
+        ],
+        [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
         ],
         [
           "gLat",
@@ -1510,6 +1582,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -1604,6 +1684,14 @@
         [
           "torque",
           "Engine torque"
+        ],
+        [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
         ],
         [
           "gLat",
@@ -1702,6 +1790,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -1796,6 +1892,14 @@
         [
           "torque",
           "Engine torque"
+        ],
+        [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
         ],
         [
           "gLat",
@@ -1894,6 +1998,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -1990,6 +2102,14 @@
           "Engine torque"
         ],
         [
+          "enginePower",
+          "Engine power"
+        ],
+        [
+          "pedal",
+          "Accelerator pedal"
+        ],
+        [
           "gLat",
           "Lateral g"
         ],
@@ -2039,7 +2159,7 @@
       "key": "timeZone",
       "label": "Time zone (the clock)",
       "type": "choice",
-      "default": "eastern",
+      "default": "utc+9",
       "options": [
         [
           "eastern",
@@ -2217,6 +2337,13 @@
         "signed16": true,
         "invalid": 32767,
         "note": "degrees at the wheel, negative to the right as BMW counts; the CAN steering-angle factor, signed 16 bit, not yet confirmed on this field: raw values on the Signals page and in the log"
+      },
+      "pedal": {
+        "factor": 0.025,
+        "offset": 0,
+        "invalid": 65535,
+        "invalidFrom": 4095,
+        "note": "0.025 % a bit, to confirm on the car (raw values in the log, 'raw AngleAcceleratorPedal'); a value that never goes past 105 is taken as % already"
       }
     },
     "dme": {

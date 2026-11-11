@@ -127,9 +127,10 @@ LAYOUTS.forEach((L) => {
             // (intake air on a petrol or diesel car) and the gearbox oil's
             // (each only where the layout doesn't show it already)
             const has = (re) => list.some((p) => re.test(p.key));
-            const hasGbox = has(/^gbox$/), hasBatt = o.vehicle !== 'ice' && !C0.engineFocus(o) && has(/^(battT|c_battV|batt)$/);
+            const ice = o.vehicle === 'ice' || C0.engineFocus(o);
+            const hasGbox = has(/^gbox$/) && (!ice || (o.infoB || 'gearbox') === 'gearbox'), hasBatt = o.vehicle !== 'ice' && !C0.engineFocus(o) && has(/^(battT|c_battV|batt)$/);
             list = list.filter((p) => !((p.key === 'outside' && hasGbox) || (p.key === 'clock' && hasBatt)))
-                .map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB(o) }) : p));
+                .map((p) => (p.key === 'clock' ? Object.assign({}, p, { text: C0.stripInfoA(o, p) }) : p.key === 'outside' ? Object.assign({}, p, { text: C0.stripInfoB(o, p) }) : p));
             // the gauges above everything but the backgrounds
             // (only with the readings in the centre: with the map or the stock centre the side columns reach
             // down to the strip, and keep their own charge and fuel bars)

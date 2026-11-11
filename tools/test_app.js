@@ -33,6 +33,8 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
 (async () => {
     const S = {}, changes = [];
     SPEC.settings.forEach((s) => { S[s.key] = s.default; });
+    // (the personal build's defaults are Korean and petrol; these checks are written for the original's)
+    Object.assign(S, { vehicle: 'auto', tankLitres: 69, speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'auto', timeZone: 'eastern' });
     const handlers = {}, clicks = {}, warns = [];
     let pages = 0;
     const ctx = {

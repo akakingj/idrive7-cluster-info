@@ -6,7 +6,7 @@
  */
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 
-/* kinds: temp (°C), press (bar), speed (km/h), rpm, pct, kw, nm, deg, km, none; icon: shaders.js ICON_FS */
+/* kinds: temp (°C), press (bar), speed (km/h), rpm, pct, kw, nm, enginePower (kW: hp, PS or kW), deg, km, none; icon: shaders.js ICON_FS */
 const READINGS = {
     oil: { title: 'Engine oil temperature', short: 'OIL', icon: 1, kind: 'temp', min: 40, max: 140, warnHigh: 130, cold: 60 },
     coolant: { title: 'Coolant temperature', short: 'COOLANT', icon: 0, kind: 'temp', min: 40, max: 130, warnHigh: 118, cold: 60 },
@@ -22,6 +22,8 @@ const READINGS = {
     rpm: { title: 'Engine speed', short: 'RPM', icon: 13, kind: 'rpm', min: 0, max: 7000 },
     speed: { title: 'Speed', short: 'SPEED', icon: 13, kind: 'speed', min: 0, max: 250 },
     torque: { title: 'Engine torque', short: 'TORQUE', icon: 11, kind: 'nm', min: 0, max: 600 },
+    enginePower: { title: 'Engine power', short: 'POWER', icon: 11, kind: 'enginePower', min: 0, max: 200 },
+    pedal: { title: 'Accelerator pedal', short: 'PEDAL', icon: 13, kind: 'pct', min: 0, max: 100 },
     gLat: { title: 'Lateral g', short: 'LAT G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     gLong: { title: 'Longitudinal g', short: 'LONG G', icon: 8, kind: 'g', min: -1.2, max: 1.2 },
     soc: { title: 'Battery charge', short: 'CHARGE', icon: 6, kind: 'pct', min: 0, max: 100, warnLow: 10 },
@@ -31,7 +33,7 @@ const READINGS = {
     frange: { title: 'Fuel range', short: 'FUEL RANGE', icon: 4, kind: 'km', min: 0, max: 700, warnLow: 50 },
 };
 
-/** Units now: { temp: 'f' | 'c', press: 'bar' | 'psi' | 'kpa', speed: 'mph' | 'kmh', torque: 'lbft' | 'nm' | 'kgm' }. */
+/** Units now: { temp: 'f' | 'c', press: 'bar' | 'psi' | 'kpa', speed: 'mph' | 'kmh', torque: 'lbft' | 'nm' | 'kgm', power: 'hp' | 'ps' | 'kw' }. */
 function convert(kind, v, u) {
     if (!isNum(v)) return v;
     if (kind === 'temp') return u.temp === 'f' ? v * 9 / 5 + 32 : v;
@@ -39,11 +41,12 @@ function convert(kind, v, u) {
     if (kind === 'press') return u.press === 'psi' ? v * 14.5038 : u.press === 'kpa' ? v * 100 : v;
     if (kind === 'speed' || kind === 'km') return u.speed === 'mph' ? v / 1.609344 : v;
     if (kind === 'nm') return u.torque === 'lbft' ? v * 0.737562 : u.torque === 'kgm' ? v / 9.80665 : v;
+    if (kind === 'enginePower') return u.power === 'kw' ? v : u.power === 'ps' ? v * 1.35962 : v * 1.34102;
     return v;
 }
 function unitText(kind, u) {
     return { temp: '°' + (u.temp === 'f' ? 'F' : 'C'), tempDelta: '°' + (u.temp === 'f' ? 'F' : 'C'), press: u.press === 'psi' ? 'PSI' : u.press === 'kpa' ? 'KPA' : 'BAR',
-        speed: u.speed === 'mph' ? 'mph' : 'km/h', km: u.speed === 'mph' ? 'mi' : 'km', rpm: 'rpm', pct: '%', kw: 'kW', nm: u.torque === 'lbft' ? 'lb-ft' : u.torque === 'kgm' ? 'kgm' : 'Nm', deg: '°', g: 'G' }[kind] || '';
+        speed: u.speed === 'mph' ? 'mph' : 'km/h', km: u.speed === 'mph' ? 'mi' : 'km', rpm: 'rpm', pct: '%', kw: 'kW', nm: u.torque === 'lbft' ? 'lb-ft' : u.torque === 'kgm' ? 'kgm' : 'Nm', enginePower: u.power === 'kw' ? 'kW' : u.power === 'ps' ? 'PS' : 'hp', deg: '°', g: 'G' }[kind] || '';
 }
 /** Decimals for a kind in a unit. */
 function decimals(kind, v, u) {

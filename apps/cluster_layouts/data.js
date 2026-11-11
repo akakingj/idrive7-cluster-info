@@ -260,6 +260,20 @@ function startData(ctx, opts) {
     watch('de.bmw.chassis.SteeringAngle', {
         ActualSteeringAngleDriver: (v) => { fes('ActualSteeringAngleDriver')(v); const a = sc('steer', numberIn(v, /angle|winkel/i)); if (isNum(a) && Math.abs(a) < 900) put('steer', a); },
     }, 'steering angle');
+    let pedalRaw = 0;
+    // the accelerator pedal, 0..100 % (as installed apps declare it; scaling in config.scaling 'pedal', to confirm
+    // on the car: its raw values go to the log, 'raw AngleAcceleratorPedal')
+    watch('de.bmw.powertrain.AcceleratorPedal', {
+        AngleAcceleratorPedal: (v) => {
+            fes('AngleAcceleratorPedal')(v);
+            const r = numberIn(v, /pedal|angle|accel|value/i);
+            if (!isNum(r) || r < 0 || (S.pedal && isNum(S.pedal.invalidFrom) && r >= S.pedal.invalidFrom)) return;
+            // raw (0.025 % a bit) or already in %: raw once it has gone past 105, which a percentage never does
+            pedalRaw = Math.max(pedalRaw, r);
+            const a = pedalRaw > 105 ? sc('pedal', r) : r;
+            if (isNum(a) && a <= 105) put('pedal', Math.max(0, Math.min(100, a)));
+        },
+    }, 'accelerator pedal');
     watch('de.bmw.infotainment.vehicle.CDS2', {
         statusYawVelocityVehicle: (v) => { fes('statusYawVelocityVehicle')(v); const y = sc('yaw', numberIn(v, /yaw|gier|velocity/i)); if (isNum(y) && Math.abs(y) < 160) put('yaw', y); },
     }, 'yaw rate');
@@ -459,10 +473,13 @@ function startData(ctx, opts) {
                 .forEach((k) => { if (!d.demo && fresh(k, 60000)) o[k] = x[k]; });
             // boost: the engine unit's (fast, while a layout wants it), else the car's sport display signal
             if (!isNum(o.boostActual) && !d.demo && fresh('boostCar', 5000)) o.boostActual = x.boostCar;
+            if (!d.demo && fresh('pedal', 3000)) o.pedal = x.pedal;
             if (d.demo) Object.assign(o, demo(d));
             if (isNum(o.iat) && isNum(o.outside)) o.iatRise = o.iat - o.outside;
             if (isNum(o.battTemp) === false && p.battery !== undefined) o.battTemp = p.battery;
             o.engineOn = isNum(o.rpm) ? o.rpm > 300 : undefined;
+            // the engine's power (kW) from its own torque (the crankshaft's, FES) and speed
+            if (isNum(o.torque) && isNum(o.rpm)) o.enginePower = o.engineOn ? o.torque * o.rpm / 9549.3 : 0;
             // no electric range from the car or an app yet: an estimate from the charge and the range a full battery
             // gives (Settings > Electric range when full, miles), shown with '~'
             if (!isNum(o.erange) && isNum(o.soc) && !ice()) {
@@ -496,7 +513,7 @@ function demo(d) {
     const t = Date.now() / 1000, rpm = d.rpm || 1500;
     return {
         outside: 9, gearbox: 72 + 4 * Math.sin(t / 50), iat: 34 + 6 * Math.sin(t / 20), hpfp: 50 + rpm / 40, lpfp: 5.2 + 0.2 * Math.sin(t),
-        timing: 18 - rpm / 800, boostTarget: Math.max(0, (rpm - 1500) / 4000), boostActual: Math.max(0, (rpm - 1600) / 4100),
+        timing: 18 - rpm / 800, pedal: Math.max(0, Math.min(100, (isNum(d.torque) ? d.torque : 40) / 4.2)), boostTarget: Math.max(0, (rpm - 1500) / 4000), boostActual: Math.max(0, (rpm - 1600) / 4100),
         battTemp: 27, battMin: 25, battMax: 29, soc: 64, kw: -12 + 25 * Math.sin(t / 7), pdDrive: 60, pdClimate: 25, pdSeats: 15,
         erange: 29, frange: 520, fuelLevel: 38,
         tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } },

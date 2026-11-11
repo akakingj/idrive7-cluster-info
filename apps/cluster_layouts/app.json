@@ -113,6 +113,10 @@
     "de.bmw.infotainment.displaydataserver.DisplayDataServer": {
       "_optional": "the cruise control's set speed",
       "functionalLibraryData": "rs"
+    },
+    "de.bmw.powertrain.AcceleratorPedal": {
+      "_optional": "the accelerator pedal (Readouts: Accelerator pedal)",
+      "AngleAcceleratorPedal": "s"
     }
   },
   "screens": [
@@ -145,7 +149,7 @@
       "key": "vehicle",
       "label": "Vehicle",
       "type": "choice",
-      "default": "auto",
+      "default": "ice",
       "options": [
         [
           "auto",
@@ -166,7 +170,7 @@
       "label": "Fuel tank size",
       "type": "number",
       "unit": "L",
-      "default": 69,
+      "default": 59,
       "steps": [
         40,
         42,
@@ -406,7 +410,7 @@
       "key": "speedUnit",
       "label": "Speed unit",
       "type": "choice",
-      "default": "mph",
+      "default": "kmh",
       "options": [
         [
           "mph",
@@ -422,7 +426,7 @@
       "key": "tempUnit",
       "label": "Temperature unit",
       "type": "choice",
-      "default": "f",
+      "default": "c",
       "options": [
         [
           "f",
@@ -438,7 +442,7 @@
       "key": "torqueUnit",
       "label": "Torque unit",
       "type": "choice",
-      "default": "nm",
+      "default": "kgm",
       "options": [
         [
           "nm",
@@ -458,7 +462,7 @@
       "key": "pressUnit",
       "label": "Pressure unit",
       "type": "choice",
-      "default": "auto",
+      "default": "psi",
       "options": [
         [
           "auto",
@@ -475,6 +479,166 @@
         [
           "kpa",
           "kPa"
+        ]
+      ]
+    },
+    {
+      "key": "powerUnit",
+      "label": "Power unit (the engine's power)",
+      "type": "choice",
+      "default": "hp",
+      "options": [
+        [
+          "hp",
+          "hp"
+        ],
+        [
+          "ps",
+          "PS"
+        ],
+        [
+          "kw",
+          "kW"
+        ]
+      ]
+    },
+    {
+      "key": "infoA",
+      "label": "Readout 1 (petrol or diesel: top left of the centre display, where the time was over the car's own bottom strip)",
+      "type": "choice",
+      "default": "iat",
+      "options": [
+        [
+          "off",
+          "Nothing"
+        ],
+        [
+          "iat",
+          "Intake air temperature"
+        ],
+        [
+          "gearbox",
+          "Gearbox oil temperature"
+        ],
+        [
+          "oil",
+          "Engine oil temperature"
+        ],
+        [
+          "coolant",
+          "Coolant temperature"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "power",
+          "Engine power (from its torque and speed)"
+        ],
+        [
+          "torque",
+          "Engine torque"
+        ],
+        [
+          "throttle",
+          "Accelerator pedal (0 - 100 %)"
+        ],
+        [
+          "timing",
+          "Ignition timing"
+        ]
+      ]
+    },
+    {
+      "key": "infoB",
+      "label": "Readout 2 (top right, where the outside temperature was)",
+      "type": "choice",
+      "default": "gearbox",
+      "options": [
+        [
+          "off",
+          "Nothing"
+        ],
+        [
+          "iat",
+          "Intake air temperature"
+        ],
+        [
+          "gearbox",
+          "Gearbox oil temperature"
+        ],
+        [
+          "oil",
+          "Engine oil temperature"
+        ],
+        [
+          "coolant",
+          "Coolant temperature"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "power",
+          "Engine power (from its torque and speed)"
+        ],
+        [
+          "torque",
+          "Engine torque"
+        ],
+        [
+          "throttle",
+          "Accelerator pedal (0 - 100 %)"
+        ],
+        [
+          "timing",
+          "Ignition timing"
+        ]
+      ]
+    },
+    {
+      "key": "infoMain",
+      "label": "Main readout (petrol or diesel: under the digital speed, in place of the engine torque)",
+      "type": "choice",
+      "default": "torque",
+      "options": [
+        [
+          "iat",
+          "Intake air temperature"
+        ],
+        [
+          "gearbox",
+          "Gearbox oil temperature"
+        ],
+        [
+          "oil",
+          "Engine oil temperature"
+        ],
+        [
+          "coolant",
+          "Coolant temperature"
+        ],
+        [
+          "boost",
+          "Boost"
+        ],
+        [
+          "power",
+          "Engine power (from its torque and speed)"
+        ],
+        [
+          "torque",
+          "Engine torque"
+        ],
+        [
+          "throttle",
+          "Accelerator pedal (0 - 100 %)"
+        ],
+        [
+          "timing",
+          "Ignition timing"
         ]
       ]
     },
@@ -543,7 +707,7 @@
       "key": "timeZone",
       "label": "Time zone (the clock)",
       "type": "choice",
-      "default": "eastern",
+      "default": "utc+9",
       "options": [
         [
           "eastern",
@@ -721,6 +885,13 @@
         "signed16": true,
         "invalid": 32767,
         "note": "degrees at the wheel, negative to the right as BMW counts; the CAN steering-angle factor, signed 16 bit, not yet confirmed on this field: raw values on the Signals page and in the log"
+      },
+      "pedal": {
+        "factor": 0.025,
+        "offset": 0,
+        "invalid": 65535,
+        "invalidFrom": 4095,
+        "note": "0.025 % a bit, to confirm on the car (raw values in the log, 'raw AngleAcceleratorPedal'); a value that never goes past 105 is taken as % already"
       }
     },
     "dme": {

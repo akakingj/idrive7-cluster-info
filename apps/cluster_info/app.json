@@ -85,7 +85,7 @@
       "key": "slot1",
       "label": "Panel: first item",
       "type": "choice",
-      "default": "power",
+      "default": "boost",
       "options": [
         [
           "none",
@@ -129,7 +129,7 @@
       "key": "slot2",
       "label": "Panel: second item",
       "type": "choice",
-      "default": "battery",
+      "default": "torque",
       "options": [
         [
           "none",
@@ -301,7 +301,7 @@
       "key": "tempUnit",
       "label": "Temperature unit",
       "type": "choice",
-      "default": "f",
+      "default": "c",
       "options": [
         [
           "f",
@@ -317,7 +317,7 @@
       "key": "torqueUnit",
       "label": "Torque unit",
       "type": "choice",
-      "default": "nm",
+      "default": "kgm",
       "options": [
         [
           "nm",
@@ -337,7 +337,7 @@
       "key": "pressUnit",
       "label": "Pressure unit",
       "type": "choice",
-      "default": "auto",
+      "default": "psi",
       "options": [
         [
           "auto",

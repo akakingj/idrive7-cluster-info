@@ -162,10 +162,13 @@ const tachValue = (o) => (d) => {
 };
 const tachRange = (o, s) => (d) => (electric(o, d) ? [-kwRange(d).in, kwDialScale(kwRange(d).out).max] : [0, s.max]);
 /* The readings put where the time and outside temperature were, with the car's own bottom strip (which shows
- * both): the battery's temperature (a plug-in hybrid; intake air on a petrol or diesel car) and the gearbox oil's. */
-const stripInfoA = (o) => (o.vehicle === 'ice' || engineFocus(o)
-    ? (d) => 'INTAKE ' + tempText(o, d.iat) : (d) => 'BATT ' + tempText(o, d.battTemp));
-const stripInfoB = (o) => (d) => 'GEARBOX ' + tempText(o, d.gearbox);
+ * both): on a petrol or diesel car the two picked in Settings > Readout 1 / 2 (intake air and the gearbox oil's
+ * by default), on a plug-in hybrid the battery's temperature and the gearbox oil's. box: the piece's { w, h }: the
+ * long names where they fit ('INTAKE AIR 31°'), else the short ('IAT 31°'). */
+const stripInfoA = (o, box) => (o.vehicle === 'ice' || engineFocus(o)
+    ? readout(o, o.infoA || 'iat', box) : (d) => 'BATT ' + tempText(o, d.battTemp));
+const stripInfoB = (o, box) => (o.vehicle === 'ice' || engineFocus(o)
+    ? readout(o, o.infoB || 'gearbox', box) : (d) => 'GEARBOX ' + tempText(o, d.gearbox));
 
 /*
  * A tach's power meter (a plug-in hybrid's eDrive scale): an inner arc across the top of the tach, 0 a quarter
@@ -248,10 +251,52 @@ const torqueText = (o) => (d) => (isNum(d.torque) ? torqueNum(o, d.torque) + ' '
 const timingText = (d) => (isNum(d.timing) ? d.timing.toFixed(1) + '°' : '--');
 /** Boost (bar over atmosphere) 0..1.6 as 0..1. */
 const boostFrac = (d) => (d.engineOn === false || !isNum(d.boostActual) ? 0 : Math.max(0, Math.min(1, d.boostActual / 1.6)));
+/** The engine's power (kW, data.js: its torque x its speed) in Settings > Power unit: hp (the default), PS or kW. */
+const powerOf = (o) => (o && (o.powerUnit === 'ps' || o.powerUnit === 'kw') ? o.powerUnit : 'hp');
+const powerNum = (o, kw) => (!isNum(kw) ? '--' : String(Math.round(powerOf(o) === 'kw' ? kw : kw * (powerOf(o) === 'ps' ? 1.35962 : 1.34102))));
+const powerUnitText = (o) => ({ hp: 'hp', ps: 'PS', kw: 'kW' })[powerOf(o)];
+const tempOf = (k) => (o, d) => tempText(o, d[k]);
+const numOrOff = (f) => (o, d) => (d.engineOn === false ? 'OFF' : f(o, d));
+/*
+ * The readouts a petrol or diesel car's displays can pick (Settings > Readout 1, Readout 2, Main readout):
+ * short: the name where room is short; long: where there is room; num: the figures; unit: after them (none for
+ * the temperatures and the pedal, whose figures carry theirs); frac: 0..1 for a bar under it; needs: what the engine
+ * unit must read for it (data.js).
+ */
+const READOUTS = {
+    iat: { short: 'IAT', long: 'INTAKE AIR', num: tempOf('iat'), frac: (d) => (isNum(d.iat) ? d.iat / 80 : 0), needs: ['iat'] },
+    gearbox: { short: 'GBX', long: 'GEARBOX OIL', num: tempOf('gearbox'), frac: (d) => (isNum(d.gearbox) ? (d.gearbox - 40) / 90 : 0), needs: ['gearbox'] },
+    oil: { short: 'OIL', long: 'ENGINE OIL', num: tempOf('oil'), frac: (d) => (isNum(d.oil) ? (d.oil - 40) / 100 : 0) },
+    coolant: { short: 'CLT', long: 'COOLANT', num: tempOf('coolant'), frac: (d) => (isNum(d.coolant) ? (d.coolant - 40) / 90 : 0) },
+    boost: { short: 'BST', long: 'BOOST', num: numOrOff((o, d) => pressNum(o, d.boostActual)), unit: (o) => pressLabel(o), frac: (d) => boostFrac(d), needs: ['boostActual', 'boostTarget'] },
+    power: { short: (o) => powerUnitText(o).toUpperCase(), long: 'ENGINE POWER', num: (o, d) => powerNum(o, d.enginePower), unit: (o) => powerUnitText(o), frac: (d) => (isNum(d.enginePower) ? d.enginePower / 200 : 0) },
+    torque: { short: 'TQ', long: 'ENGINE TORQUE', num: (o, d) => torqueNum(o, d.torque), unit: (o) => torqueUnit(o), frac: (d) => (isNum(d.torque) ? d.torque / 450 : 0) },
+    throttle: { short: 'THR', long: 'THROTTLE', num: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), frac: (d) => (isNum(d.pedal) ? d.pedal / 100 : 0) },
+    timing: { short: 'TIM', long: 'TIMING', num: (o, d) => timingText(d), frac: (d) => (isNum(d.timing) ? (d.timing + 10) / 50 : 0), needs: ['timing'] },
+};
+const readoutOf = (k) => READOUTS[k] || null;
+const nameOf = (r, o, long) => { const n = long ? r.long : r.short; return typeof n === 'function' ? n(o) : n; };
+/** A readout on one line, its name first: 'IAT 31°', 'BST 14.5' ('INTAKE AIR 31°', 'BOOST 14.5 psi' where it
+ * fits: a box with room for its longest form). key 'off': nothing. */
+function readout(o, key, box) {
+    const r = readoutOf(key);
+    if (!r) return '';
+    // (about 0.6 of the height a character, as the bold face sets capitals and figures)
+    const room = box && box.w && box.h ? box.w / (box.h * 0.6) : 0;
+    const long = room >= nameOf(r, o, true).length + 10;
+    return (d) => nameOf(r, o, long) + ' ' + r.num(o, d) + (long && r.unit && r.num(o, d) !== '--' && r.num(o, d) !== 'OFF' ? ' ' + r.unit(o) : '');
+}
+const mainKey = (o) => (readoutOf(o && o.infoMain) ? o.infoMain : 'torque');
 const focus = {
-    power: (o) => (engineFocus(o) ? torqueText(o) : kwText),
-    powerLabel: (o, long) => (engineFocus(o) ? (long ? 'ENGINE TORQUE' : 'TORQUE') : (long ? 'BATTERY POWER' : 'POWER')),
-    /** 0..1 for the power bar: torque to 450 Nm, or none (the eDrive layouts draw their own centre-zero bar) */
+    /** a petrol or diesel car's main readout (Settings > Main readout: the engine torque by default), with its unit */
+    power: (o) => {
+        if (!engineFocus(o)) return kwText;
+        const r = readoutOf(mainKey(o));
+        return (d) => { const n = r.num(o, d); return n + (r.unit && n !== '--' && n !== 'OFF' ? ' ' + r.unit(o) : ''); };
+    },
+    powerLabel: (o, long) => (engineFocus(o) ? nameOf(readoutOf(mainKey(o)), o, true).replace('ENGINE ', long ? 'ENGINE ' : '') : (long ? 'BATTERY POWER' : 'POWER')),
+    /** 0..1 for the main readout's bar (the torque to 450 Nm by default), or none (the eDrive layouts draw their own centre-zero bar) */
+    mainFrac: (o) => { const r = readoutOf(mainKey(o)); return (d) => Math.max(0, Math.min(1, r.frac(d) || 0)); },
     torqueFrac: (d) => (isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : 0),
     charge: (o) => (engineFocus(o) ? timingText : socText),
     chargeLabel: (o) => (engineFocus(o) ? 'TIMING' : 'CHARGE'),
@@ -261,7 +306,7 @@ const focus = {
     both: (o) => (engineFocus(o) ? (d) => boostText(o, d) + '  ' + timingText(d) : (d) => erangeText(o, d) + '  ' + socText(d)),
     bar: (o) => (engineFocus(o) ? boostFrac : (d) => (isNum(d.soc) ? d.soc / 100 : 0)),
     /** what the engine readings need read from the engine unit */
-    needs: (o) => (engineFocus(o) ? ['boostActual', 'boostTarget', 'timing', 'hpfp'] : []),
+    needs: (o) => (engineFocus(o) ? ['boostActual', 'boostTarget', 'timing', 'hpfp'].concat(...[o.infoA || 'iat', o.infoB || 'gearbox', mainKey(o)].map((k) => (readoutOf(k) && readoutOf(k).needs) || [])) : []),
 };
 /** Outside temperature with its unit letter: '48°F'. */
 const outsideText = (o, c) => (isNum(c) ? Math.round(tempIn(o, c)) + '°' + (o.tempUnit === 'c' ? 'C' : 'F') : '--');
@@ -296,5 +341,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, readout, powerNum, powerUnitText,
 };

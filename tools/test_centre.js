@@ -133,6 +133,8 @@ check('pages are groups: a page is built alone, a layer a piece; a switch puts t
     const { Canvas } = require(path.join(KIT, 'canvas'));
     const S = {}, changes = [], clicks = {}, handlers = {}, warns = [];
     SPEC.settings.forEach((s) => { S[s.key] = s.default; });
+    // (the personal build's defaults are Korean and petrol; these checks are written for the original's)
+    Object.assign(S, { vehicle: 'auto', tankLitres: 69, speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'lbft', pressUnit: 'psi', timeZone: 'eastern' });
     let pages = 0, lastImage = null;
     const ctx = {
         app: {}, ui: { onClick(n, fn) { clicks[n] = fn; }, text() {}, image: async (n, cv) => { pages++; lastImage = cv; } },

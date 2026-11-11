@@ -98,7 +98,7 @@ mgu.run({
         const blockedByLayout = () => presence.active('layouts');
         const options = () => ({
             look: settings.get('look'), fit: settings.get('fit'), pages: enabled(), style: settings.get('style'), accent: settings.get('accent'), size: settings.get('size'),
-            units: { temp: settings.get('tempUnit'), press: settings.get('pressUnit'), speed: settings.get('speedUnit'), torque: settings.get('torqueUnit') },
+            units: { temp: settings.get('tempUnit'), press: settings.get('pressUnit'), speed: settings.get('speedUnit'), torque: settings.get('torqueUnit'), power: settings.get('powerUnit') },
             warn: { oilHigh: num('oilHigh'), coolantHigh: num('coolantHigh'), iatHigh: num('iatHigh'), gearboxHigh: num('gearboxHigh'), battTempHigh: num('battTempHigh'), lpfpLow: num('lpfpLow') },
             shift: { on: settings.get('shift') !== 'off', from: num('shiftFrom', 4000), at: num('shiftAt', 6200) },
             badge: settings.get('badge') !== 'off',
