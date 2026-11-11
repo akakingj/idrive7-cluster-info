@@ -265,7 +265,7 @@ const numOrOff = (f) => (o, d) => (d.engineOn === false ? 'OFF' : f(o, d));
  */
 const READOUTS = {
     iat: { short: 'IAT', long: 'INTAKE AIR', num: tempOf('iat'), frac: (d) => (isNum(d.iat) ? d.iat / 80 : 0), needs: ['iat'] },
-    gearbox: { short: 'GBX', long: 'GEARBOX OIL', num: tempOf('gearbox'), frac: (d) => (isNum(d.gearbox) ? (d.gearbox - 40) / 90 : 0), needs: ['gearbox'] },
+    gearbox: { short: 'TRANS', long: 'TRANS OIL', num: tempOf('gearbox'), frac: (d) => (isNum(d.gearbox) ? (d.gearbox - 40) / 90 : 0), needs: ['gearbox'] },
     oil: { short: 'OIL', long: 'ENGINE OIL', num: tempOf('oil'), frac: (d) => (isNum(d.oil) ? (d.oil - 40) / 100 : 0) },
     coolant: { short: 'CLT', long: 'COOLANT', num: tempOf('coolant'), frac: (d) => (isNum(d.coolant) ? (d.coolant - 40) / 90 : 0) },
     boost: { short: 'BST', long: 'BOOST', num: numOrOff((o, d) => pressNum(o, d.boostActual)), unit: (o) => pressLabel(o), frac: (d) => boostFrac(d), needs: ['boostActual', 'boostTarget'] },

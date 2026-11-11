@@ -19,7 +19,7 @@
   - Readout 1·2: 가운데 표시창 위쪽 왼쪽·오른쪽 (순정 하단 줄을 쓸 때 시계·외기온 자리). 기본 흡기온·미션오일 온도
   - Main readout: 디지털 속도 아래 (원래 엔진 토크 자리). 기본 엔진 토크
   - 고를 수 있는 항목: 흡기온, 미션오일, 엔진오일, 냉각수, 부스트, 마력, 토크, 가속 페달 %, 점화시기 (1·2는 '없음'도 가능)
-  - 좁은 칸에서는 짧은 이름 (IAT 31°, GBX 78°, BST 14.5, HP 211, TQ 30.6, THR 85%) → 흡기·미션 글자 겹침 해결
+  - 좁은 칸에서는 짧은 이름 (IAT 31°, TRANS 78°, BST 14.5, HP 211, TQ 30.6, THR 85%) → 흡기·미션 글자 겹침 해결
 - 마력 = 엔진 토크(FES statusActualValueTorque2) × rpm ÷ 9549 (계산값, JB4 등 튠 차량은 실제와 다를 수 있음)
 - 가속 페달 = de.bmw.powertrain.AcceleratorPedal / AngleAcceleratorPedal (실차 확인 필요: 로그 'raw AngleAcceleratorPedal')
 - Centre 커스텀 페이지 칸에도 Engine power, Accelerator pedal 추가

@@ -20,7 +20,7 @@ const narrow = { w: 120, h: 30 }, wide = { w: 500, h: 34 };
 
 check('readout 1 and 2: the defaults are intake air and gearbox oil, short where narrow', () => {
     assert.strictEqual(C.stripInfoA(o(), narrow)(d), 'IAT 31°');
-    assert.strictEqual(C.stripInfoB(o(), narrow)(d), 'GBX 78°');
+    assert.strictEqual(C.stripInfoB(o(), narrow)(d), 'TRANS 78°');
 });
 check('readouts: long names and units where the box has room', () => {
     assert.strictEqual(C.stripInfoA(o(), wide)(d), 'INTAKE AIR 31°');
