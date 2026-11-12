@@ -22,7 +22,8 @@ const ARC = {
     sport: { fill0: '#ffb0a0', fill1: '#ffe4dc', tip: '#ff3a1a', track: '#2a1412', regen: '#3ddc84' },
     efficient: { fill0: '#9fd8ff', fill1: '#e6f6ff', tip: '#2a9fff', track: '#14202a', regen: '#3ddc84' },
 };
-const PALETTES = Object.fromEntries(Object.keys(TP.PALETTES).map((k) => [k, Object.assign({}, TP.PALETTES[k], ARC[k])]));
+// (no Object.fromEntries: the head unit's Node is 8)
+const PALETTES = Object.keys(TP.PALETTES).reduce((o, k) => { o[k] = Object.assign({}, TP.PALETTES[k], ARC[k]); return o; }, {});
 const bandColours = (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.minor, num: t.num, neg: t.regen });
 
 /* the arc's sweep: three quarters of a circle, from (just left of) six o'clock up the left, over the top and
