@@ -97,15 +97,7 @@ small eDrive box at the top right (`layout_common.js`; `tools/clearance.js` chec
 |---|---|
 | ![](../../docs/digital_dash_sport.png) | ![](../../docs/digital_dash_map.png) |
 
-### Freedom
-
-Over the top and American: the stars and stripes wave behind everything, bald eagles fly across and
-fireworks go off in red, white and blue, all drawn and moved by the cluster itself (`shaders.js`: `FLAG_FS`,
-`EAGLE_FS`, `FIREWORKS_FS`, on the renderer's clock, so nothing is sent to animate them). Over it: a huge speed
-inside a red-to-blue tach arc, the battery's power large on the left (the gear there without the car's own strip), a
-FREEDOM banner, a gold-edged plaque of readings along the bottom, and the gearbox oil on the right.
-
-![Freedom](../../docs/freedom.png)
+(Freedom, the stars-and-stripes layout, is removed in akakingj's build: a layout saved as it shows Arc tach.)
 
 ### Retro
 

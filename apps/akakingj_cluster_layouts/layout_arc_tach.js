@@ -1,120 +1,136 @@
 'use strict';
 /**
- * layout_arc_tach.js - "Arc tach": the engine speed as a solid arc, filling as it climbs, three quarters round (from six o'clock up
- * the left, over the top, down to three o'clock), its numerals 0 - 7 (Settings > Rev scale) inside it, the red
- * zone the shift point's (layout_common.shiftPoint: lower while the oil is cold) at its end; the digital speed in
- * the quarter it leaves open, under the red end; the main readout inside the arc; a round pod either side
- * (pods.js: the coolant left, the oil right by default, C - H; Readout 1 / 2 in them over the car's
- * own strip). An original design (akakingj's build).
+ * layout_arc_tach.js - "Arc tach": three round dials under chrome rings, the big tach in the middle in front, a
+ * smaller dial either side tucked behind it (each side ring ends where it goes behind the middle one's). The tach:
+ * a needle round numerals inside a dark ring, the red zone along the ring (from where the shift point puts it, lower
+ * while the oil is cold), the main readout above the hub, the digital speed and its unit at the bottom right where
+ * the scale leaves off, the gear at the bottom left (Settings > Arc tach: the gear in the arc; not over the car's own
+ * strip, which shows it). Each side dial: one gauge along its outer top (left: Small gauge in the speedometer, Auto
+ * the coolant, C - H; right: Small gauge in the tach, Auto the fuel, F at the top and E below), and a readout at its
+ * foot (the time and the outside temperature; over the car's strip Readout 1 and 2). An original design after the
+ * idea of a three-ring sports-car cluster (akakingj's build).
  *
- * The car's own bottom strip (the default): the arc and the speed in the middle, its top clear of the camera's cowl
- * and its foot above the strip, a pod either side, the three joined: each circle's rim cut where the next one's
- * meets it, one outline round them (rims). The layout's own strip: the arc left, the two pods joined on to it in
- * a row up to the KOMBI's gear box (an M car: apart, lower, under its boxes), the ranges right of the box. The map:
- * the arc left of it, a pod right. The stock centre: the arc left, a pod right of the KOMBI's centre.
+ * The car's own bottom strip (the default): the three centred, the tach's ring from just under the camera's cowl to
+ * just over the strip. The layout's own strip: the three left of the KOMBI's gear box, the ranges right of it (an M
+ * car: the tach left and the side dials apart, under its boxes). The map: the tach left of it, a dial right. The
+ * stock centre: the tach left, a dial right of the KOMBI's centre.
  */
 const C = require('./layout_common');
+const B = require('./bimmer');
 const TP = require('./pods');
-const { pod, ranges, lit, lbl, gearC, elecTxt } = TP;
+const { PALETTES: POD_PALETTES, dialColours, lit, lbl, gearC, elecTxt, ranges } = TP;
 
-/* the pods' colours (pods.js), and the arc's: its unlit track, the lit part's gradient and the tip's glow */
-const ARC = {
-    comfort: { fill0: '#e8ecf0', fill1: '#ffffff', tip: '#ff6a3a', track: '#202226', regen: '#3ddc84' },
-    sport: { fill0: '#ffb0a0', fill1: '#ffe4dc', tip: '#ff3a1a', track: '#2a1412', regen: '#3ddc84' },
-    efficient: { fill0: '#9fd8ff', fill1: '#e6f6ff', tip: '#2a9fff', track: '#14202a', regen: '#3ddc84' },
+/* the pods' colours (pods.js), and the tach's: its face and its dark ring */
+const TACH = {
+    comfort: { tface0: '#0d0e10', tface1: '#030304', ring: '#2a2d32' },
+    sport: { tface0: '#120a09', tface1: '#040202', ring: '#3a2522' },
+    efficient: { tface0: '#0a0e11', tface1: '#020405', ring: '#22303a' },
 };
 // (no Object.fromEntries: the head unit's Node is 8)
-const PALETTES = Object.keys(TP.PALETTES).reduce((o, k) => { o[k] = Object.assign({}, TP.PALETTES[k], ARC[k]); return o; }, {});
-const bandColours = (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.minor, num: t.num, neg: t.regen });
+const PALETTES = Object.keys(POD_PALETTES).reduce((o, k) => { o[k] = Object.assign({ regen: '#3ddc84' }, POD_PALETTES[k], TACH[k]); return o; }, {});
 
-/* the arc's sweep: three quarters of a circle, from (just left of) six o'clock up the left, over the top and
- * down to three o'clock, where the red zone ends; the quarter it leaves open, under that end, holds the digital speed */
-const A0 = -170, A1 = 90;   // (its foot a little left of six o'clock: the shader's angles wrap at six)
+/* the tach's sweep: three quarters of a turn from just left of six o'clock, up the left, over the top, down to
+ * a little past three; the quarter it leaves open (bottom right) holds the digital speed */
+const A0 = -165, A1 = 105;
 const kwOf = (d) => (C.isNum(d.kw) ? d.kw : 0);
-const kwN = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 30) * 30, in: r.in }; };
 
 /**
- * The arc tach round (cx, cy), radius R (the band's centre line): the band, its numerals inside it; in the
- * quarter it leaves open (bottom right, under the red end) the digital speed and its unit, `room` px right of cx
- * for them; inside the arc the gear (withGear: where the KOMBI's strip doesn't show it) or the scale's unit, and
- * the main readout. On a plug-in hybrid in an electric mode the arc reads the battery's power (0 a quarter along,
- * regeneration below it in green), as Modern wide's.
+ * The tach at (cx, cy), radius R (to the inside of its chrome ring): numerals 0 to the rev scale's end, the needle,
+ * the red zone; the main readout above the hub, the speed bottom right, the gear (withGear) bottom left. On a
+ * plug-in hybrid in an electric mode it reads the battery's power (layout_common.tachValue, tachDyn).
  */
-function arcTach(o, cx, cy, R, withGear, room, inside) {
-    const k = R / 240, s = C.rpmScale(o), T = Math.round(30 * k);
-    const numH = Math.round(32 * k), numAt = -(T / 2 + Math.round(32 * k));
-    // (the layer square round the circle, with room round the band for its glow)
-    // (cut at the car's own strip's line: only its glow's edge reached below it, over the strip and the warning
-    // lights)
-    const half = Math.round(R + T / 2 + 30 * k), X = Math.round(cx - half), Y = Math.round(cy - half), H = Math.min(2 * half, C.STRIP_Y - Y);
+function tach(o, cx, cy, R, withGear) {
+    const k = R / 240, s = C.rpmScale(o), S = 2 * R;
     const evOff = (d) => C.electric(o, d);
-    const marks = [s.max, 1, numH, numAt];
-    const redSpan = (red) => [A0 + (A1 - A0) * Math.min(1, red / s.max), A1, 0, 0];
-    // the red zone's strip: where it starts now (the shift point's), shown only while it has a length (none with the
-    // red line at the scale's end: a zero sweep would divide by zero in the shader); its layer just round the part
-    // of the circle it can reach (from where the coldest oil puts it, layout_common.shiftPoint at 30 °C)
-    const redNow = (d) => Math.min(s.red, C.shiftPoint(o, d).red / 1000);
-    const rr = R - T / 2 - Math.round(8 * k), rw = Math.max(4, Math.round(6 * k));
-    const aLow = redSpan(Math.min(s.red, C.shiftPoint(o, { oil: 30 }).red / 1000))[0];
-    const xs = [], ys = [];
-    for (let a = aLow; a <= A1 + 0.01; a += Math.max(0.5, (A1 - aLow) / 64)) for (const r of [rr - rw, rr + rw]) { xs.push(cx + r * Math.sin(a * Math.PI / 180)); ys.push(cy - r * Math.cos(a * Math.PI / 180)); }
-    const RX = Math.floor(Math.min(...xs) - 6), RY = Math.floor(Math.min(...ys) - 6), RW = Math.ceil(Math.max(...xs) + 6) - RX, RH = Math.ceil(Math.max(...ys) + 6) - RY;
-    const sx = cx + Math.round(0.04 * R), sw = Math.round(room - 0.04 * R);
-    // (inside: the speed within the circle round the arc, smaller - joined, a rim round it)
-    const sy = inside ? [0.2, 0.42, 0.66, 0.08] : [0.12, 0.72, 0.86, 0.1];
     const list = [
         {
-            key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: H,
-            params: { u_geo: [cx - X, cy - Y, R, T], u_span: [A0, A1, 0, 0], u_marks: marks, u_red: [s.red / s.max], u_zero: [0], u_soft: [0.45] },
-            colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.ev, fill1: t.ev, tip: kwOf(d) < -0.3 ? t.regen : t.ev }) : bandColours(t)),
-            value: (d) => (evOff(d) ? C.kwFrac(d.kw, kwN(d)) : C.isNum(d.rpm) ? Math.min(1, d.rpm / 1000 / s.max) : 0), max: 1, sweep: true,
-            // (the red zone where the shift point puts it now; on a plug-in hybrid in an electric mode the power's
-            // scale, no red zone)
-            dyn: (d) => (evOff(d) ? { u_marks: [3, kwN(d).out / 3, numH, numAt], u_red: [2], u_zero: [C.KW_ZERO] }
-                : { u_marks: marks, u_red: [Math.min(s.red, C.shiftPoint(o, d).red / 1000) / s.max], u_zero: [0] }),
+            key: 'rpm', kind: 'dial', x: cx - R, y: cy - R, w: S, h: S,
+            params: {
+                u_scale: [s.max, s.major, s.minor, s.red], u_arc: [A0, A1, Math.round(36 * k), Math.round(160 * k)],
+                u_needle_dim: [Math.round(196 * k), Math.round(36 * k), Math.round(13 * k), 4], u_look: [0.9, 0.85, 0, 0], u_look2: [0, S / 640, 0.85, 0.7],
+            },
+            colors: (t) => Object.assign(dialColours(t), { face0: t.tface0, face1: t.tface1, bezel: t.ring, bezel2: t.ring }),
+            max: s.max, sweep: true, value: C.tachValue(o), range: C.tachRange(o, s), dyn: C.tachDyn(o, s, s.red),
         },
-        {
-            // the red zone marked inside the band, lit or not: a thin red arc from where it starts now
-            key: 'rpmRedZone', kind: 'band', x: RX, y: RY, w: RW, h: RH,
-            params: { u_geo: [cx - RX, cy - RY, rr, rw], u_span: redSpan(s.red), u_marks: [0, 0, 0, 0], u_red: [2], u_soft: [1] },
-            colors: (t) => ({ track: t.red, fill0: t.red, fill1: t.red, redc: t.red, tip: t.red, tick: t.red, num: t.red }),
-            value: () => 1, max: 1,
-            dyn: (d) => { const sp = redSpan(redNow(d)); return { u_span: sp[1] - sp[0] >= 1 ? sp : [A1 - 1, A1, 0, 0] }; },
-            visible: (d) => !evOff(d) && redNow(d) < s.max - 0.01,
-        },
-        // the digital speed in the open quarter, under the arc's red end
-        C.text('speedDigits', sx, cy + Math.round(sy[0] * R), sw, Math.round(sy[1] * R), (d) => C.speedText(o, d), lit),
-        C.text('speedDigitsUnit', sx, cy + Math.round(sy[2] * R), sw, Math.round(sy[3] * R), C.speedUnit(o), lbl, { tracking: 0.12 }),
-        // the main readout inside the arc, at its middle
-        C.text('kwNow', cx - Math.round(0.55 * R), cy - Math.round(0.16 * R), Math.round(1.1 * R), Math.round(0.24 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
-        C.text('kwNowLbl', cx - Math.round(0.5 * R), cy + Math.round(0.11 * R), Math.round(R), Math.round(0.075 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
+        // the speed bottom right, where the scale leaves off; its unit and the scale's under it
+        C.text('speedDigits', cx + Math.round(0.02 * R), cy + Math.round(0.25 * R), Math.round(0.5 * R), Math.round(0.27 * R), (d) => C.speedText(o, d), lit, { align: 1 }),
+        C.text('speedDigitsUnit', cx + Math.round(0.02 * R), cy + Math.round(0.54 * R), Math.round(0.5 * R), Math.round(0.07 * R), C.speedUnit(o), lbl, { align: 1, tracking: 0.12 }),
+        C.text('rpmUnit', cx + Math.round(0.12 * R), cy + Math.round(0.65 * R), Math.round(0.4 * R), Math.round(0.055 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { align: 1, tracking: 0.1 }),
+        // the main readout above the hub
+        C.text('kwNow', cx - Math.round(0.36 * R), cy - Math.round(0.46 * R), Math.round(0.72 * R), Math.round(0.15 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
+        C.text('kwNowLbl', cx - Math.round(0.3 * R), cy - Math.round(0.29 * R), Math.round(0.6 * R), Math.round(0.055 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
     ];
     // (the gear: Settings > Arc tach: the gear in the arc; not twice, with the gear as the main readout too)
-    if (withGear) { if (o.arcGear !== 'off' && o.infoMain !== 'gear') list.push(C.text('gear', cx - Math.round(0.25 * R), cy - Math.round(0.5 * R), Math.round(0.5 * R), Math.round(0.26 * R), C.gearText, gearC)); }
-    else list.push(C.text('rpmUnit', cx - Math.round(0.4 * R), cy - Math.round(0.4 * R), Math.round(0.8 * R), Math.round(0.08 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
+    if (withGear && o.arcGear !== 'off' && o.infoMain !== 'gear') list.push(C.text('gear', cx - Math.round(0.42 * R), cy + Math.round(0.14 * R), Math.round(0.3 * R), Math.round(0.22 * R), C.gearText, gearC));
     return list;
 }
 
 /**
- * The rims of circles joined in a row: [{ x, y, r }] (r: the rim's middle line), each drawn as a thin satin band
- * all round but where another of them overlaps it, so where two meet their rims end on each other in a point and
- * one outline goes round them all. Thickness w px.
+ * A side dial at (cx, cy), radius r (to the inside of its ring), on `side` (-1 left, +1 right) of the tach: its
+ * gauge along the top away from the tach (`which` 'speed': Small gauge in the speedometer, Auto the coolant; 'rpm':
+ * Small gauge in the tach, Auto the fuel), a temperature C - H, the fuel F at the top and E below (its red at E),
+ * another reading its name and figures; its icon by the pivot; the readout `readKey` at its foot.
+ */
+function sideDial(o, which, cx, cy, r, side, readKey) {
+    const k = r / 170, S = 2 * r, g = C.gaugeOf(o, which);
+    const key = g ? g.key : which === 'speed' ? 'coolant' : 'fuel', ch = C.chOf(o, key);
+    const fuel = !g && key === 'fuel';
+    // the scale's ends: from low (C, E... at the bottom outside) up over the top; the right one mirrored
+    const arc = side < 0 ? [-125, 5] : [-5, 125];
+    // (the fuel on the right: F at the top, E at the bottom - the scale runs backwards, its red at E)
+    const back = fuel && side > 0;
+    const red = ch ? C.chRed(o, ch) * 100 : g ? Math.min(101, g.redFrac * 100) : fuel ? (back ? 88 : 101) : C.hotAt(o, 'coolant') - 40;
+    const raw = ch ? (d) => C.chFrac(ch, d[ch]) * 100 : g ? (d) => g.frac(d) * 100
+        : fuel ? (d) => (C.isNum(d.fuelPct) ? Math.max(0, Math.min(100, d.fuelPct)) : 0) : (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0);
+    const id = 'side' + (side < 0 ? 'L' : 'R');
+    const list = [{
+        key: id, kind: 'dial', x: cx - r, y: cy - r, w: S, h: S,
+        params: { u_scale: [100, 50, 12.5, red], u_arc: [arc[0], arc[1], 0, 0], u_needle_dim: [Math.round(112 * k), Math.round(20 * k), Math.round(8 * k), 3], u_look: [0.85, 0.85, 0, 0], u_look2: [0, S / 640, 0.75, 0.6] },
+        colors: (t) => Object.assign(dialColours(t), { face0: t.tface0, face1: t.tface1, bezel: t.ring, bezel2: t.ring }),
+        value: back ? (d) => 100 - raw(d) : raw, max: 100, sweep: true,
+    }];
+    // the scale's end letters, a little inside its marks
+    const lh = Math.max(14, Math.round(24 * k)), at = (a) => [cx + Math.sin(a * Math.PI / 180) * r * 0.62, cy - Math.cos(a * Math.PI / 180) * r * 0.62];
+    const letter = (n, a, txt, hot) => { const [x, y] = at(a), w = Math.round(lh * 1.6); return C.text(id + n, Math.round(x - w / 2), Math.round(y - lh / 2), w, lh, txt, hot ? (t) => ({ color: [t.red, 1], glow: [t.red, 0.3] }) : lit); };
+    const lo = side < 0 ? arc[0] : arc[1], hi = side < 0 ? arc[1] : arc[0];   // (the reading's low end, its high end)
+    if (ch) list.push(letter('Lo', lo, 'C'), letter('Hi', hi, 'H', true));
+    else if (fuel) list.push(letter('Lo', back ? arc[1] : lo, 'E', true), letter('Hi', back ? arc[0] : hi, 'F'));
+    // its icon (or the picked reading's name and figures) by the pivot, on the side away from the scale
+    const ix = cx - side * Math.round(0.02 * r);
+    if (g) {
+        list.push(C.text(id + 'Lbl', ix - Math.round(0.45 * r), cy + Math.round(0.14 * r), Math.round(0.9 * r), Math.round(0.1 * r), g.label, lbl, { tracking: 0.12 }));
+        if (!ch) list.push(C.text(id + 'Num', ix - Math.round(0.45 * r), cy + Math.round(0.27 * r), Math.round(0.9 * r), Math.round(0.15 * r), g.txt, (t, d) => (g.hot(d) ? { color: [t.red, 1], glow: [t.red, 0.3] } : lit(t))));
+    } else {
+        const iw = Math.round(0.2 * r);
+        list.push(B.icon(id + 'Icon', ix - Math.round(iw / 2), cy + Math.round(0.14 * r), iw, iw, key === 'coolant' ? 'therm' : 'fuel', 'dim'));
+    }
+    if (readKey) {
+        const txt = readKey === 'clock' ? C.clock : (d) => C.outsideText(o, d.outside);
+        list.push(C.text(readKey, cx - Math.round(0.5 * r), cy + Math.round(0.5 * r), Math.round(r), Math.round(0.16 * r), txt, lit));
+    }
+    return list;
+}
+
+/**
+ * Chrome rings round circles [{ x, y, r, front }] (r: the ring's middle line), w px thick: the one marked front all
+ * round; each other one all round but where it goes behind a front one (inside its ring), so it seems to pass under
+ * it. Each ring a thin satin band, in arcs (the band's angles wrap at six o'clock).
  */
 function rims(circles, w) {
     const out = [];
     const wrap = (a) => ((a + 540) % 360) - 180;
     circles.forEach((c, i) => {
-        // the gaps: towards each circle that overlaps this one, as wide as the overlap's chord
         const gaps = [];
-        circles.forEach((e, j) => {
-            if (i === j) return;
-            const D = Math.hypot(e.x - c.x, e.y - c.y);
-            if (!(D < c.r + e.r && D > Math.abs(c.r - e.r))) return;
-            const half = Math.acos((D * D + c.r * c.r - e.r * e.r) / (2 * D * c.r)) * 180 / Math.PI;
-            gaps.push({ at: Math.atan2(e.x - c.x, -(e.y - c.y)) * 180 / Math.PI, half });
-        });
+        if (!c.front) {
+            circles.forEach((e) => {
+                if (!e.front || e === c) return;
+                const D = Math.hypot(e.x - c.x, e.y - c.y), er = e.r + w;
+                if (!(D < c.r + er && D > Math.abs(c.r - er))) return;
+                const half = Math.acos((D * D + c.r * c.r - er * er) / (2 * D * c.r)) * 180 / Math.PI;
+                gaps.push({ at: Math.atan2(e.x - c.x, -(e.y - c.y)) * 180 / Math.PI, half });
+            });
+        }
         const open = (a) => gaps.every((g) => Math.abs(wrap(a - g.at)) > g.half);
-        // the arcs left, each within -180 .. 180 (the band's angles wrap at six o'clock)
         const runs = [];
         let from = null;
         for (let a = -180; a <= 180.001; a += 0.25) {
@@ -142,24 +158,30 @@ function rims(circles, w) {
 }
 
 /**
- * The arc, its circle's rim and pods joined on to it in a row (rims): the arc round (cx, cy), radius R (its band's
- * middle line); then each pod [which, readKey, rim radius], left (side -1) or right (+1) of the one before, its
- * rim overlapping that one's by `bite` px. A pod's dial sits inside its rim clear of the overlap.
+ * The three: the tach at (cx, cy), radius R inside its ring, in front; the side dials [which, readKey, radius]
+ * left and right, their rings `tuck` px behind the tach's, their centres level with it. The sides first, the tach
+ * over them, the rings last.
  */
-function joined(o, cx, cy, R, withGear, pods) {
-    const k = R / 240, T = Math.round(30 * k), bite = Math.round(20 * k), rimW = Math.max(3, Math.round(5 * k));
-    const RC = Math.round(R + T / 2 + bite + 8 * k);       // the arc's circle: clear of its band, and of the pods' bite
-    const circles = [{ x: cx, y: cy, r: RC }];
-    const list = [];
-    const ends = { '-1': { x: cx, r: RC }, '1': { x: cx, r: RC } };
-    pods.forEach(([which, readKey, r, side]) => {
-        const e = ends[side], x = Math.round(e.x + side * (e.r + r - bite));
-        circles.push({ x, y: cy, r });
-        list.push(...pod(o, which, x, cy, 2 * (r - bite - Math.round(10 * k)), readKey, true));
-        ends[side] = { x, r };
+function three(o, cx, cy, R, withGear, sides, tuck) {
+    const k = R / 240, w = Math.max(4, Math.round(6 * k)), RC = R + w;
+    const circles = [{ x: cx, y: cy, r: RC, front: true }];
+    let list = [];
+    sides.forEach(([which, readKey, r], i) => {
+        const side = i === 0 ? -1 : 1, x = Math.round(cx + side * (RC + r + w - tuck));
+        circles.push({ x, y: cy, r: r + w });
+        list = list.concat(sideDial(o, which, x, cy, r, side, readKey));
     });
-    // (the speed in the arc's open quarter, inside its circle)
-    return list.concat(arcTach(o, cx, cy, R, withGear, Math.round(0.86 * R), true), rims(circles, rimW));
+    return list.concat(tach(o, cx, cy, R, withGear), rims(circles, w));
+}
+
+/** A dial alone, with its own ring (the map, the stock centre, an M car's own strip). */
+function alone(o, which, cx, cy, r, side, readKey) {
+    const w = Math.max(3, Math.round(5 * r / 170));
+    return sideDial(o, which, cx, cy, r, side, readKey).concat(rims([{ x: cx, y: cy, r: r + w, front: true }], w).map((p) => Object.assign(p, { key: 'rimS' + which + p.key })));
+}
+function tachAlone(o, cx, cy, R, withGear) {
+    const w = Math.max(4, Math.round(6 * R / 240));
+    return tach(o, cx, cy, R, withGear).concat(rims([{ x: cx, y: cy, r: R + w, front: true }], w));
 }
 
 module.exports = {
@@ -167,16 +189,18 @@ module.exports = {
     title: 'Arc tach',
     palette: (lookId) => PALETTES[lookId] || PALETTES.comfort,
     gearText: C.gearText,
+    stripFuel: false,   // (its own fuel gauge, the right dial)
+    speedGauge: false,  // (the speed in figures only)
 
     pieces(o) {
         const bg = [C.flat('bg', 0, 0, 1920, 720, 'bg')];
         if (o.centre === 'map') {
-            // the arc left of the map, the right pod right of it (above the KOMBI's gear box without the car's
-            // strip); the readouts above the map, the ranges under it
+            // the tach left of the map, a dial right of it (above the KOMBI's gear box without the car's strip); the
+            // readouts above the map, the ranges under it
             const top = C.MAP.y, bot = C.MAP.y + C.MAP.h, st = C.strip(o);
             return C.aroundMap().map((r, i) => C.flat('bg' + i, r.x, r.y, r.w, r.h, 'bg')).concat(
-                arcTach(o, 180, 400, 150, !st, 230),
-                st ? pod(o, 'rpm', 1712, 404, 330, null) : pod(o, 'rpm', 1792, 500, 236, null), [
+                tachAlone(o, 196, 390, 176, !st),
+                st ? alone(o, 'rpm', 1712, 390, 168, 1, null) : alone(o, 'rpm', 1792, 520, 110, 1, null), [
                     C.text('clock', 520, top - 76, 200, 34, C.clock, lit),
                     C.text('outside', 1200, top - 76, 200, 34, (d) => C.outsideText(o, d.outside), lit),
                 ],
@@ -185,20 +209,18 @@ module.exports = {
             );
         }
         if (C.strip(o)) {
-            // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the arc's circle
-            // centred on the screen (its rim's foot above the strip), a pod joined on either side, their centres level
-            // (its rim from just under the camera's cowl, NOTCH, to just over the strip)
-            return bg.concat(joined(o, 960, 387, 214, false, [['speed', 'clock', 158, -1], ['rpm', 'outside', 158, 1]]));
+            // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the tach centred,
+            // its ring from just under the camera's cowl (NOTCH) to just over the strip, a dial behind it either side
+            return bg.concat(three(o, 960, 387, 246, false, [['speed', 'clock', 176], ['rpm', 'outside', 176]], 72));
         }
         if (o.centre === 'stock') {
-            // the KOMBI's own centre between: the arc left, the right pod right of it, the ranges right of the box
+            // the KOMBI's own centre between: the tach left, a dial right of it, the ranges right of the box
             return [C.flat('bg', 0, 0, 566, 720, 'bg'), C.flat('bgR', 1104, 0, 816, 720, 'bg')].concat(
-                arcTach(o, 250, 400, 200, true, 300), C.mCar(o) ? [] : pod(o, 'rpm', 1256, 392, 280, null), ranges(o));   // (an M car: its second box there)
+                tachAlone(o, 270, 392, 230, true), C.mCar(o) ? [] : alone(o, 'rpm', 1256, 392, 136, 1, null), ranges(o));   // (an M car: its second box there)
         }
-        // the layout's own strip: the arc left, the pods between it and the KOMBI's gear box (an M car: lower,
-        // under the M KOMBI's two boxes), the ranges right of the box
-        // (an M car: the pods apart, lower, under the M KOMBI's two boxes)
-        if (C.mCar(o)) return bg.concat(arcTach(o, 430, 390, 230, true, 340), pod(o, 'speed', 916, 540, 200, 'clock'), pod(o, 'rpm', 1311, 556, 186, 'outside'), ranges(o));
-        return bg.concat(joined(o, 400, 380, 222, true, [['speed', 'clock', 150, 1], ['rpm', 'outside', 138, 1]]), ranges(o));
+        // the layout's own strip: the three left of the KOMBI's gear box, the ranges right of it (an M car: the tach
+        // left, the dials apart and lower, under the M KOMBI's two boxes)
+        if (C.mCar(o)) return bg.concat(tachAlone(o, 400, 390, 236, true), alone(o, 'speed', 916, 542, 96, -1, 'clock'), alone(o, 'rpm', 1311, 552, 88, 1, 'outside'), ranges(o));
+        return bg.concat(three(o, 720, 384, 240, true, [['speed', 'clock', 160], ['rpm', 'outside', 160]], 66), ranges(o));
     },
 };

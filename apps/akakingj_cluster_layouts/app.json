@@ -2,7 +2,7 @@
   "id": "akakingj_cluster_layouts",
   "title": "AK Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.28.7",
+  "version": "0.28.8",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "AKCL",
@@ -180,10 +180,6 @@
           "Digital dash"
         ],
         [
-          "freedom",
-          "Freedom"
-        ],
-        [
           "retro",
           "Retro"
         ],
@@ -272,10 +268,6 @@
           "Digital dash"
         ],
         [
-          "freedom",
-          "Freedom"
-        ],
-        [
           "retro",
           "Retro"
         ],
@@ -339,10 +331,6 @@
         [
           "digital_dash",
           "Digital dash"
-        ],
-        [
-          "freedom",
-          "Freedom"
         ],
         [
           "retro",

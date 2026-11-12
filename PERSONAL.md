@@ -78,14 +78,13 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   in the speedometer pick others) and a pale grey display with dark figures: the speed, the gear (not over the car's
   strip), the fuel range (over the strip: Centre readout: bottom line), the time and the outside temperature (over
   the strip: Readout 1 / 2). An M car: the dials swapped (the tach under the M boxes), no arch on the full screen.
-- Layout 'Arc tach' (an original design): the engine speed as a solid arc three quarters round, filling as it climbs (0 to Max rpm,
-  from just left of six o'clock up the left, over the top, to three o'clock), the numerals inside it, a thin red arc
-  inside it where the red zone starts now (the shift point's: lower while the oil is cold); the digital speed in the
-  quarter the arc leaves open, under its red end; the Main readout inside the arc; a round pod either side,
-  joined to it (each rim cut where the next one meets it: one outline round the three; the layout's own strip: the
-  arc and both pods in a row) (pods.js: the coolant and oil gauges, C - H, or the Speedometer gauge / Tach gauge setting; Readout 1 / 2 in them
-  over the car's own strip). Three pods (a big centre tach and two pods) was removed: a layout saved as it is Arc tach. With the map: the arc left, a pod right; the car's own centre: the arc and one pod; the layout's own strip
-  on an M car: the pods lower, under its boxes. A plug-in hybrid in an electric mode: the arc reads the power.
+- Layout 'Arc tach' (an original design after the idea of a three-ring sports-car cluster): three round dials under
+  chrome rings, the tach in the middle in front, a smaller dial either side tucked behind it (each side ring ends where
+  it goes behind the tach's). The tach: a needle round numerals, the red zone along its ring (lower while the oil is
+  cold), the main readout above the hub, the digital speed bottom right, the gear bottom left (Arc tach: the gear in
+  the arc; not over the car's strip). The side dials: the coolant C - H on the left, the fuel F - E on the right
+  (Small gauge in the speedometer / tach pick others), a readout at each foot (over the strip Readout 1 / 2). Freedom
+  removed (saved as it: Arc tach).
 - Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile 1.2.0): the three apps follow what it sets
   in /dev/shm/car-profile.json, as its apps do (kit/runtime/mgu.js Settings, app.json "profile"; checked every 3 s, a
   change applied at once). Layouts: Red zone from (redline), Shift point below the red zone by (shiftBefore), Rev

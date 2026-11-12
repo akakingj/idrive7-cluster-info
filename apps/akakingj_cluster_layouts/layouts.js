@@ -3,7 +3,7 @@
  * layouts.js - the layouts this app offers, by id. A layout is one file, layout_<id>.js, next to this one
  * (the build ships only top-level .js files); list it here and in app.json's "layout" setting (README.md).
  */
-const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_freedom'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse'), require('./layout_gt3'), require('./layout_m'), require('./layout_sport'), require('./layout_classic'), require('./layout_arc_tach'), require('./layout_twin_cowl')];
+const LAYOUTS = [require('./layout_analog_sport'), require('./layout_digital_round'), require('./layout_modern_wide'), require('./layout_digital_dash'), require('./layout_retro'), require('./layout_track'), require('./layout_pulse'), require('./layout_gt3'), require('./layout_m'), require('./layout_sport'), require('./layout_classic'), require('./layout_arc_tach'), require('./layout_twin_cowl')];
 /* with Settings > Frame behind the gear box on: the bezel behind the KOMBI's gear bracket (layout_common.boxBezel),
  * just above the backgrounds. Off (the default, from the car: the frame read as a stray grey box) the box sits on
  * the layout's own black background and its black window disappears into it */
@@ -79,12 +79,6 @@ const M_MOVES = {
             oil: { y: 578, h: 36 }, oilLbl: { y: 619, h: 18 }, coolant: { y: 578, h: 36 }, coolantLbl: { y: 619, h: 18 },
             gear: { y: 432, h: 120 }, rpmDigits: { y: 556 }, '-soc': 'band' },
         stock: { gear: { y: 432, h: 120 }, rpmDigits: { y: 556 } },
-    },
-    freedom: {
-        // the speed to the left (where the gear was), the gear to the right under the banner
-        info: { speedDigits: { x: 150, y: 186, w: 300, h: 150 }, speedUnit: { x: 150, y: 338, w: 300, h: 22 }, clock: { y: 376 }, outside: { y: 376 },
-            gear: { x: 1680, y: 268, w: 220, h: 140 } },
-        stock: { gear: { x: 1680, y: 268, w: 220, h: 140 } },
     },
     digital_dash: {
         // with the stock centre: the left column a little narrower, the right column's last two below the box
