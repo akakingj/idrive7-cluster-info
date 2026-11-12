@@ -242,6 +242,7 @@ module.exports = {
             label('gboxL', RX, 634, 120, 'GEARBOX'),
             C.text('gbox', RX + 120, 628, RW - 120, 32, (d) => C.tempText(o, d.gearbox), txt, { align: 1, chars: 7 }),
         );
-        return list;
+        // (Centre readout: under the speed: Nothing - its bar gone too)
+        return C.engineFocus(o) && C.mainOff(o) ? list.filter((p) => !p || p.key !== 'power') : list;
     },
 };

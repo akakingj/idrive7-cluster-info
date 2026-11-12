@@ -132,7 +132,7 @@ function newCar(o, arcs, gearC, rpmTxt) {
         C.text('kwLbl', L.x + 20, L.y + 16, L.w - 40, 18, C.focus.powerLabel(o, true), lbl, { align: 0, tracking: 0.14 }),
         C.text('kwNow', L.x + 18, L.y + 40, L.w - 36, 58, C.focus.power(o),
             engine ? txt : (t, d) => ({ color: [kwOf(d) < -0.3 ? t.regen : t.text, 1], glow: [kwOf(d) < -0.3 ? t.regen : t.glow, 0.3] }), { align: 0 }),
-    ], engine ? [hbar('pwrBar', L.x + 20, L.y + 112, L.w - 40, 14, C.focus.mainFrac(o), (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 24)] : [
+    ], engine ? C.mainOff(o) ? [] : [hbar('pwrBar', L.x + 20, L.y + 112, L.w - 40, 14, C.focus.mainFrac(o), (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.dim, num: t.num }), false, 24)] : [
         // as the other power gauges: 0 a quarter along, regenerating fills left of it, drawing right, each to the
         // battery's limit (eDrive Live's: layout_common.kwRange)
         hbar('regenBar', L.x + 20, L.y + 112, (L.w - 44) / 4, 14, (d) => Math.max(0, Math.min(1, -kwOf(d) / C.kwRange(d).in)), (t) => ({ track: t.track, fill0: t.regen, fill1: t.regen, redc: t.red, tip: t.regen, tick: t.dim, num: t.num }), true, 4),

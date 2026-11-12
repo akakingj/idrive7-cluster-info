@@ -11,13 +11,22 @@ const path = require('path');
 const DIR = process.env.CLUSTER_PRESENCE_DIR || '/dev/shm/cluster-layouts';
 const FRESH_MS = 3000;
 let last = 0;
+const opened = {};
 
 /** Says `name` is showing now (written at most once a second), with `extra` (plain JSON) for the other app. */
 function mark(name, extra) {
     const now = Date.now();
     if (now - last < 1000) return;
     last = now;
-    try { try { fs.mkdirSync(DIR); } catch (e) { if (e.code !== 'EEXIST') throw e; } fs.writeFileSync(path.join(DIR, name + '.json'), JSON.stringify(Object.assign({}, extra, { at: now }))); } catch (e) { /* tmpfs not there: nothing shared */ }
+    try {
+        // (readable by the other app, which runs as another user, whatever this one's umask: the folder 0755, the
+        // file 0644, each set once)
+        try { fs.mkdirSync(DIR, 0o755); } catch (e) { if (e.code !== 'EEXIST') throw e; }
+        if (!opened['/']) { opened['/'] = true; try { fs.chmodSync(DIR, 0o755); } catch (e) { /* not ours */ } }
+        const f = path.join(DIR, name + '.json');
+        fs.writeFileSync(f, JSON.stringify(Object.assign({}, extra, { at: now })), { mode: 0o644 });
+        if (!opened[name]) { opened[name] = true; try { fs.chmodSync(f, 0o644); } catch (e) { /* not ours */ } }
+    } catch (e) { /* tmpfs not there: nothing shared */ }
 }
 /** True while `name` has said it is showing in the last FRESH_MS (the file read at most twice a second). */
 const seen = new Map();
