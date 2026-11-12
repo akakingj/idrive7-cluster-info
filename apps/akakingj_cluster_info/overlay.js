@@ -324,8 +324,18 @@ function startOverlay(ctx, lv, opts) {
         if (tm - taken.at < 1000) return taken.by.length > 0;
         let by = [];
         try {
+            // (as hud_claim.js others(): touched within 6 s and {"held": true} - an app giving the HUD back writes
+            // {"held": false}; a time over a minute ahead is from before the head unit set its clock back: stale)
             by = fs.readdirSync(claimsDir).filter((f) => !/\.standing$|\.tmp$/.test(f)).filter((f) => {
-                try { return tm - fs.statSync(path.join(claimsDir, f)).mtime.getTime() < 6000; } catch (e) { return false; }
+                try {
+                    const fp = path.join(claimsDir, f), age = tm - fs.statSync(fp).mtime.getTime();
+                    if (!(age < 6000 && age > -60000)) return false;
+                    // (a claim another app's user wrote unreadable to this one, an older kit under a strict umask: its
+                    // being touched is all there is to go by)
+                    let body = null;
+                    try { body = fs.readFileSync(fp, 'utf8'); } catch (e) { return e.code === 'EACCES' || e.code === 'EPERM'; }
+                    return JSON.parse(body).held === true;
+                } catch (e) { return false; }
             });
         } catch (e) { by = []; }      // (no folder: nobody holds it)
         if (by.join() !== taken.by.join()) log.info(by.length ? 'HUD held by ' + by.join(', ') + ': the panel and arrows step aside there' : 'HUD free again');
@@ -483,6 +493,8 @@ function startOverlay(ctx, lv, opts) {
         lastPhase = null;
     }
     function arrowTick() {
+        // (another app took the HUD: the arrows gone at once, not after the let-go moment)
+        if (arrowsShown && settings.get('turnSignals') !== 'off' && hudTaken()) { hideArrows(); lastDir = 'off'; return; }
         const dir = signalsOn() ? lv.indicator() || 'off' : 'off';
         const tm = now();
         if (dir === 'off') {

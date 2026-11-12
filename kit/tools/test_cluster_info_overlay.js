@@ -269,18 +269,24 @@ class FakeCR extends EventEmitter {
     check('setting off: no arrows', () => assert(!ov.arrows().shown));
     // another app holding the HUD (the idrive7-apps kit's claim: Redline's HUD): the arrows and a panel on the HUD step aside
     settings.v.turnSignals = 'on'; ind = 'off'; t += 1300; ov._arrowTick();
-    const touch = (f, at) => { fs.writeFileSync(path.join(claims, f), ''); fs.utimesSync(path.join(claims, f), at / 1000, at / 1000); };
-    touch('redline', t); touch('cluster_functions.standing', t);
+    const touch = (f, at, body) => { fs.writeFileSync(path.join(claims, f), body === undefined ? '{"held": true}\n' : body); fs.utimesSync(path.join(claims, f), at / 1000, at / 1000); };
+    touch('redline', t); touch('cluster_functions.standing', t, '{"on": true}\n');
+    touch('other_app', t, '{"held": false}\n');                // (given back: not held)
+    touch('stale_app', t + 3600000);                              // (an hour ahead: from before the clock went back)
     t += 1100; ind = 'right'; ov._arrowTick();
     check('the HUD held by Redline: no turn arrows there', () => assert(!ov.arrows().shown));
-    check('the status says who holds it', () => assert(/held by redline/.test(ov.status().hud), ov.status().hud));
+    check('the status says who holds it: Redline only (given back, ahead of the clock: not)', () => assert.strictEqual(ov.status().hud, 'held by redline (panel and arrows step aside)'));
     settings.v.show = 'hud'; t += 300; ov._tick();
     check('the HUD held: no panel on the HUD', () => assert.strictEqual(ov.shown(), false));
     settings.v.show = 'map'; t += 300; ov._tick();
     check('the Waze map on the HUD (status: target hud): the panel on it steps aside too', () => assert.strictEqual(ov.shown(), false));
     kw = 40; write({ state: 'showing', target: 'map', hud_width_pct: 0 }); await step(); t += 300; ov._tick();
     check('the Waze map on the cluster: the panel there, not affected', () => assert.strictEqual(ov.shown(), true));
-    t += 6000; ov._arrowTick();       // (not touched for 6 s: Redline's HUD gone)
+    touch('redline', t, '{"held": false}\n'); t += 1100; ov._arrowTick();       // (Redline's HUD turned off: given back at once)
+    check('given back: the arrows back at once, not 6 s later', () => assert(ov.arrows().shown));
+    touch('redline', t); t += 1100; ov._arrowTick();
+    check('held again: aside', () => assert(!ov.arrows().shown));
+    t += 6000; ov._arrowTick();       // (not touched for 6 s: Redline stopped)
     check('the claim gone stale: the arrows back', () => assert(ov.arrows().shown));
     check('and the status says free', () => assert.strictEqual(ov.status().hud, 'free'));
     ov.stop();
