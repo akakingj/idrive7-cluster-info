@@ -71,6 +71,12 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   Speedometer gauge / Tach gauge setting) and Readout 1 / 2 in them over the car's own strip. With the map: the tach
   left, a pod right; with the car's own centre: the tach and one pod. On an M car the gear and the pod in the M
   boxes are left out.
+- Layout 'Arc tach' (an original design): the engine speed as a wide segmented arc (0 to Max rpm, 117 degrees
+  either side of twelve o'clock) over a large digital speed, the numerals inside the arc, a thin red arc inside it
+  where the red zone starts now (the shift point's: lower while the oil is cold), the Main readout under the speed;
+  Three pods' side pods either side. With the map: the arc left, a pod right; the car's own centre: the arc and one
+  pod; the layout's own strip on an M car: the pods lower, under its boxes. A plug-in hybrid in an electric mode:
+  the arc reads the power.
 
 ## Demo
 `cluster_demo.bat` (Windows) or `node tools/cluster_demo.js`.

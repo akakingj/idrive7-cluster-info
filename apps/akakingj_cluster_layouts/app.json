@@ -214,6 +214,10 @@
         [
           "three_pods",
           "Three pods"
+        ],
+        [
+          "arc_tach",
+          "Arc tach"
         ]
       ]
     },
@@ -302,6 +306,10 @@
         [
           "three_pods",
           "Three pods"
+        ],
+        [
+          "arc_tach",
+          "Arc tach"
         ]
       ],
       "section": "Display"
@@ -367,6 +375,10 @@
         [
           "three_pods",
           "Three pods"
+        ],
+        [
+          "arc_tach",
+          "Arc tach"
         ]
       ],
       "section": "Display"

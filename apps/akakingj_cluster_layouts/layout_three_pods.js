@@ -140,3 +140,6 @@ function ranges(o) {
         C.bar('soc', RX + 8, 562, RW - 16, 16, C.focus.bar(o), (t) => ({ track: t.track, fill0: C.engineFocus(o) ? t.accent : t.ev, fill1: C.engineFocus(o) ? t.accent : t.ev, redc: t.red, tip: t.glow, tick: t.dim, num: t.num }), 16),
     ];
 }
+
+/** (shared with layout_arc_tach.js: its side pods and ranges are these) */
+module.exports.parts = { PALETTES, pod, ranges, lit, lbl, gearC, elecTxt };
