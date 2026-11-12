@@ -39,14 +39,14 @@ const kwN = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 30)
  * regeneration below it in green), as Modern wide's.
  */
 function arcTach(o, cx, cy, R, withGear, room) {
-    const k = R / 240, s = C.rpmScale(o), T = Math.round(38 * k);
-    const numH = Math.round(26 * k), numAt = -(T / 2 + Math.round(30 * k));
+    const k = R / 240, s = C.rpmScale(o), T = Math.round(30 * k);
+    const numH = Math.round(32 * k), numAt = -(T / 2 + Math.round(32 * k));
     // (the layer square round the circle, with room round the band for its glow)
     const half = Math.round(R + T / 2 + 30 * k), X = Math.round(cx - half), Y = Math.round(cy - half);
     const evOff = (d) => C.electric(o, d);
     const marks = [s.max, 1, numH, numAt];
     const redSpan = (red) => [A0 + (A1 - A0) * Math.min(1, red / s.max), A1, 0, 0];
-    const sx = cx + Math.round(0.1 * R), sw = Math.round(room - 0.1 * R);
+    const sx = cx + Math.round(0.04 * R), sw = Math.round(room - 0.04 * R);
     const list = [
         {
             key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: 2 * half,
@@ -68,14 +68,14 @@ function arcTach(o, cx, cy, R, withGear, room) {
             visible: (d) => !evOff(d),
         },
         // the digital speed in the open quarter, under the arc's red end
-        C.text('speedDigits', sx, cy + Math.round(0.14 * R), sw, Math.round(0.6 * R), (d) => C.speedText(o, d), lit),
-        C.text('speedDigitsUnit', sx, cy + Math.round(0.78 * R), sw, Math.round(0.1 * R), C.speedUnit(o), lbl, { tracking: 0.12 }),
+        C.text('speedDigits', sx, cy + Math.round(0.12 * R), sw, Math.round(0.72 * R), (d) => C.speedText(o, d), lit),
+        C.text('speedDigitsUnit', sx, cy + Math.round(0.86 * R), sw, Math.round(0.1 * R), C.speedUnit(o), lbl, { tracking: 0.12 }),
         // the main readout inside the arc, at its middle
-        C.text('kwNow', cx - Math.round(0.5 * R), cy - Math.round(0.1 * R), Math.round(R), Math.round(0.19 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
-        C.text('kwNowLbl', cx - Math.round(0.5 * R), cy + Math.round(0.11 * R), Math.round(R), Math.round(0.07 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
+        C.text('kwNow', cx - Math.round(0.55 * R), cy - Math.round(0.16 * R), Math.round(1.1 * R), Math.round(0.24 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
+        C.text('kwNowLbl', cx - Math.round(0.5 * R), cy + Math.round(0.11 * R), Math.round(R), Math.round(0.075 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
     ];
     if (withGear) list.push(C.text('gear', cx - Math.round(0.25 * R), cy - Math.round(0.5 * R), Math.round(0.5 * R), Math.round(0.26 * R), C.gearText, gearC));
-    else list.push(C.text('rpmUnit', cx - Math.round(0.4 * R), cy - Math.round(0.36 * R), Math.round(0.8 * R), Math.round(0.08 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
+    else list.push(C.text('rpmUnit', cx - Math.round(0.4 * R), cy - Math.round(0.4 * R), Math.round(0.8 * R), Math.round(0.08 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
     return list;
 }
 
@@ -104,7 +104,7 @@ module.exports = {
         if (C.strip(o)) {
             // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the arc
             // centred, its top under the camera's cowl and its ends above the strip, a pod either side
-            return bg.concat(arcTach(o, 880, 386, 230, false, 360), pod(o, 'speed', 420, 404, 330, 'clock'), pod(o, 'rpm', 1490, 404, 330, 'outside'));
+            return bg.concat(arcTach(o, 912, 388, 234, false, 340), pod(o, 'speed', 440, 404, 330, 'clock'), pod(o, 'rpm', 1480, 404, 330, 'outside'));
         }
         if (o.centre === 'stock') {
             // the KOMBI's own centre between: the arc left, the right pod right of it, the ranges right of the box
