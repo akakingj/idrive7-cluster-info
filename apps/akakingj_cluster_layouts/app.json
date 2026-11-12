@@ -877,6 +877,7 @@
     },
     {
       "key": "redline",
+      "profile": "redline",
       "label": "Red zone from",
       "type": "number",
       "unit": "rpm",
@@ -894,6 +895,7 @@
     },
     {
       "key": "rpmMax",
+      "profile": "rpmScale",
       "label": "Rev scale up to",
       "type": "number",
       "unit": "rpm",
@@ -977,6 +979,7 @@
     },
     {
       "key": "coldLimit",
+      "profile": "coldLimit",
       "label": "Cold engine: shift point with the oil at 30 °C",
       "type": "number",
       "unit": "rpm",
@@ -993,6 +996,7 @@
     },
     {
       "key": "warmOil",
+      "profile": "warmOil",
       "label": "Cold engine: oil warm at",
       "type": "number",
       "unit": "°C",
@@ -1011,6 +1015,7 @@
     },
     {
       "key": "speedUnit",
+      "profile": "speedUnit",
       "label": "Speed unit",
       "type": "choice",
       "default": "kmh",
@@ -1028,6 +1033,7 @@
     },
     {
       "key": "tempUnit",
+      "profile": "tempUnit",
       "label": "Temperature unit",
       "type": "choice",
       "default": "c",
@@ -1045,6 +1051,7 @@
     },
     {
       "key": "torqueUnit",
+      "profile": "torqueUnit",
       "label": "Torque unit",
       "type": "choice",
       "default": "kgm",
@@ -1066,6 +1073,7 @@
     },
     {
       "key": "pressUnit",
+      "profile": "pressUnit",
       "label": "Pressure unit",
       "type": "choice",
       "default": "psi",
@@ -1091,6 +1099,7 @@
     },
     {
       "key": "powerUnit",
+      "profile": "powerUnit",
       "label": "Power unit",
       "type": "choice",
       "default": "hp",

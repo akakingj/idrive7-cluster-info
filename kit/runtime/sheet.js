@@ -106,6 +106,8 @@ function values(s) {
 function listSheet(settings, title, opts) {
     const version = opts && opts.version;
     const schema = settings.schema.filter((s) => !s.hidden);
+    // a setting the Car profile app sets now: its value shown, not changed here (mgu.js Settings.held)
+    const held = (s) => !!(s && s.key && settings.held && settings.held(s.key));
     // settings with a "section" (app.json) go in a row of their own that opens them: the top lists the others, then
     // the sections in the order they first come (none: one list, as before)
     const sections = [];
@@ -129,7 +131,7 @@ function listSheet(settings, title, opts) {
                 ? { label: s.section, value: schema.filter((x) => x.section === s.section).length + ' settings', kind: 'more' }
                 : s.type === 'bool'
                 ? { label: s.label, kind: 'toggle', on: !!settings.get(s.key) }
-                : { label: s.label, value: settings.display(s.key), kind: values(s) ? 'more' : null }));
+                : { label: s.label, value: settings.display(s.key), kind: values(s) && !held(s) ? 'more' : null }));
         },
         draw(r, t) {
             r.clear(t.bg);
@@ -178,6 +180,7 @@ function listSheet(settings, title, opts) {
             const s = this.entries()[this.focus];
             if (!s) return null;
             if (s.section && !s.key) { this.secFocus = this.focus; this.sec = s.section; this.focus = 0; return null; }
+            if (held(s)) return null;      // the Car profile sets it (Settings.held): changed in Car profile
             if (s.type === 'bool') settings.set(s.key, !settings.get(s.key));
             else if (values(s)) {
                 this.open = s;

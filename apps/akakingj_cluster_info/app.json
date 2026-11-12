@@ -307,6 +307,7 @@
     },
     {
       "key": "tempUnit",
+      "profile": "tempUnit",
       "label": "Temperature unit",
       "type": "choice",
       "default": "c",
@@ -324,6 +325,7 @@
     },
     {
       "key": "torqueUnit",
+      "profile": "torqueUnit",
       "label": "Torque unit",
       "type": "choice",
       "default": "kgm",
@@ -345,6 +347,7 @@
     },
     {
       "key": "pressUnit",
+      "profile": "pressUnit",
       "label": "Pressure unit",
       "type": "choice",
       "default": "psi",

@@ -141,7 +141,9 @@ mgu.run({
         let profiles = {}, applying = false, profile = null;
         try { profiles = JSON.parse(fs.readFileSync(PROFILE_FILE, 'utf8')) || {}; } catch (e) { /* none yet */ }
         const saveProfiles = () => { try { fs.writeFileSync(PROFILE_FILE, JSON.stringify(profiles)); } catch (e) { log.warn('profiles: ' + e); } };
-        const snapshot = () => { const o = {}; PROFILE_KEYS.forEach((k) => { o[k] = settings.get(k); }); return o; };
+        // (the values set here, not the Car profile's: a driver keeps their own, used again without the profile)
+        const own = (k) => (settings.values ? settings.values[k] : settings.get(k));
+        const snapshot = () => { const o = {}; PROFILE_KEYS.forEach((k) => { o[k] = own(k); }); return o; };
         ctx.signals.watch('de.bmw.infotainment.personalization.SessionManager', 'de.bmw.infotainment.personalization.SessionManager', {
             currentUserAccountReference: (v) => {
                 const id = typeof v === 'string' ? v : v && (v.value || v.currentUserAccountReference);
@@ -149,7 +151,7 @@ mgu.run({
                 profile = String(id);
                 if (profiles[profile]) {
                     applying = true;
-                    PROFILE_KEYS.forEach((k) => { if (profiles[profile][k] !== undefined && profiles[profile][k] !== settings.get(k)) settings.set(k, profiles[profile][k]); });
+                    PROFILE_KEYS.forEach((k) => { if (profiles[profile][k] !== undefined && profiles[profile][k] !== own(k)) settings.set(k, profiles[profile][k]); });
                     applying = false;
                     log.info('driver profile ' + profile + ': their settings');
                     rebuild();
@@ -164,7 +166,8 @@ mgu.run({
             if (page) { const p = page; page = null; goTo(p); }
         }
         settings.onChange((k, v) => {
-            if (!applying && profile && PROFILE_KEYS.indexOf(k) >= 0) { profiles[profile] = Object.assign(profiles[profile] || snapshot(), { [k]: v }); saveProfiles(); }
+            // (a change the Car profile made is not the driver's: theirs stays as they set it)
+            if (!applying && profile && PROFILE_KEYS.indexOf(k) >= 0 && !(settings.held && settings.held(k))) { profiles[profile] = Object.assign(profiles[profile] || snapshot(), { [k]: own(k) }); saveProfiles(); }
             if (applying || k === 'show' || k === 'demo' || k === 'rotate') return;
             if (k === 'accent') return cluster.recolour();
             rebuild();

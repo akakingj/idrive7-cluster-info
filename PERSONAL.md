@@ -77,6 +77,15 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   quarter the arc leaves open, under its red end; the Main readout inside the arc; Three pods' side pods either
   side. With the map: the arc left, a pod right; the car's own centre: the arc and one pod; the layout's own strip
   on an M car: the pods lower, under its boxes. A plug-in hybrid in an electric mode: the arc reads the power.
+- Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile): the three apps follow what it sets in
+  /dev/shm/car-profile.json, as its apps do (kit/runtime/mgu.js Settings, app.json "profile"; checked every 3 s, a
+  change applied at once). Layouts: Red zone from (redline), Rev scale up to (rpmScale), Cold engine: shift point
+  (coldLimit), Cold engine: oil warm at (warmOil), the speed, temperature, torque, pressure and power units. Centre:
+  Rev limit when warm (redline), Rev limit while cold (coldLimit), Oil warm at (warmOil), Shift light: starts at
+  (lightStart), the five units. Info: the temperature, torque and pressure units. A setting the profile sets shows
+  its value and can't be changed in the app; one it leaves to each app (or its Auto, 0) or no Car profile: the app's
+  own, kept all along. Centre's settings per driver keep each driver's own values, not the profile's.
+  Not in the profile, the apps' own: Shift point below the red zone, Amber zone, Centre's Shift light: flashes at.
 
 ## Demo
 `cluster_demo.bat` (Windows) or `node tools/cluster_demo.js`.

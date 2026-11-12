@@ -107,8 +107,64 @@ class Settings {
             if (it.reset && this.values[mark] !== it.reset) { this.values[it.key] = it.default; this.values[mark] = it.reset; changed = true; }
         }
         if (changed && fs.existsSync(this.file)) try { fs.writeFileSync(this.file, JSON.stringify(this.values, null, 1)); } catch (e) { /* read-only */ }
+        // Car profile (akakingj/idrive7-apps, apps/car_profile): a setting with "profile": name in app.json follows the
+        // value the Car profile app publishes under that name in /dev/shm/car-profile.json, over the one set here
+        // ("profileMap": { its value: this setting's } where the two name them differently). The value set here is
+        // kept, and is used again for a name the profile leaves to each app, a value this setting can't take (a number
+        // of 0, the profile's "Auto", unless the setting has a label for 0), or no Car profile at all. The file is
+        // looked at every 3 s; a change tells the onChange listeners as a change of the setting would.
+        this._prof = {}; this._profAt = 0; this._profBy = {};
+        for (const s of this.schema) if (s.profile) this._profBy[s.key] = s;
+        if (Object.keys(this._profBy).length) {
+            this._readProfile();
+            const timer = setInterval(() => this._pollProfile(), 3000);
+            if (timer.unref) timer.unref();
+        }
     }
-    get(key) { return this.values[key]; }
+    static profileFile() { return process.env.MGU_CAR_PROFILE || '/dev/shm/car-profile.json'; }
+    /** Read the Car profile when its file changed; true when its values may have. */
+    _readProfile() {
+        const file = Settings.profileFile();
+        let at = 0;
+        try { at = fs.statSync(file).mtime.getTime(); } catch (e) { at = 0; }
+        if (at === this._profAt) return false;
+        let vals = {};
+        if (at) {
+            try {
+                const p = JSON.parse(fs.readFileSync(file, 'utf8'));
+                if (p && p.v === 1 && p.values && typeof p.values === 'object') vals = p.values;
+            } catch (e) { return false; }      // (written whole, so only a file in the making: the next look)
+        }
+        this._profAt = at; this._prof = vals;
+        return true;
+    }
+    _pollProfile() {
+        const keys = Object.keys(this._profBy), before = {};
+        keys.forEach((k) => { before[k] = this.get(k); });
+        if (!this._readProfile()) return;
+        keys.forEach((k) => {
+            const v = this.get(k);
+            if (v !== before[k]) this.listeners.forEach((fn) => { try { fn(k, v); } catch (e) { log.error(e); } });
+        });
+    }
+    /** The Car profile's value for setting s where it has one s can take, else undefined. */
+    fromProfile(s) {
+        if (!s || !s.profile || !this._prof) return undefined;
+        let v = this._prof[s.profile];
+        if (v === undefined || v === null) return undefined;
+        if (s.profileMap && Object.prototype.hasOwnProperty.call(s.profileMap, v)) v = s.profileMap[v];
+        if (s.type === 'choice') return (s.options || []).some((o) => o[0] === v) ? v : undefined;
+        if (s.type === 'number') return typeof v === 'number' && isFinite(v) && (v > 0 || (v === 0 && !!s.labels && s.labels['0'] !== undefined)) ? v : undefined;
+        if (s.type === 'bool') return typeof v === 'boolean' ? v : undefined;
+        return undefined;
+    }
+    /** Whether the Car profile sets this setting now (it then shows the profile's value and can't be changed here). */
+    held(key) { const s = this._profBy && this._profBy[key]; return !!s && this.fromProfile(s) !== undefined; }
+    get(key) {
+        const s = this._profBy && this._profBy[key];
+        if (s) { const p = this.fromProfile(s); if (p !== undefined) return p; }
+        return this.values[key];
+    }
     set(key, value) {
         this.values[key] = value;
         try { fs.writeFileSync(this.file, JSON.stringify(this.values, null, 1)); } catch (e) { log.warn('settings save: ' + e); }
@@ -118,7 +174,7 @@ class Settings {
     item(key) { return this.schema.find((s) => s.key === key); }
     /** Human text for the current value of a setting. */
     display(key) {
-        const s = this.item(key), v = this.values[key];
+        const s = this.item(key), v = this.get(key);
         if (!s) return String(v);
         if (s.type === 'choice') { const o = (s.options || []).find((x) => x[0] === v); return o ? o[1] : String(v); }
         if (s.type === 'number') return String(v) + (s.unit ? ' ' + s.unit : '') + (s.markDefault && v === s.default ? ' (default)' : '');
@@ -128,7 +184,7 @@ class Settings {
     /** Advance a choice/number setting to its next value (wraps). */
     cycle(key) {
         const s = this.item(key);
-        if (!s) return;
+        if (!s || this.held(key)) return;      // (the Car profile sets it: changed in Car profile)
         if (s.type === 'bool') return this.set(key, !this.values[key]);
         const list = s.type === 'choice' ? s.options.map((o) => o[0]) : (s.steps || []);
         if (!list.length) return;
@@ -451,6 +507,7 @@ function wireSettings(ctx) {
         if (values(s)) {
             // the chosen row of the drop-down (the HMI shows the selection itself)
             ui.onClick(comp, (ev) => {
+                if (settings.held(s.key)) return refresh();      // the Car profile sets it: its value back on the list
                 const v = values(s)[ev && ev.row];
                 if (v !== undefined && v !== settings.get(s.key)) settings.set(s.key, v);
             });
