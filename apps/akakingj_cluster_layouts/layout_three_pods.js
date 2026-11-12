@@ -69,12 +69,12 @@ function tach(o, cx, cy, S, withGear) {
  * temperature's place, layouts.js puts Readout 1 / 2 there over the car's own strip).
  */
 function pod(o, which, cx, cy, S, readKey) {
-    const k = S / 360, temp = which === 'speed' ? 'coolant' : 'oil', tempRed = which === 'speed' ? 120 : 130;
+    const k = S / 360, temp = which === 'speed' ? 'coolant' : 'oil', tempRed = C.hotAt(o, temp);
     const g = C.gaugeOf(o, which), tk = g ? g.key : temp, ch = C.chOf(o, tk);
     const list = [
         {
             key: temp + 'Dial', kind: 'dial', x: cx - S / 2, y: cy - S / 2, w: S, h: S,
-            params: { u_scale: [100, 50, 12.5, ch ? C.CH_RED * 100 : g ? Math.min(101, g.redFrac * 100) : tempRed - 40], u_arc: [-110, 110, 0, 0], u_needle_dim: [128 * k, 26 * k, 10 * k, 3.5], u_look: [0.85, 0.85, 0, 0], u_look2: [Math.max(5, Math.round(11 * k)), S / 640, 0.75, 0.8] },
+            params: { u_scale: [100, 50, 12.5, ch ? C.chRed(o, ch) * 100 : g ? Math.min(101, g.redFrac * 100) : tempRed - 40], u_arc: [-110, 110, 0, 0], u_needle_dim: [128 * k, 26 * k, 10 * k, 3.5], u_look: [0.85, 0.85, 0, 0], u_look2: [Math.max(5, Math.round(11 * k)), S / 640, 0.75, 0.8] },
             colors: dialColours, value: ch ? (d) => C.chFrac(ch, d[ch]) * 100 : g ? (d) => g.frac(d) * 100 : (d) => (C.isNum(d[temp]) ? Math.max(0, d[temp] - 40) : 0), max: 100, sweep: true,
         },
         C.text(temp + 'Lbl', cx - 80, cy + Math.round(30 * k), 160, Math.round(17 * k), g ? g.label : temp === 'oil' ? 'OIL' : 'COOLANT', lbl, { tracking: 0.16 }),

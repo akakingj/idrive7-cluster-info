@@ -165,8 +165,10 @@ mgu.run({
             if (name === 'battery') return c < 5 ? t.cold : c > 45 ? t.crit : c > 38 ? t.warn : t.text;
             if (name === 'soc') return t.text;
             // (as Cluster Layouts' and Centre's: cold under 60 °C (the gearbox oil 50), the oil amber up to Oil warm at,
-            // too hot from 130 / 118 / 115; anything else as before)
-            const T = { oil: [60, 130], coolant: [60, 118], gearbox: [50, 115] }[name];
+            // too hot from Settings: Oil / Coolant / Gearbox is too hot at (130 / 118 / 115, the Car profile's when it
+            // sets them); anything else as before)
+            const hot = (k, d) => { const v = Number(settings.get(k)); return isFinite(v) && v > 0 ? v : d; };
+            const T = { oil: [60, hot('hotOil', 130)], coolant: [60, hot('hotCoolant', 118)], gearbox: [50, hot('hotGearbox', 115)] }[name];
             if (!T) return c >= 125 ? t.warn : c < 60 ? (t.cold || t.text) : t.text;
             if (c >= T[1]) return t.crit || t.warn;
             if (c < T[0]) return t.cold || t.text;

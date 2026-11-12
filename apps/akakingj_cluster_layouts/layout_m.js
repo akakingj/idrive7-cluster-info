@@ -58,12 +58,12 @@ function gauges(o, engine) {
     const isF = o.tempUnit !== 'c', us = o.speedUnit !== 'kmh';
     const tl = (c) => String(Math.round(C.tempIn(o, c) / 10) * 10), tu = '°' + (isF ? 'F' : 'C');
     const f01 = (v, a, b) => (isNum(v) ? Math.max(0, Math.min(1, (v - a) / (b - a))) : 0);
-    // the engine's temperatures: the coolant (70-130 C, hot from 118), the oil (50-150 C, hot from 135), the
-    // gearbox oil (40-140 C, hot from 126); each one's reading in figures beside its icon (rd)
+    // the engine's temperatures: the coolant (70-130 C), the oil (50-150 C), the gearbox oil (40-140 C), each red from
+    // Settings > Too hot (C.hotAt: 118, 130, 115); each one's reading in figures beside its icon (rd)
     const rd = (k) => (d) => (isNum(d[k]) ? String(Math.round(C.tempIn(o, d[k]))) : '--');
-    const coolant = { icon: 'therm', unit: tu, read: rd('coolant'), labels: [[0, tl(70)], [0.5, tl(100)], [1, tl(130)]], value: (d) => f01(d.coolant, 70, 130), zero: 0, lo: -1, hi: 0.8 };
-    const oil = { icon: 'oilcan', unit: tu, read: rd('oil'), labels: [[0, tl(50)], [0.5, tl(100)], [1, tl(150)]], value: (d) => f01(d.oil, 50, 150), zero: 0, lo: -1, hi: 0.85 };
-    const gearbox = { icon: 'cog', unit: tu, read: rd('gearbox'), labels: [[0, tl(40)], [0.5, tl(90)], [1, tl(140)]], value: (d) => f01(d.gearbox, 40, 140), zero: 0, lo: -1, hi: 0.86 };
+    const coolant = { icon: 'therm', unit: tu, read: rd('coolant'), labels: [[0, tl(70)], [0.5, tl(100)], [1, tl(130)]], value: (d) => f01(d.coolant, 70, 130), zero: 0, lo: -1, hi: f01(C.hotAt(o, 'coolant'), 70, 130) };
+    const oil = { icon: 'oilcan', unit: tu, read: rd('oil'), labels: [[0, tl(50)], [0.5, tl(100)], [1, tl(150)]], value: (d) => f01(d.oil, 50, 150), zero: 0, lo: -1, hi: f01(C.hotAt(o, 'oil'), 50, 150) };
+    const gearbox = { icon: 'cog', unit: tu, read: rd('gearbox'), labels: [[0, tl(40)], [0.5, tl(90)], [1, tl(140)]], value: (d) => f01(d.gearbox, 40, 140), zero: 0, lo: -1, hi: f01(C.hotAt(o, 'gearbox'), 40, 140) };
     // along the bottom: the fuel (red under an eighth) and the charge in figures too (red under 10%); on a petrol or
     // diesel car the oil there instead, and the gearbox's oil in the card in its place
     const ice = o.vehicle === 'ice';

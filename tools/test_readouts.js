@@ -218,4 +218,22 @@ check('settings in sections: the top lists Show, Layout, Colours and the section
     assert.strictEqual(sh.back(), null); assert.strictEqual(sh.sec, null); assert.strictEqual(sh.focus, 4);
     assert.strictEqual(sh.back(), 'close');
 });
+check('too hot: Settings > Too hot (the Car profile\'s) for the colours, the small gauges\' and the C-H gauges\' red', () => {
+    assert.deepStrictEqual(['oil', 'coolant', 'gearbox'].map((k) => C.hotAt({}, k)), [130, 118, 115], 'the defaults');
+    const o = { hotOil: 125, hotCoolant: 112, hotGearbox: 120 };
+    assert.strictEqual(C.toneOf('coolant', { coolant: 113 }, {}), null);
+    assert.strictEqual(C.toneOf('coolant', { coolant: 113 }, o), 'hot');
+    assert.strictEqual(C.toneOf('gearbox', { gearbox: 118 }, o), null);
+    assert.strictEqual(C.toneOf('oil', { oil: 125 }, Object.assign({ warmOil: 80 }, o)), 'hot');
+    assert.strictEqual(C.toneOf('iat', { iat: 61 }, o), 'hot', 'the intake air its own 60');
+    const g = C.gaugeOf(Object.assign({ gaugeSpeed: 'coolant' }, o), 'speed');
+    assert.strictEqual(g.red, 112); assert(g.hot({ coolant: 112 }) && !g.hot({ coolant: 111 }));
+    assert(Math.abs(C.chRed(o, 'coolant') - C.chFrac('coolant', 112)) < 1e-9 && C.chRed(o, 'coolant') < C.chRed({}, 'coolant'));
+    assert.strictEqual(C.chRed(o, 'boost'), C.CH_RED);
+    // the settings: each a Car profile name, its default the colours' own
+    ['hotOil', 'hotCoolant', 'hotGearbox'].forEach((k, i) => {
+        const s = SPEC.settings.find((x) => x.key === k);
+        assert.strictEqual(s.profile, k); assert.strictEqual(s.default, [130, 118, 115][i]);
+    });
+});
 console.log(n + ' passed');

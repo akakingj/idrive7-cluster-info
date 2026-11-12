@@ -41,17 +41,18 @@ const clear = () => { try { fs.unlinkSync(FILE); } catch (e) { /* none */ } };
 const PROFILE_VALUES = {
     engine: ['auto', 'diesel', 'petrol'], redline: [0, 4000, 6000, 7000, 9000], shiftBefore: [0, 100, 300, 400, 1000], rpmScale: [0, 5000, 7000, 10000],
     coldLimit: [0, 2000, 4500, 5500], lightMode: ['shift', 'rev'], lightStart: [2000, 4000, 6000], coldGuard: ['on', 'off'], warmOil: [60, 80, 100],
-    warmCoolant: [60, 90], speedUnit: ['kmh', 'mph'], distUnit: ['km', 'mi'], tempUnit: ['c', 'f'],
+    warmCoolant: [60, 90], hotOil: [110, 125, 140], hotCoolant: [105, 112, 120], hotGearbox: [100, 115, 130], speedUnit: ['kmh', 'mph'], distUnit: ['km', 'mi'], tempUnit: ['c', 'f'],
     pressUnit: ['bar', 'psi', 'kpa'], fuelUnit: ['l100', 'kml', 'mpguk', 'mpgus'], torqueUnit: ['nm', 'lbft', 'kgm'],
     powerUnit: ['hp', 'ps', 'kw'],
 };
 // what each app follows (app.json "profile")
 const FOLLOWS = {
-    layouts: { redline: 'redline', rpmMax: 'rpmScale', shiftBefore: 'shiftBefore', coldGuard: 'coldGuard', coldLimit: 'coldLimit', warmOil: 'warmOil', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
-    centre: { redline: 'redline', shiftBefore: 'shiftBefore', coldGuard: 'coldGuard', coldLimit: 'coldLimit', warmTarget: 'warmOil', shiftFrom: 'lightStart', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
-    info: { warmOil: 'warmOil', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit' },
+    layouts: { redline: 'redline', rpmMax: 'rpmScale', shiftBefore: 'shiftBefore', coldGuard: 'coldGuard', coldLimit: 'coldLimit', warmOil: 'warmOil', hotOil: 'hotOil', hotCoolant: 'hotCoolant', hotGearbox: 'hotGearbox', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
+    centre: { redline: 'redline', shiftBefore: 'shiftBefore', coldGuard: 'coldGuard', coldLimit: 'coldLimit', warmTarget: 'warmOil', shiftFrom: 'lightStart', oilHigh: 'hotOil', coolantHigh: 'hotCoolant', gearboxHigh: 'hotGearbox', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
+    info: { warmOil: 'warmOil', hotOil: 'hotOil', hotCoolant: 'hotCoolant', hotGearbox: 'hotGearbox', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit' },
 };
-const MINE = { speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'bar', powerUnit: 'kw', redline: 7000, rpmMax: 8000, shiftBefore: 200, coldGuard: 'off', coldLimit: 3500, warmOil: 90, warmTarget: 90, shiftFrom: 3000 };
+const MINE = { speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'bar', powerUnit: 'kw', redline: 7000, rpmMax: 8000, shiftBefore: 200, coldGuard: 'off', coldLimit: 3500, warmOil: 90, warmTarget: 90, shiftFrom: 3000,
+    hotOil: 135, hotCoolant: 115, hotGearbox: 120, oilHigh: 135, coolantHigh: 115, gearboxHigh: 120 };
 
 const cases = {
     'each app follows the names it says, a known name of the Car profile each'() {
@@ -63,11 +64,12 @@ const cases = {
         });
     },
     'every number the Car profile can give is in the setting\'s own list (its drop-down and the HMI\'s list show it)'() {
-        // (the Car profile's steps, as its app.json in akakingj/idrive7-apps car-profile 1.1.1)
+        // (the Car profile's steps, as its app.json in akakingj/idrive7-apps car-profile 1.2.0)
         const STEPS = { redline: [0, 4000, 4500, 5000, 5500, 5800, 6000, 6200, 6500, 6800, 7000, 7200, 7500, 7800, 8000, 8500, 9000],
             shiftBefore: [0, 100, 200, 300, 400, 500, 700, 800, 1000], rpmScale: [0, 5000, 6000, 7000, 8000, 9000, 10000],
             coldLimit: [0, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500], lightStart: [2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
-            warmOil: [60, 70, 75, 80, 85, 90, 100], warmCoolant: [60, 70, 75, 80, 85, 90] };
+            warmOil: [60, 70, 75, 80, 85, 90, 100], warmCoolant: [60, 70, 75, 80, 85, 90],
+            hotOil: [110, 115, 120, 125, 130, 135, 140], hotCoolant: [105, 108, 110, 112, 115, 118, 120], hotGearbox: [100, 105, 110, 115, 120, 125, 130] };
         Object.keys(FOLLOWS).forEach((app) => schemaOf(app).filter((s) => s.profile && s.type === 'number').forEach((s) => {
             const lost = STEPS[s.profile].filter((v) => v > 0 || (v === 0 && (s.steps || []).indexOf(0) >= 0)).filter((v) => s.steps.indexOf(v) < 0);
             assert.deepStrictEqual(lost, [], app + ' ' + s.key + ': ' + lost.join(', '));
@@ -94,6 +96,16 @@ const cases = {
         assert.strictEqual(Ce.get('shiftAt'), 0, 'the flash point the app\'s own (no Car profile name): Auto, the shift point from the profile\'s redline');
         const I = settingsIn('info', MINE);
         assert.deepStrictEqual([I.get('tempUnit'), I.get('torqueUnit'), I.get('pressUnit')], ['c', 'kgm', 'psi']);
+    },
+    'too hot: the profile\'s oil / coolant / gearbox temperatures to all three apps (Layouts, Centre\'s Warnings, Info)'() {
+        clear();
+        writeProfile({ hotOil: 125, hotCoolant: 112, hotGearbox: 120 });
+        const L = settingsIn('layouts', MINE), Ce = settingsIn('centre', MINE), I = settingsIn('info', MINE);
+        assert.deepStrictEqual(['hotOil', 'hotCoolant', 'hotGearbox'].map((k) => L.get(k)), [125, 112, 120]);
+        assert.deepStrictEqual(['oilHigh', 'coolantHigh', 'gearboxHigh'].map((k) => Ce.get(k)), [125, 112, 120]);
+        assert.deepStrictEqual(['hotOil', 'hotCoolant', 'hotGearbox'].map((k) => I.get(k)), [125, 112, 120]);
+        clear(); L._pollProfile();
+        assert.strictEqual(L.get('hotOil'), 135, 'gone: the own value');
     },
     'the profile\'s Auto (0) and values a setting can\'t take: the app\'s own'() {
         clear();

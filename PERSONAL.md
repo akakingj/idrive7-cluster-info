@@ -50,7 +50,10 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   gearbox oil gauges as the car's own, C at the cold end, H at the hot end, the needle in the middle once warm
   (coolant 80-105 °C, oil 85-115, gearbox oil 65-95), red towards H.
 - Temperature colours (on): the readouts' and the small gauges' temperatures blue while cold (oil and coolant under
-  60 °C, gearbox oil under 50) and red when too hot (130, 118, 115; intake air from 60).
+  60 °C, gearbox oil under 50) and red when too hot (Readouts and gauges > Oil / Coolant / Gearbox is too hot at: 130,
+  118, 115; intake air from 60). The same temperatures start the red zone of every layout's temperature gauges (the
+  small gauges, the scales, C - H, the M layout's bars) and turn Digital dash's, GT3's, Pulse's and Modern wide's
+  figures red.
 - Shift warning (off): the digital speed and the gear red at the shift point, in the layouts without their own
   (not M, Sport, GT3, Track).
 - Settings in sections (the app's own settings page): Show, Layout and Colours at the top, then Display, Readouts and
@@ -77,13 +80,14 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   quarter the arc leaves open, under its red end; the Main readout inside the arc; Three pods' side pods either
   side. With the map: the arc left, a pod right; the car's own centre: the arc and one pod; the layout's own strip
   on an M car: the pods lower, under its boxes. A plug-in hybrid in an electric mode: the arc reads the power.
-- Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile 1.1.0): the three apps follow what it sets
+- Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile 1.2.0): the three apps follow what it sets
   in /dev/shm/car-profile.json, as its apps do (kit/runtime/mgu.js Settings, app.json "profile"; checked every 3 s, a
   change applied at once). Layouts: Red zone from (redline), Shift point below the red zone by (shiftBefore), Rev
   scale up to (rpmScale), Cold-engine rev guard (coldGuard), Cold engine: shift point (coldLimit), oil warm at
-  (warmOil), the speed, temperature, torque, pressure and power units. Centre: the same red line, shift point before
-  it, guard, cold limit and oil warm at, Shift light: starts at (lightStart), the five units. Info: Oil warm at and
-  the temperature, torque and pressure units. A setting the profile sets shows its value and can't be changed in the
+  (warmOil), too hot at (hotOil, hotCoolant, hotGearbox), the speed, temperature, torque, pressure and power units.
+  Centre: the same red line, shift point before it, guard, cold limit and oil warm at, Shift light: starts at
+  (lightStart), Warnings: oil / coolant / gearbox above (hotOil, hotCoolant, hotGearbox), the five units. Info: Oil
+  warm at, too hot at (the three) and the temperature, torque and pressure units. A setting the profile sets shows its value and can't be changed in the
   app; one it leaves to each app (or its Auto, 0, where the setting has no 0) or no Car profile: the app's own, kept
   all along. Centre's settings per driver keep each driver's own values, not the profile's.
 - One shift point everywhere, as the idrive7-apps kit's (engine.js Engine.coldShift, Redline's and Warm-Up's): the red
@@ -97,8 +101,11 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   arrows go), back once the claim goes stale; Info's status page says who holds it. Info doesn't claim the HUD or stand
   on it, so Redline's HUD is never switched off for it.
 - The oil amber while warming (60 °C up to Oil warm at), as the Redline app's HUD: Layouts' readouts and small gauges'
-  figures, Centre's oil tile, Info's panel. Too hot red (Info: before amber). The hot thresholds stay the cluster's
-  (Centre's Warnings, 130 / 118 / 115 °C; the Redline HUD's: 130 / 112 / 120).
+  figures, Centre's oil tile, Info's panel. Too hot red (Info: before amber).
+- Too hot, one set of temperatures: the Car profile's Too hot group (oil, coolant, gearbox) sets Layouts', Centre's
+  Warnings and Info's, and Redline's (HUD and page), M Vitals' and Warm-Up's (oil) too. Unset, each keeps its own
+  default (the cluster 130 / 118 / 115 °C, Redline 130 / 112 / 120, M Vitals 125 / 112 / 120, Warm-Up oil 125).
+  Red at that temperature and above everywhere.
 
 ## Demo
 `cluster_demo.bat` (Windows) or `node tools/cluster_demo.js`.

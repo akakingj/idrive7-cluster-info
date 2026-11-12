@@ -156,9 +156,9 @@ module.exports = {
                 C.text('gear', GX, GY + 40, GW, GH - 140, C.gearText, (t, d) => ({ color: [C.gearText(d) === 'R' ? t.red : isNum(d.rpm) && d.rpm >= shiftPoint(o, d.oil).rpm ? t.red : t.text, 1], glow: [t.glow, 0.3] })),
                 C.flat('gearRule', GX + 40, GY + GH - 96, GW - 80, 2, 'tileEdge'),
                 C.text('coolantLbl', GX + 40, GY + GH - 84, 340, 18, 'COOLANT', lbl, { align: 0, tracking: 0.12 }),
-                C.text('coolant', GX + 40, GY + GH - 62, 340, 50, (d) => C.tempText(o, d.coolant), hot('coolant', 118), { align: 0 }),
+                C.text('coolant', GX + 40, GY + GH - 62, 340, 50, (d) => C.tempText(o, d.coolant), hot('coolant', C.hotAt(o, 'coolant')), { align: 0 }),
                 C.text('oilLbl', GX + GW - 380, GY + GH - 84, 340, 18, 'OIL', lbl, { align: 1, tracking: 0.12 }),
-                C.text('oil', GX + GW - 380, GY + GH - 62, 340, 50, (d) => C.tempText(o, d.oil), hot('oil', 130), { align: 1 }));
+                C.text('oil', GX + GW - 380, GY + GH - 62, 340, 50, (d) => C.tempText(o, d.oil), hot('oil', C.hotAt(o, 'oil')), { align: 1 }));
         }
         // left: the speed, the engine speed, the tyres (with the map: the gear)
         list.push(...box('speedB', L.x, top, L.w, h1, 'SPEED ' + C.speedUnit(o).toUpperCase()),
@@ -176,8 +176,8 @@ module.exports = {
             // (each half no taller than holds three figures, '104°': the narrow tile ran them over its edges)
             const tw = (R.w - 28) / 2, th = Math.min(h3 - 42, Math.floor(tw / 1.45)), ty = y3 + 34 + Math.round((h3 - 42 - th) / 2);
             list.push(...box('temps', R.x, y3, R.w, h3, 'COOLANT  ·  OIL'),
-                C.text('coolant', R.x + 14, ty, tw, th, (d) => C.tempText(o, d.coolant), hot('coolant', 118), { align: 0 }),
-                C.text('oil', R.x + R.w / 2, ty, tw, th, (d) => C.tempText(o, d.oil), hot('oil', 130), { align: 1 }));
+                C.text('coolant', R.x + 14, ty, tw, th, (d) => C.tempText(o, d.coolant), hot('coolant', C.hotAt(o, 'coolant')), { align: 0 }),
+                C.text('oil', R.x + R.w / 2, ty, tw, th, (d) => C.tempText(o, d.oil), hot('oil', C.hotAt(o, 'oil')), { align: 1 }));
         } else {
             list.push(...box('lastB', R.x, y3, R.w, h3, 'LAST SHIFT'),
                 C.text('lastGears', R.x + R.w - 120, y3 + 6, 106, 18, () => (score.last ? score.last.from + '-' + score.last.to : ''), lbl, { align: 1 }),

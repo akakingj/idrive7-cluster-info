@@ -6,7 +6,8 @@
  *
  *   node tools/preview.js [--layout analog_sport] [--look comfort|sport|efficient] [--centre info|stock] [--kmh]
  *                         [--black] [--speed 62] [--rpm 3200] [--gear 4] [--stage D] [--mode S] [--oil 96] [--coolant 90]
- *                         [--mcar] [--strip] [--dap] [--out preview.png]
+ *                         [--mcar] [--strip] [--dap] [--hotOil 125] [--hotCoolant 112] [--hotGearbox 120] [--tempGauge scale]
+ *                         [--out preview.png]
  * --mcar: Settings > Cluster M car, with the M KOMBI's two dark boxes drawn over the layout as on the car
  */
 const fs = require('fs');
@@ -114,7 +115,9 @@ async function render(scene, out, mapWindow, over) {
 
 if (require.main === module) {
     const a = args(process.argv.slice(2));
-    const s = makeScene({ layout: a.layout, look: a.look, black: !!a.black, options: { centre: a.centre, speedUnit: a.kmh ? 'kmh' : 'mph', vehicle: a.engine ? 'ice' : 'phev', cluster: a.mcar ? 'm' : 'standard', bottomStrip: a.strip ? 'stock' : 'layout' },
+    const s = makeScene({ layout: a.layout, look: a.look, black: !!a.black, options: { centre: a.centre, speedUnit: a.kmh ? 'kmh' : 'mph', vehicle: a.engine ? 'ice' : 'phev', cluster: a.mcar ? 'm' : 'standard', bottomStrip: a.strip ? 'stock' : 'layout',
+        // (Settings > Too hot, as the Car profile sets them: --hotOil 125 --hotCoolant 112 --hotGearbox 120; --tempGauge scale)
+        hotOil: a.hotOil, hotCoolant: a.hotCoolant, hotGearbox: a.hotGearbox, tempGauge: a.tempGauge || 'ch' },
         data: { speed: a.speed * (a.kmh ? 1 : 1.609344), rpm: a.rpm, gear: a.gear, stage: a.stage, mode: a.mode, driveMode: a.drive, oil: a.oil, coolant: a.coolant, outside: a.outside, soc: a.soc, kw: a.kw, erange: a.erange, frange: a.frange,
             gearbox: a.gearbox, iat: a.iat, battTemp: a.batt, boostActual: a.boost, torque: 312, timing: 14.5, hpfp: 205, boostTarget: 0.9, engineOn: a.rpm > 300, tyres: { p: { FL: 2.48, FR: 2.50, RL: 2.62, RR: 2.60 }, t: { FL: 24, FR: 25, RL: 27, RR: 26 } }, fuelPct: a.fuel, pdDrive: 62, pdClimate: 24, pdSeats: 14, dap: a.dap ? require('../apps/akakingj_cluster_layouts/dap').DEMO : null } });
     // let the needles ease to their readings

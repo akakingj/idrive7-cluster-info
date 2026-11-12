@@ -78,8 +78,8 @@ module.exports = {
             ],
             up('fuel', 20, 510, 190, 40, (d) => C.distText(o, d.frange), 'FUEL', txt, 20),
             up('elec', 215, 510, 195, 40, C.focus.range(o), C.focus.rangeLabel(o), eTxt, 20),
-            up('oil', 1510, 500, 200, 40, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 20),
-            up('coolant', 1710, 500, 200, 40, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 20),
+            up('oil', 1510, 500, 200, 40, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil')), 20),
+            up('coolant', 1710, 500, 200, 40, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant')), 20),
             up('kw', 1510, 576, 200, 40, C.focus.power(o), C.focus.powerLabel(o), txt, 20),
             up('soc', 1710, 576, 200, 40, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 20));
         }
@@ -95,8 +95,8 @@ module.exports = {
                 C.text('gear', 1666, 270, 244, 170, C.gearText, gearC),
                 C.text('mode', 1666, 444, 244, 26, C.modeText, accent, { tracking: 0.25 }),
             ].concat(
-                up('oil', 110, 540, 250, 48, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130)),
-                up('coolant', 380, 540, 250, 48, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118)),
+                up('oil', 110, 540, 250, 48, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil'))),
+                up('coolant', 380, 540, 250, 48, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant'))),
                 up('fuel', 1290, 480, 310, 48, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt),
                 up('elec', 1600, 480, 310, 48, C.focus.range(o), C.focus.rangeLabel(o), eTxt),
                 up('kw', 1290, 570, 310, 48, C.focus.power(o), C.focus.powerLabel(o), txt),
@@ -116,8 +116,8 @@ module.exports = {
                 rpmBar(o, 'rpmBar', 200, 474, 1520, 34, 64),
             ].concat(
                 up('rpmNum', 1250, 272, 340, 96, rpmNum, 'ENGINE RPM', txt, 24),
-                up('oil', 250, 526, 236, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
-                up('coolant', 488, 526, 236, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
+                up('oil', 250, 526, 236, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil')), 24),
+                up('coolant', 488, 526, 236, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant')), 24),
                 up('kw', 726, 526, 236, 64, C.focus.power(o), C.focus.powerLabel(o), kwC, 24),
                 up('soc', 964, 526, 236, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
                 C.engineFocus(o) || o.vehicle === 'ice' ? up('iat', 1202, 526, 236, 64, (d) => C.tempText(o, d.iat), 'INTAKE', txt, 24)
@@ -139,13 +139,13 @@ module.exports = {
         ].concat(C.strip(o) ? [].concat(
             // the car's own bottom strip shows the ranges, and the fuel and charge gauges sit above them in the
             // corners: four readings between them
-            up('oil', 340, 534, 300, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
-            up('coolant', 650, 534, 300, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
+            up('oil', 340, 534, 300, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil')), 24),
+            up('coolant', 650, 534, 300, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant')), 24),
             up('soc', 960, 534, 300, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),
             up('kw', 1270, 534, 300, 64, C.focus.power(o), C.focus.powerLabel(o), txt, 24)) : [].concat(
             // one row along the bottom, the charge bar under its charge
-            up('oil', 200, 534, 250, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), 24),
-            up('coolant', 454, 534, 250, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), 24),
+            up('oil', 200, 534, 250, 64, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil')), 24),
+            up('coolant', 454, 534, 250, 64, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant')), 24),
             up('fuel', 708, 534, 250, 64, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, 24),
             up('elec', 962, 534, 250, 64, C.focus.range(o), C.focus.rangeLabel(o), eTxt, 24),
             up('soc', 1216, 534, 250, 64, C.focus.charge(o), C.focus.chargeLabel(o), eTxt, 24),

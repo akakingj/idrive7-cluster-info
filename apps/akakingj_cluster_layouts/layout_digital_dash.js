@@ -65,11 +65,12 @@ const fillC = (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.
 
 /* ---------- the readings ---------- */
 const frac = (v, lo, hi) => (isNum(v) ? Math.max(0, Math.min(1, (v - lo) / (hi - lo))) : null);
-/** id: { title, icon, value(d), text(o, d), unit(o), lo, hi (base units), hot (base units, or null) } */
+/** id: { title, icon, value(d), text(o, d), unit(o), lo, hi (base units), hot (base units, a temperature's name: from
+ * Settings > Too hot, C.hotAt; or null) } */
 const READ = {
-    oil: { title: 'OIL', icon: 1, value: (d) => d.oil, lo: 40, hi: 150, hot: 130 },
-    coolant: { title: 'COOLANT', icon: 0, value: (d) => d.coolant, lo: 40, hi: 130, hot: 118 },
-    gearbox: { title: 'GEARBOX', icon: 2, value: (d) => d.gearbox, lo: 20, hi: 140, hot: 120 },
+    oil: { title: 'OIL', icon: 1, value: (d) => d.oil, lo: 40, hi: 150, hot: 'oil' },
+    coolant: { title: 'COOLANT', icon: 0, value: (d) => d.coolant, lo: 40, hi: 130, hot: 'coolant' },
+    gearbox: { title: 'GEARBOX', icon: 2, value: (d) => d.gearbox, lo: 20, hi: 140, hot: 'gearbox' },
     iat: { title: 'INTAKE AIR', icon: 3, value: (d) => d.iat, lo: 0, hi: 80, hot: 60 },
     batt: { title: 'BATTERY', icon: 6, value: (d) => d.battTemp, lo: 0, hi: 60, hot: 45 },
     boost: { title: 'BOOST', icon: 5, value: (d) => (d.engineOn === false ? null : d.boostActual), lo: -0.6, hi: 1.6, hot: null, boost: true },
@@ -84,51 +85,52 @@ function readText(o, r, d) {
     return String(Math.round(C.tempIn(o, v)));
 }
 const readUnit = (o, r) => (r.boost || r.rail ? C.pressLabel(o).toUpperCase() : o.tempUnit === 'c' ? '°C' : '°F');
-const hot = (r, d) => r.hot !== null && isNum(r.value(d)) && r.value(d) >= r.hot;
+const hotOf = (o, r) => (typeof r.hot === 'string' ? C.hotAt(o, r.hot) : r.hot);
+const hot = (o, r, d) => isNum(hotOf(o, r)) && isNum(r.value(d)) && r.value(d) >= hotOf(o, r);
 
 /** A tile: card, icon and title, unit, value, trend line and bar with its red mark. */
 function tile(o, id, x, y, w, h) {
     const r = READ[id], k = 't_' + id;
-    const accent = (t, d) => (hot(r, d) ? t.warm : t.glow);
+    const accent = (t, d) => (hot(o, r, d) ? t.warm : t.glow);
     return [
         card(k + 'C', x, y, w, h),
         icon(k + 'I', x + 14, y + 12, 26, r.icon, accent),
         label(k + 'L', x + 48, y + 15, w - 62, r.title + '  ' + readUnit(o, r)),
-        C.text(k + 'V', x + 16, y + 44, w - 32, 84, (d) => readText(o, r, d), (t, d) => ({ color: [hot(r, d) ? t.warm : t.text, 1], glow: [accent(t, d), 0.08] }), { align: 0, chars: 6 }),
+        C.text(k + 'V', x + 16, y + 44, w - 32, 84, (d) => readText(o, r, d), (t, d) => ({ color: [hot(o, r, d) ? t.warm : t.text, 1], glow: [accent(t, d), 0.08] }), { align: 0, chars: 6 }),
         spark(k + 'S', x + 10, y + 134, w - 20, h - 174, (d) => frac(r.value(d), r.lo, r.hi), (t, d) => accent(t, d)),
         bar(k + 'B', x + 10, y + h - 30, w - 20, 16, (d) => frac(r.value(d), r.lo, r.hi) || 0, (t, d) => fillC(t, d),
-            { mark: (d) => (r.hot === null ? 2 : (r.hot - r.lo) / (r.hi - r.lo)) }),
+            { mark: (d) => (!isNum(hotOf(o, r)) ? 2 : (hotOf(o, r) - r.lo) / (r.hi - r.lo)) }),
     ];
 }
 /** A slim tile, one line high (Settings > Cluster: M car, where the M KOMBI's boxes take the tile's lower part):
  * card, icon, title and unit, the value at the right end, its bar along the bottom. */
 function slimTile(o, id, x, y, w, h) {
     const r = READ[id], k = 't_' + id;
-    const accent = (t, d) => (hot(r, d) ? t.warm : t.glow);
+    const accent = (t, d) => (hot(o, r, d) ? t.warm : t.glow);
     return [
         card(k + 'C', x, y, w, h),
         icon(k + 'I', x + 14, y + Math.round((h - 26) / 2) - 3, 26, r.icon, accent),
         label(k + 'L', x + 48, y + Math.round((h - 20) / 2) - 3, 150, r.title + '  ' + readUnit(o, r)),
-        C.text(k + 'V', x + 150, y + 4, w - 166, h - 16, (d) => readText(o, r, d), (t, d) => ({ color: [hot(r, d) ? t.warm : t.text, 1], glow: [accent(t, d), 0.08] }), { align: 1, chars: 6 }),
+        C.text(k + 'V', x + 150, y + 4, w - 166, h - 16, (d) => readText(o, r, d), (t, d) => ({ color: [hot(o, r, d) ? t.warm : t.text, 1], glow: [accent(t, d), 0.08] }), { align: 1, chars: 6 }),
         bar(k + 'B', x + 10, y + h - 10, w - 20, 6, (d) => frac(r.value(d), r.lo, r.hi) || 0, (t, d) => fillC(t, d),
-            { mark: (d) => (r.hot === null ? 2 : (r.hot - r.lo) / (r.hi - r.lo)) }),
+            { mark: (d) => (!isNum(hotOf(o, r)) ? 2 : (hotOf(o, r) - r.lo) / (r.hi - r.lo)) }),
     ];
 }
 /** A compact reading for the strips: icon, value with its unit, title under it. */
 function compact(o, id, x, y, w, up) {
     const r = READ[id], k = 'c_' + id;
     const val = (d) => { const s = readText(o, r, d); return s === '--' ? s : s + (r.boost || r.rail ? '' : '°'); };
-    const col = (t, d) => ({ color: [hot(r, d) ? t.warm : t.text, 1], glow: [t.glow, 0.05] });
+    const col = (t, d) => ({ color: [hot(o, r, d) ? t.warm : t.text, 1], glow: [t.glow, 0.05] });
     // up: the label above the value (a row that must end above the warning lights)
     if (up) {
         return [
-            icon(k + 'I', x, y + 24, 22, r.icon, (t, d) => (hot(r, d) ? t.warm : t.glow)),
+            icon(k + 'I', x, y + 24, 22, r.icon, (t, d) => (hot(o, r, d) ? t.warm : t.glow)),
             C.text(k + 'L', x + 30, y, w - 30, 16, r.title, lbl, { align: 0, tracking: 0.08 }),
             C.text(k + 'V', x + 30, y + 18, w - 30, 32, val, col, { align: 0, chars: 6 }),
         ];
     }
     return [
-        icon(k + 'I', x, y + 8, 22, r.icon, (t, d) => (hot(r, d) ? t.warm : t.glow)),
+        icon(k + 'I', x, y + 8, 22, r.icon, (t, d) => (hot(o, r, d) ? t.warm : t.glow)),
         C.text(k + 'V', x + 30, y - 4, w - 30, 46, val, col, { align: 0, chars: 6 }),
         label(k + 'L', x + 30, y + 46, w - 30, r.title),
     ];

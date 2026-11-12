@@ -41,7 +41,7 @@ function tempArc(key, x, y, which, redC, o) {
     const ch = C.chOf(o, g ? g.key : which);
     if (ch) {
         const list = tempArc0(key, x, y, which, redC, o, g);
-        list[0] = Object.assign({}, list[0], { params: Object.assign({}, list[0].params, { u_red: [C.CH_RED] }), value: (d) => C.chFrac(ch, d[ch]) });
+        list[0] = Object.assign({}, list[0], { params: Object.assign({}, list[0].params, { u_red: [C.chRed(o, ch)] }), value: (d) => C.chFrac(ch, d[ch]) });
         return list.concat(C.chMarks(key + 'Ch', x + 100, y + 120, 76, -90, 90, 16, lbl));
     }
     return tempArc0(key, x, y, which, redC, o, g);
@@ -129,7 +129,7 @@ module.exports = {
             const keep = (list) => list.filter((p) => !/^(fuel|elec|soc)(Lbl)?$/.test(p.key));
             const ty = scy + Math.round(120 * kk);
             return [C.flat('bg', 0, 0, 1920, 720, 'bg')].concat(keep(dialSet(o, 'speed', 452, SS, scy)), keep(dialSet(o, 'rpm', 1468, SS, scy)),
-                tempArc('coolant', 452 - 100, ty, 'coolant', 118, o), tempArc('oil', 1468 - 100, ty, 'oil', 130, o), card(o, 830, 164, 260, 440, true));   // (its top clear of the camera's cowl: a photo of the car)
+                tempArc('coolant', 452 - 100, ty, 'coolant', C.hotAt(o, 'coolant'), o), tempArc('oil', 1468 - 100, ty, 'oil', C.hotAt(o, 'oil'), o), card(o, 830, 164, 260, 440, true));   // (its top clear of the camera's cowl: a photo of the car)
         }
         const S = 520, cy = 392, L = 300;
         const stock = o.centre === 'stock', R = stock ? 1256 : 1120, SR = stock ? 296 : S;
@@ -139,7 +139,7 @@ module.exports = {
             list.push(C.flat('bgR', 1104, 0, 816, 720, 'bg'));
         }
         // right of the dark box: the temperatures
-        list.push(...tempArc('oil', 1690, 292, 'oil', 130, o), ...tempArc('coolant', 1690, 476, 'coolant', 118, o));
+        list.push(...tempArc('oil', 1690, 292, 'oil', C.hotAt(o, 'oil'), o), ...tempArc('coolant', 1690, 476, 'coolant', C.hotAt(o, 'coolant'), o));
         if (stock) return list;
         // the card between the dials (below the camera's cowl, above the warning lights)
         return list.concat(card(o, 574, 140, 278, 470));

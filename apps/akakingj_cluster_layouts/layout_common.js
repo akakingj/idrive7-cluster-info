@@ -298,8 +298,9 @@ const readoutOf = (k) => READOUTS[k] || null;
 /*
  * Temperatures in colour (Settings > Temperature colours): blue while cold, the oil amber while warming, red when too
  * hot, as Cluster Centre's tiles (readings.js: oil and coolant cold under 60 °C, the gearbox oil under 50; the oil
- * warming up to Oil warm at; hot from 130, 118, 115; the intake air from 60). toneOf: 'cold', 'warm', 'hot' or null
- * for a reading now; toned: a piece's colours with it.
+ * warming up to Oil warm at; hot from Settings > Too hot: oil, coolant, gearbox (130, 118, 115 °C; the Car profile's
+ * when it sets them: hotAt); the intake air from 60). toneOf: 'cold', 'warm', 'hot' or null for a reading now; toned: a
+ * piece's colours with it. The same temperatures start the red on every layout's temperature gauges and figures.
  */
 /*
  * Temperature gauges as the car's own (Settings > Temperature gauges: C-H, the default): C at the cold end, H at the hot
@@ -325,13 +326,22 @@ function chMarks(key, cx, cy, r, a0, a1, size, colors) {
     return [mk('C', a0, 'C', colors), mk('H', a1, 'H', (t) => ({ color: [t.red || '#ff3b30', 1], glow: [t.red || '#ff3b30', 0.3] }))];
 }
 const TEMP_TONES = { oil: { cold: 60, hot: 130 }, coolant: { cold: 60, hot: 118 }, gearbox: { cold: 50, hot: 115 }, iat: { hot: 60 } };
+// too hot from (°C): the setting's, else TEMP_TONES' (the settings' defaults)
+const HOT_KEY = { oil: 'hotOil', coolant: 'hotCoolant', gearbox: 'hotGearbox' };
+const hotAt = (o, k) => {
+    const s = HOT_KEY[k], v = o && s ? Number(o[s]) : NaN;
+    if (o && s && o[s] !== '' && o[s] !== null && o[s] !== undefined && isFinite(v) && v > 0) return v;
+    return TEMP_TONES[k] && isNum(TEMP_TONES[k].hot) ? TEMP_TONES[k].hot : NaN;
+};
+/** Where the red starts on a C-H gauge of k (0..1): at its too-hot temperature (CH_RED for any other reading). */
+const chRed = (o, k) => (CH[k] && isNum(hotAt(o, k)) ? chFrac(k, hotAt(o, k)) : CH_RED);
 const TONE_RGB = { cold: '#4ab4ff', warm: '#ffc21a', hot: '#ff3b30' };
 // (the oil amber from cold up to Settings > Cold engine: oil warm at (warmOil), as the Redline app's HUD and Cluster
 // Centre's tiles: the cold-engine guard still lowering the shift point)
 const toneOf = (k, d, o) => {
-    const r = TEMP_TONES[k], v = d && d[k];
+    const r = TEMP_TONES[k], v = d && d[k], hot = hotAt(o, k);
     if (!r || !isNum(v)) return null;
-    if (isNum(r.hot) && v >= r.hot) return 'hot';
+    if (isNum(hot) && v >= hot) return 'hot';
     if (isNum(r.cold) && v < r.cold) return 'cold';
     const warm = k === 'oil' && o ? setNum(o, 'warmOil') : NaN;      // (unset: 80, as the shift point's)
     return isFinite(warm) && v < warm ? 'warm' : null;
@@ -375,14 +385,15 @@ function readout(o, key, box, longAlways) {
 }
 /*
  * The small gauges set into the analog dials (Settings > Speedometer gauge / Tach gauge; 'auto': the layout's
- * own): each reading's scale (in the data's units: °C, bar, kW, Nm, %), its red zone from `red` up (none: null),
+ * own): each reading's scale (in the data's units: °C, bar, kW, Nm, %), its red zone from `red` up (none: null; the
+ * temperatures' from Settings > Too hot: gaugeOf),
  * its label and its figures. frac 0..1 on the scale; redFrac where the red zone starts (over 1: none).
  */
 const GAUGES = {
-    coolant: { label: 'COOLANT', min: 40, max: 140, red: 120, v: (d) => d.coolant, text: tempOf('coolant') },
+    coolant: { label: 'COOLANT', min: 40, max: 140, red: 118, v: (d) => d.coolant, text: tempOf('coolant') },
     oil: { label: 'OIL', min: 40, max: 140, red: 130, v: (d) => d.oil, text: tempOf('oil') },
     iat: { label: 'INTAKE', min: 0, max: 80, red: 60, v: (d) => d.iat, text: tempOf('iat'), needs: ['iat'] },
-    gearbox: { label: 'TRANS', min: 40, max: 140, red: 120, v: (d) => d.gearbox, text: tempOf('gearbox'), needs: ['gearbox'] },
+    gearbox: { label: 'TRANS', min: 40, max: 140, red: 115, v: (d) => d.gearbox, text: tempOf('gearbox'), needs: ['gearbox'] },
     boost: { label: 'BOOST', min: 0, max: 1.6, red: null, v: (d) => (d.engineOn === false ? 0 : d.boostActual), text: (o, d) => { const n = numOrOff((o2, d2) => pressNum(o2, d2.boostActual))(o, d); return n === '--' || n === 'OFF' ? n : n + ' ' + pressLabel(o); }, needs: ['boostActual', 'boostTarget'] },
     power: { label: 'POWER', min: 0, max: 200, red: null, v: (d) => d.enginePower, text: (o, d) => { const n = powerNum(o, d.enginePower); return n === '--' ? n : n + ' ' + powerUnitText(o); } },
     torque: { label: 'TORQUE', min: 0, max: 450, red: null, v: (d) => d.torque, text: (o, d) => { const n = torqueNum(o, d.torque); return n === '--' ? n : n + ' ' + torqueUnit(o); } },
@@ -394,8 +405,10 @@ const GAUGES = {
 /** The gauge picked for the speedometer ('speed') or the tach ('rpm'), or null for the layout's own. */
 const gaugeOf = (o, which) => {
     const k = o && (which === 'speed' ? o.gaugeSpeed : o.gaugeRpm);
-    const g = k && GAUGES[k];
-    if (!g) return null;
+    const g0 = k && GAUGES[k];
+    if (!g0) return null;
+    // (a temperature's red zone from its too-hot temperature: hotAt)
+    const g = HOT_KEY[k] ? Object.assign({}, g0, { red: hotAt(o, k) }) : g0;
     return Object.assign({ key: k }, g, {
         frac: (d) => { const v = g.v(d); return isNum(v) ? Math.max(0, Math.min(1, (v - g.min) / (g.max - g.min))) : 0; },
         redFrac: isNum(g.red) ? (g.red - g.min) / (g.max - g.min) : 1.01,
@@ -459,5 +472,5 @@ const flat = (key, x, y, w, h, colour) => ({ key, kind: 'flat', x, y, w, h, colo
 
 module.exports = {
     isNum, speedIn, speedUnit, tempIn, tempText, speedText, speedScale, rpmScale, shiftPoint, tempFrac, gearText, selectorLit, clock, modeText, text, flat,
-    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, TEMP_TONES, toneOf, toned, CH, CH_RED, chOf, chFrac, chMarks, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
+    STRIP_Y, strip, stripGauges, STRIP_DROP, electric, KW_ZERO, KW_FLOOR, REGEN_RGB, kwRange, kwFrac, kwDialScale, powerMeter, tachDyn, tachValue, tachRange, stripInfoA, stripInfoB, MAP, aroundMap, overMap, cut, NOTCH, GEARBOX_HOLE, boxBezel, EDRIVE_HOLE, M_BOXES, M_HOLES, mCar, holes, TELLTALES, inCorner, distText, erangeText, outsideText, socText, kwText, reading, readingUp, bar, engineFocus, focus, pressUnitOf, pressNum, pressLabel, boostText, torqueText, torqueNum, torqueUnit, timingText, boostFrac, READOUTS, READOUT_SAMPLES, fitText, TEMP_TONES, HOT_KEY, hotAt, toneOf, toned, CH, CH_RED, chRed, chOf, chFrac, chMarks, readout, powerNum, powerUnitText, GAUGES, gaugeOf,
 };

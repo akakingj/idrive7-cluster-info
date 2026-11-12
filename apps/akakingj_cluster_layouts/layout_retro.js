@@ -75,7 +75,7 @@ function dialSet(o, which, cx, size, cy) {
     // Settings > Speedometer gauge / Tach gauge: another reading in the small gauge (its scale 0..100 here)
     const g = C.gaugeOf(o, which);
     const ch = g ? C.chOf(o, g.key) : null;   // (a temperature as the car's own: C to H; Settings > Temperature gauges)
-    const subPiece = ch ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, C.CH_RED * 100], [-110, 110], (d) => C.chFrac(ch, d[ch]) * 100)
+    const subPiece = ch ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, C.chRed(o, ch) * 100], [-110, 110], (d) => C.chFrac(ch, d[ch]) * 100)
         : g ? small(which === 'speed' ? 'fuelDial' : 'econDial', cx, subY, sub, [100, 25, 12.5, Math.min(101, g.redFrac * 100)], [-110, 110], (d) => g.frac(d) * 100)
         : which === 'speed'
         // fuel: full at the right, empty at the left, the reserve (the last eighth) red; read as 100 - level
@@ -150,10 +150,10 @@ module.exports = {
 };
 
 /** The coolant gauge between the dials: C to H (Settings > Temperature gauges, warm in the middle), else a 40-140 °C
- * scale, red from 120 °C; and under it its figures, or with C-H the C and H at its ends. */
+ * scale; red from Settings > Too hot: coolant (118 °C); and under it its figures, or with C-H the C and H at its ends. */
 const coolantDial = (o, mid, gy) => (C.chOf(o, 'coolant')
-    ? small('coolantDial', mid, gy, 184, [100, 25, 12.5, C.CH_RED * 100], [-110, 110], (d) => C.chFrac('coolant', d.coolant) * 100, 2)
-    : small('coolantDial', mid, gy, 184, [100, 25, 12.5, 80], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2));
+    ? small('coolantDial', mid, gy, 184, [100, 25, 12.5, C.chRed(o, 'coolant') * 100], [-110, 110], (d) => C.chFrac('coolant', d.coolant) * 100, 2)
+    : small('coolantDial', mid, gy, 184, [100, 25, 12.5, C.hotAt(o, 'coolant') - 40], [-110, 110], (d) => (C.isNum(d.coolant) ? Math.max(0, d.coolant - 40) : 0), 2));
 const coolantFig = (o, mid, gy) => (C.chOf(o, 'coolant') ? C.chMarks('coolantCh', mid, gy, 70, -110, 110, 18, lit)
     : [C.text('coolantNum', mid - 60, gy + 50, 120, 24, (d) => C.tempText(o, d.coolant), lit)]);   // (in figures)
 
@@ -177,7 +177,7 @@ function middle(o, X, W, gearC, top, bottom, stripped) {
     return [
         C.text('clock', X + 8, top, (W - 22) / 2, 36, C.clock, lit, { align: 0 }),
         C.text('outside', X + W / 2 + 3, top, (W - 22) / 2, 36, (d) => C.outsideText(o, d.outside), lit, { align: 1 }),
-        // coolant: cold left, hot right, red from 120 °C (a 40-140 °C scale)
+        // coolant: cold left, hot right, red from Settings > Too hot (a 40-140 °C scale)
         coolantDial(o, mid, gy),
         C.text('coolantLbl', mid - 60, gy + 26, 120, 19, 'TEMP', lbl, { tracking: 0.14 }),
         ...coolantFig(o, mid, gy),

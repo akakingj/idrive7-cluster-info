@@ -215,8 +215,8 @@ module.exports = {
             ],
             C.readingUp('fuel', 440, bot + 2, 220, 30, (d) => C.distText(o, d.frange), 'FUEL RANGE', txt, lbl),
             C.readingUp('elec', 670, bot + 2, 220, 30, C.focus.both(o), C.focus.rangeLabel(o), C.engineFocus(o) ? txt : evTxt, lbl),
-            C.readingUp('oil', 900, bot + 2, 160, 30, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), lbl),
-            C.readingUp('coolant', 1070, bot + 2, 160, 30, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), lbl));
+            C.readingUp('oil', 900, bot + 2, 160, 30, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil')), lbl),
+            C.readingUp('coolant', 1070, bot + 2, 160, 30, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant')), lbl));
         }
         const list = [bg('bg', 0, 0, 1920, 720)].concat(arcs, [
             // the gear stays left of the dark box the KOMBI leaves where its own gear readout was
@@ -244,7 +244,7 @@ module.exports = {
         C.reading('soc', 800, 376, 160, 36, C.focus.charge(o), C.focus.chargeLabel(o), C.engineFocus(o) ? txt : evTxt, lbl),
         C.reading('kw', 960, 376, 160, 36, C.focus.power(o), C.focus.powerLabel(o), txt, lbl),
         [C.flat('rule2', 800, 474, 320, 2, 'rule')],
-        C.reading('oil', 790, 494, 160, 44, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', 130), lbl),
-        C.reading('coolant', 970, 494, 160, 44, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', 118), lbl));
+        C.reading('oil', 790, 494, 160, 44, (d) => C.tempText(o, d.oil), 'OIL', hotC('oil', C.hotAt(o, 'oil')), lbl),
+        C.reading('coolant', 970, 494, 160, 44, (d) => C.tempText(o, d.coolant), 'COOLANT', hotC('coolant', C.hotAt(o, 'coolant')), lbl));
     },
 };

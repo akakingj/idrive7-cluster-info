@@ -2043,6 +2043,7 @@
     },
     {
       "key": "oilHigh",
+      "profile": "hotOil",
       "label": "Oil above (°C)",
       "type": "number",
       "unit": "°C",
@@ -2060,13 +2061,16 @@
     },
     {
       "key": "coolantHigh",
+      "profile": "hotCoolant",
       "label": "Coolant above (°C)",
       "type": "number",
       "unit": "°C",
       "default": 118,
       "steps": [
         105,
+        108,
         110,
+        112,
         115,
         118,
         120,
@@ -2093,6 +2097,7 @@
     },
     {
       "key": "gearboxHigh",
+      "profile": "hotGearbox",
       "label": "Gearbox above (°C)",
       "type": "number",
       "unit": "°C",
@@ -2103,7 +2108,8 @@
         110,
         115,
         120,
-        125
+        125,
+        130
       ],
       "section": "Warnings"
     },

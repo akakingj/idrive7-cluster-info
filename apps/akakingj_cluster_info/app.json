@@ -278,6 +278,60 @@
       "section": "Panel items"
     },
     {
+      "key": "hotOil",
+      "profile": "hotOil",
+      "label": "Oil is too hot at (red)",
+      "type": "number",
+      "unit": "°C",
+      "default": 130,
+      "steps": [
+        110,
+        115,
+        120,
+        125,
+        130,
+        135,
+        140
+      ],
+      "section": "Panel items"
+    },
+    {
+      "key": "hotCoolant",
+      "profile": "hotCoolant",
+      "label": "Coolant is too hot at (red)",
+      "type": "number",
+      "unit": "°C",
+      "default": 118,
+      "steps": [
+        105,
+        108,
+        110,
+        112,
+        115,
+        118,
+        120
+      ],
+      "section": "Panel items"
+    },
+    {
+      "key": "hotGearbox",
+      "profile": "hotGearbox",
+      "label": "Gearbox is too hot at (red)",
+      "type": "number",
+      "unit": "°C",
+      "default": 115,
+      "steps": [
+        100,
+        105,
+        110,
+        115,
+        120,
+        125,
+        130
+      ],
+      "section": "Panel items"
+    },
+    {
       "key": "turnSignals",
       "label": "Turn signal arrows on the HUD",
       "type": "choice",
