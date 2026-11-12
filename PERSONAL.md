@@ -53,6 +53,9 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   60 °C, gearbox oil under 50) and red when too hot (130, 118, 115; intake air from 60).
 - Shift warning (off): the digital speed and the gear red at the shift point, in the layouts without their own
   (not M, Sport, GT3, Track).
+- Settings in sections (the app's own settings page): Show, Layout and Colours at the top, then Display, Readouts and
+  gauges, Red zone and shift, Units and clock, Car, each opening its own list (kit/runtime/sheet.js: a setting's
+  "section" in app.json; none: one list, as before).
 - Engine power = crankshaft torque (FES statusActualValueTorque2) x rpm / 9549: a calculation; on a tuned car
   (JB4) it may differ from the real power.
 - Accelerator pedal and throttle, apart (the pedal is the driver's request, the throttle the valve's opening): both

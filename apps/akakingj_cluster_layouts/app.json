@@ -142,71 +142,6 @@
   ],
   "settings": [
     {
-      "key": "vehicle",
-      "label": "Vehicle",
-      "type": "choice",
-      "default": "ice",
-      "options": [
-        [
-          "auto",
-          "Auto (found from the car)"
-        ],
-        [
-          "phev",
-          "Plug-in hybrid (charge, electric range, battery power)"
-        ],
-        [
-          "ice",
-          "Petrol or diesel (boost, timing, torque, fuel rail)"
-        ]
-      ]
-    },
-    {
-      "key": "tankLitres",
-      "label": "Fuel tank size",
-      "type": "number",
-      "unit": "L",
-      "default": 59,
-      "steps": [
-        40,
-        42,
-        46,
-        50,
-        52,
-        55,
-        57,
-        59,
-        60,
-        63,
-        65,
-        66,
-        68,
-        69,
-        70,
-        74,
-        80,
-        83,
-        85,
-        90
-      ]
-    },
-    {
-      "key": "kwFast",
-      "label": "Battery power (kW)",
-      "type": "choice",
-      "default": "on",
-      "options": [
-        [
-          "on",
-          "Fast: between eDrive Live's readings from the car's speed and acceleration"
-        ],
-        [
-          "off",
-          "eDrive Live's readings only"
-        ]
-      ]
-    },
-    {
       "key": "show",
       "label": "Show on the cluster",
       "type": "choice",
@@ -228,126 +163,6 @@
       "type": "choice",
       "default": "analog_sport",
       "options": [
-        [
-          "analog_sport",
-          "Analog sport"
-        ],
-        [
-          "digital_round",
-          "Digital round"
-        ],
-        [
-          "modern_wide",
-          "Modern wide"
-        ],
-        [
-          "digital_dash",
-          "Digital dash"
-        ],
-        [
-          "freedom",
-          "Freedom"
-        ],
-        [
-          "retro",
-          "Retro"
-        ],
-        [
-          "track",
-          "Track"
-        ],
-        [
-          "pulse",
-          "Pulse"
-        ],
-        [
-          "gt3",
-          "GT3"
-        ],
-        [
-          "m",
-          "M"
-        ],
-        [
-          "sport",
-          "Sport"
-        ],
-        [
-          "classic",
-          "Classic M"
-        ]
-      ]
-    },
-    {
-      "key": "layoutSport",
-      "label": "Layout in Sport",
-      "type": "choice",
-      "default": "same",
-      "options": [
-        [
-          "same",
-          "Same as Layout"
-        ],
-        [
-          "analog_sport",
-          "Analog sport"
-        ],
-        [
-          "digital_round",
-          "Digital round"
-        ],
-        [
-          "modern_wide",
-          "Modern wide"
-        ],
-        [
-          "digital_dash",
-          "Digital dash"
-        ],
-        [
-          "freedom",
-          "Freedom"
-        ],
-        [
-          "retro",
-          "Retro"
-        ],
-        [
-          "track",
-          "Track"
-        ],
-        [
-          "pulse",
-          "Pulse"
-        ],
-        [
-          "gt3",
-          "GT3"
-        ],
-        [
-          "m",
-          "M"
-        ],
-        [
-          "sport",
-          "Sport"
-        ],
-        [
-          "classic",
-          "Classic M"
-        ]
-      ]
-    },
-    {
-      "key": "layoutEco",
-      "label": "Layout in ECO PRO",
-      "type": "choice",
-      "default": "same",
-      "options": [
-        [
-          "same",
-          "Same as Layout"
-        ],
         [
           "analog_sport",
           "Analog sport"
@@ -423,6 +238,128 @@
       ]
     },
     {
+      "key": "layoutSport",
+      "label": "Layout in Sport",
+      "type": "choice",
+      "default": "same",
+      "options": [
+        [
+          "same",
+          "Same as Layout"
+        ],
+        [
+          "analog_sport",
+          "Analog sport"
+        ],
+        [
+          "digital_round",
+          "Digital round"
+        ],
+        [
+          "modern_wide",
+          "Modern wide"
+        ],
+        [
+          "digital_dash",
+          "Digital dash"
+        ],
+        [
+          "freedom",
+          "Freedom"
+        ],
+        [
+          "retro",
+          "Retro"
+        ],
+        [
+          "track",
+          "Track"
+        ],
+        [
+          "pulse",
+          "Pulse"
+        ],
+        [
+          "gt3",
+          "GT3"
+        ],
+        [
+          "m",
+          "M"
+        ],
+        [
+          "sport",
+          "Sport"
+        ],
+        [
+          "classic",
+          "Classic M"
+        ]
+      ],
+      "section": "Display"
+    },
+    {
+      "key": "layoutEco",
+      "label": "Layout in ECO PRO",
+      "type": "choice",
+      "default": "same",
+      "options": [
+        [
+          "same",
+          "Same as Layout"
+        ],
+        [
+          "analog_sport",
+          "Analog sport"
+        ],
+        [
+          "digital_round",
+          "Digital round"
+        ],
+        [
+          "modern_wide",
+          "Modern wide"
+        ],
+        [
+          "digital_dash",
+          "Digital dash"
+        ],
+        [
+          "freedom",
+          "Freedom"
+        ],
+        [
+          "retro",
+          "Retro"
+        ],
+        [
+          "track",
+          "Track"
+        ],
+        [
+          "pulse",
+          "Pulse"
+        ],
+        [
+          "gt3",
+          "GT3"
+        ],
+        [
+          "m",
+          "M"
+        ],
+        [
+          "sport",
+          "Sport"
+        ],
+        [
+          "classic",
+          "Classic M"
+        ]
+      ],
+      "section": "Display"
+    },
+    {
       "key": "background",
       "label": "Background",
       "type": "choice",
@@ -436,7 +373,8 @@
           "tinted",
           "Tinted, as designed"
         ]
-      ]
+      ],
+      "section": "Display"
     },
     {
       "key": "cluster",
@@ -452,7 +390,8 @@
           "m",
           "M car: two more boxes in the middle, readings moved round them"
         ]
-      ]
+      ],
+      "section": "Display"
     },
     {
       "key": "bottomStrip",
@@ -468,39 +407,8 @@
           "layout",
           "The layout's (full screen)"
         ]
-      ]
-    },
-    {
-      "key": "boxClear",
-      "label": "Draw around the gear box (Digital dash)",
-      "type": "choice",
-      "default": "off",
-      "options": [
-        [
-          "off",
-          "Off: background under the box"
-        ],
-        [
-          "on",
-          "On: nothing under the box (shows the cluster's frame)"
-        ]
-      ]
-    },
-    {
-      "key": "boxBezel",
-      "label": "Frame behind the gear box",
-      "type": "choice",
-      "default": "off",
-      "options": [
-        [
-          "off",
-          "Off: the box blends into the black background"
-        ],
-        [
-          "on",
-          "On: a grey frame round the box"
-        ]
-      ]
+      ],
+      "section": "Display"
     },
     {
       "key": "centre",
@@ -520,103 +428,76 @@
           "stock",
           "Stock (the stock centre content)"
         ]
-      ]
+      ],
+      "section": "Display"
     },
     {
-      "key": "speedUnit",
-      "label": "Speed unit",
+      "key": "boxClear",
+      "label": "Draw around the gear box (Digital dash)",
       "type": "choice",
-      "default": "kmh",
+      "default": "off",
       "options": [
         [
-          "mph",
-          "mph"
+          "off",
+          "Off: background under the box"
         ],
         [
-          "kmh",
-          "km/h"
+          "on",
+          "On: nothing under the box (shows the cluster's frame)"
         ]
-      ]
+      ],
+      "section": "Display"
     },
     {
-      "key": "tempUnit",
-      "label": "Temperature unit",
+      "key": "boxBezel",
+      "label": "Frame behind the gear box",
       "type": "choice",
-      "default": "c",
+      "default": "off",
       "options": [
         [
-          "f",
-          "Fahrenheit"
+          "off",
+          "Off: the box blends into the black background"
         ],
         [
-          "c",
-          "Celsius"
+          "on",
+          "On: a grey frame round the box"
         ]
-      ]
+      ],
+      "section": "Display"
     },
     {
-      "key": "torqueUnit",
-      "label": "Torque unit",
+      "key": "sweep",
+      "label": "Needle sweep when it comes up",
       "type": "choice",
-      "default": "kgm",
+      "default": "on",
       "options": [
         [
-          "nm",
-          "Nm"
+          "on",
+          "On"
         ],
         [
-          "kgm",
-          "kgm"
-        ],
-        [
-          "lbft",
-          "lb-ft"
+          "off",
+          "Off"
         ]
-      ]
+      ],
+      "section": "Display"
     },
     {
-      "key": "pressUnit",
-      "label": "Pressure unit",
+      "key": "demo",
+      "label": "Demo data",
       "type": "choice",
-      "default": "psi",
+      "default": "off",
       "options": [
         [
-          "auto",
-          "With the speed unit (psi / bar)"
+          "on",
+          "Always"
         ],
         [
-          "psi",
-          "psi"
-        ],
-        [
-          "bar",
-          "bar"
-        ],
-        [
-          "kpa",
-          "kPa"
+          "off",
+          "Never"
         ]
-      ]
-    },
-    {
-      "key": "powerUnit",
-      "label": "Power unit",
-      "type": "choice",
-      "default": "hp",
-      "options": [
-        [
-          "hp",
-          "hp"
-        ],
-        [
-          "ps",
-          "PS"
-        ],
-        [
-          "kw",
-          "kW"
-        ]
-      ]
+      ],
+      "section": "Display"
     },
     {
       "key": "infoA",
@@ -668,7 +549,8 @@
           "timing",
           "Ignition timing"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "infoB",
@@ -720,7 +602,8 @@
           "timing",
           "Ignition timing"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "infoMain",
@@ -768,7 +651,8 @@
           "timing",
           "Ignition timing"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "infoLow",
@@ -816,7 +700,8 @@
           "timing",
           "Ignition timing"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "gaugeSpeed",
@@ -872,7 +757,8 @@
           "fuel",
           "Fuel level"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "gaugeRpm",
@@ -928,7 +814,8 @@
           "fuel",
           "Fuel level"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "tempGauge",
@@ -944,7 +831,8 @@
           "scale",
           "A scale and figures (40 - 140 °C)"
         ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "tempTone",
@@ -960,23 +848,8 @@
           "off",
           "Off"
         ]
-      ]
-    },
-    {
-      "key": "shiftWarn",
-      "label": "Shift warning (layouts without their own)",
-      "type": "choice",
-      "default": "off",
-      "options": [
-        [
-          "off",
-          "Off"
-        ],
-        [
-          "on",
-          "On: the digital speed and the gear red at the shift point"
-        ]
-      ]
+      ],
+      "section": "Readouts and gauges"
     },
     {
       "key": "redline",
@@ -992,7 +865,8 @@
         7000,
         7500,
         8000
-      ]
+      ],
+      "section": "Red zone and shift"
     },
     {
       "key": "rpmMax",
@@ -1005,7 +879,8 @@
         7000,
         8000,
         9000
-      ]
+      ],
+      "section": "Red zone and shift"
     },
     {
       "key": "amberRpm",
@@ -1021,7 +896,8 @@
         1000,
         1500,
         2000
-      ]
+      ],
+      "section": "Red zone and shift"
     },
     {
       "key": "shiftBefore",
@@ -1038,7 +914,25 @@
         500,
         700,
         1000
-      ]
+      ],
+      "section": "Red zone and shift"
+    },
+    {
+      "key": "shiftWarn",
+      "label": "Shift warning (layouts without their own)",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "off",
+          "Off"
+        ],
+        [
+          "on",
+          "On: the digital speed and the gear red at the shift point"
+        ]
+      ],
+      "section": "Red zone and shift"
     },
     {
       "key": "coldGuard",
@@ -1054,7 +948,8 @@
           "off",
           "Off (the red zone where it is set)"
         ]
-      ]
+      ],
+      "section": "Red zone and shift"
     },
     {
       "key": "coldLimit",
@@ -1069,7 +964,8 @@
         4500,
         5000,
         5500
-      ]
+      ],
+      "section": "Red zone and shift"
     },
     {
       "key": "warmOil",
@@ -1086,39 +982,109 @@
         90,
         95,
         100
-      ]
+      ],
+      "section": "Red zone and shift"
     },
     {
-      "key": "sweep",
-      "label": "Needle sweep when it comes up",
+      "key": "speedUnit",
+      "label": "Speed unit",
       "type": "choice",
-      "default": "on",
+      "default": "kmh",
       "options": [
         [
-          "on",
-          "On"
+          "mph",
+          "mph"
         ],
         [
-          "off",
-          "Off"
+          "kmh",
+          "km/h"
         ]
-      ]
+      ],
+      "section": "Units and clock"
     },
     {
-      "key": "demo",
-      "label": "Demo data",
+      "key": "tempUnit",
+      "label": "Temperature unit",
       "type": "choice",
-      "default": "off",
+      "default": "c",
       "options": [
         [
-          "on",
-          "Always"
+          "f",
+          "Fahrenheit"
         ],
         [
-          "off",
-          "Never"
+          "c",
+          "Celsius"
         ]
-      ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "torqueUnit",
+      "label": "Torque unit",
+      "type": "choice",
+      "default": "kgm",
+      "options": [
+        [
+          "nm",
+          "Nm"
+        ],
+        [
+          "kgm",
+          "kgm"
+        ],
+        [
+          "lbft",
+          "lb-ft"
+        ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "pressUnit",
+      "label": "Pressure unit",
+      "type": "choice",
+      "default": "psi",
+      "options": [
+        [
+          "auto",
+          "With the speed unit (psi / bar)"
+        ],
+        [
+          "psi",
+          "psi"
+        ],
+        [
+          "bar",
+          "bar"
+        ],
+        [
+          "kpa",
+          "kPa"
+        ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "powerUnit",
+      "label": "Power unit",
+      "type": "choice",
+      "default": "hp",
+      "options": [
+        [
+          "hp",
+          "hp"
+        ],
+        [
+          "ps",
+          "PS"
+        ],
+        [
+          "kw",
+          "kW"
+        ]
+      ],
+      "section": "Units and clock"
     },
     {
       "key": "timeZone",
@@ -1178,7 +1144,8 @@
           "utc+9",
           "Korea / Japan (UTC+9)"
         ]
-      ]
+      ],
+      "section": "Units and clock"
     },
     {
       "key": "clock",
@@ -1194,7 +1161,76 @@
           "24",
           "24-hour"
         ]
-      ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "vehicle",
+      "label": "Vehicle",
+      "type": "choice",
+      "default": "ice",
+      "options": [
+        [
+          "auto",
+          "Auto (found from the car)"
+        ],
+        [
+          "phev",
+          "Plug-in hybrid (charge, electric range, battery power)"
+        ],
+        [
+          "ice",
+          "Petrol or diesel (boost, timing, torque, fuel rail)"
+        ]
+      ],
+      "section": "Car"
+    },
+    {
+      "key": "tankLitres",
+      "label": "Fuel tank size",
+      "type": "number",
+      "unit": "L",
+      "default": 59,
+      "steps": [
+        40,
+        42,
+        46,
+        50,
+        52,
+        55,
+        57,
+        59,
+        60,
+        63,
+        65,
+        66,
+        68,
+        69,
+        70,
+        74,
+        80,
+        83,
+        85,
+        90
+      ],
+      "section": "Car"
+    },
+    {
+      "key": "kwFast",
+      "label": "Battery power (kW)",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "Fast: between eDrive Live's readings from the car's speed and acceleration"
+        ],
+        [
+          "off",
+          "eDrive Live's readings only"
+        ]
+      ],
+      "section": "Car"
     },
     {
       "key": "eFull",
@@ -1217,7 +1253,8 @@
         40,
         45,
         50
-      ]
+      ],
+      "section": "Car"
     }
   ],
   "config": {

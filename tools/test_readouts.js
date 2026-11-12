@@ -195,4 +195,20 @@ check('the throttle (the valve, as Live Data: 4600 / 5858, OBD 11) apart from th
     assert.strictEqual(low({ infoLow: 'throttle' }).text({ throttle: 40 }), 'THROTTLE 40%');
     assert.strictEqual(low({ infoLow: 'boost' }).text({ boostActual: 1, engineOn: true }), 'BOOST 14.5 psi');
 });
+check('settings in sections: the top lists Show, Layout, Colours and the sections; a section opens, Back returns', () => {
+    const { listSheet } = require(path.join(ROOT, 'kit', 'runtime', 'sheet.js'));
+    const vals = {}; SPEC.settings.forEach((x) => { vals[x.key] = x.default; });
+    const st = { schema: SPEC.settings, get: (k) => vals[k], set: (k, v) => { vals[k] = v; }, display: (k) => String(vals[k]), cycle() {} };
+    const sh = listSheet(st, null, {});
+    const top = sh.entries().map((e) => e.key || '[' + e.section + ']');
+    assert.deepStrictEqual(top, ['show', 'layout', 'look', '[Display]', '[Readouts and gauges]', '[Red zone and shift]', '[Units and clock]', '[Car]']);
+    sh.focus = 4; sh.choose();
+    assert.strictEqual(sh.sec, 'Readouts and gauges');
+    assert.strictEqual(sh.entries()[0].key, 'infoA');
+    sh.focus = 0; sh.choose(); assert.strictEqual(sh.open.key, 'infoA');
+    sh.sub = sh.open.options.findIndex((x) => x[0] === 'boost'); sh.choose();
+    assert.strictEqual(vals.infoA, 'boost'); assert.strictEqual(sh.sec, 'Readouts and gauges');
+    assert.strictEqual(sh.back(), null); assert.strictEqual(sh.sec, null); assert.strictEqual(sh.focus, 4);
+    assert.strictEqual(sh.back(), 'close');
+});
 console.log(n + ' passed');
