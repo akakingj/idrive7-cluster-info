@@ -89,7 +89,8 @@ function arcTach(o, cx, cy, R, withGear, room, inside) {
         C.text('kwNow', cx - Math.round(0.55 * R), cy - Math.round(0.16 * R), Math.round(1.1 * R), Math.round(0.24 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
         C.text('kwNowLbl', cx - Math.round(0.5 * R), cy + Math.round(0.11 * R), Math.round(R), Math.round(0.075 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
     ];
-    if (withGear) list.push(C.text('gear', cx - Math.round(0.25 * R), cy - Math.round(0.5 * R), Math.round(0.5 * R), Math.round(0.26 * R), C.gearText, gearC));
+    // (the gear: Settings > Arc tach: the gear in the arc; not twice, with the gear as the main readout too)
+    if (withGear) { if (o.arcGear !== 'off' && o.infoMain !== 'gear') list.push(C.text('gear', cx - Math.round(0.25 * R), cy - Math.round(0.5 * R), Math.round(0.5 * R), Math.round(0.26 * R), C.gearText, gearC)); }
     else list.push(C.text('rpmUnit', cx - Math.round(0.4 * R), cy - Math.round(0.4 * R), Math.round(0.8 * R), Math.round(0.08 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
     return list;
 }

@@ -2,7 +2,7 @@
   "id": "akakingj_cluster_layouts",
   "title": "AK Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.28.4",
+  "version": "0.28.5",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "AKCL",
@@ -735,6 +735,23 @@
         [
           "gear",
           "Gear (D / S / M and its number)"
+        ]
+      ],
+      "section": "Readouts and gauges"
+    },
+    {
+      "key": "arcGear",
+      "label": "Arc tach: the gear in the arc (the layout's own strip)",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "On"
+        ],
+        [
+          "off",
+          "Off"
         ]
       ],
       "section": "Readouts and gauges"

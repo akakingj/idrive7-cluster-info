@@ -40,7 +40,8 @@ READ.forEach((k, i) => SETS.push({ tag: 'readouts ' + k, infoLow: READ[(i + 7) %
 SETS.push({ tag: 'off, fuel', infoA: 'off', infoB: 'off', gaugeSpeed: 'fuel', gaugeRpm: 'auto' });
 // the gear as a readout, and Nothing under the speed and on Classic M's bottom line
 SETS.push({ tag: 'gear everywhere', infoA: 'gear', infoB: 'gear', infoMain: 'gear', infoLow: 'gear' });
-SETS.push({ tag: 'nothing everywhere', infoA: 'off', infoB: 'off', infoMain: 'off', infoLow: 'off' });
+SETS.push({ tag: 'nothing everywhere', infoA: 'off', infoB: 'off', infoMain: 'off', infoLow: 'off', arcGear: 'off' });
+SETS.push({ tag: 'gear under the speed', infoMain: 'gear', arcGear: 'on' });
 SETS.push({ tag: 'imperial', speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'lbft', pressUnit: 'kpa', powerUnit: 'kw', gaugeSpeed: 'boost', gaugeRpm: 'gearbox' });
 SETS.push({ tag: 'no cold guard, no amber', coldGuard: 'off', amberRpm: 0, shiftBefore: 0 });
 SETS.push({ tag: 'wide amber, far shift', amberRpm: 2000, shiftBefore: 1000, coldLimit: 3000, warmOil: 100, redline: 5000, rpmMax: 6000 });

@@ -35,6 +35,8 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   time and outside temperature were over the car's own bottom strip) and the line under the digital speed: intake
   air, gearbox oil (TRANS), oil, coolant, boost, engine power, torque, throttle, accelerator pedal, timing, the gear
   (GEAR D4 / S3 / M2, P R N), or Nothing (each of them, under the speed too).
+  Arc tach: the gear in the arc (the layout's own strip) on or off; not shown twice when the gear is the readout
+  under the speed.
   Classic M: Centre readout: bottom line (the coolant by default). Short names where
   the box is narrow (IAT 31°, TRANS 78°, BST 14.5, HP 211).
 - Layouts > Speedometer gauge / Tach gauge: the small gauge in the analog dials (Analog sport, Digital round, Retro,
