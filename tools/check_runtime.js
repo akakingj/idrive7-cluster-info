@@ -42,6 +42,10 @@ SETS.push({ tag: 'imperial', speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'lbft'
 SETS.push({ tag: 'no cold guard, no amber', coldGuard: 'off', amberRpm: 0, shiftBefore: 0 });
 SETS.push({ tag: 'wide amber, far shift', amberRpm: 2000, shiftBefore: 1000, coldLimit: 3000, warmOil: 100, redline: 5000, rpmMax: 6000 });
 SETS.push({ tag: 'top end', redline: 8000, rpmMax: 9000 });
+// the Car profile's ends (its values are all in the settings' lists): the scale to 10000 with the red line at 9000, and
+// to 5000 with it at 4000, the shift point 800 below
+SETS.push({ tag: 'profile top', redline: 9000, rpmMax: 10000, shiftBefore: 800, coldLimit: 2000 });
+SETS.push({ tag: 'profile bottom', redline: 4000, rpmMax: 5000, shiftBefore: 800, coldLimit: 2000, warmOil: 60 });
 SETS.push({ tag: 'layout strip, map', bottomStrip: 'layout', centre: 'map' });
 SETS.push({ tag: 'stock centre', centre: 'stock' });
 SETS.push({ tag: 'M cluster', cluster: 'm', bottomStrip: 'layout' });

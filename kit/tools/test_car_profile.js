@@ -62,6 +62,17 @@ const cases = {
             Object.keys(got).forEach((k) => assert(PROFILE_VALUES[got[k]], app + ' ' + k + ': ' + got[k] + ' is no Car profile name'));
         });
     },
+    'every number the Car profile can give is in the setting\'s own list (its drop-down and the HMI\'s list show it)'() {
+        // (the Car profile's steps, as its app.json in akakingj/idrive7-apps car-profile 1.1.1)
+        const STEPS = { redline: [0, 4000, 4500, 5000, 5500, 5800, 6000, 6200, 6500, 6800, 7000, 7200, 7500, 7800, 8000, 8500, 9000],
+            shiftBefore: [0, 100, 200, 300, 400, 500, 700, 800, 1000], rpmScale: [0, 5000, 6000, 7000, 8000, 9000, 10000],
+            coldLimit: [0, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500], lightStart: [2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
+            warmOil: [60, 70, 75, 80, 85, 90, 100], warmCoolant: [60, 70, 75, 80, 85, 90] };
+        Object.keys(FOLLOWS).forEach((app) => schemaOf(app).filter((s) => s.profile && s.type === 'number').forEach((s) => {
+            const lost = STEPS[s.profile].filter((v) => v > 0 || (v === 0 && (s.steps || []).indexOf(0) >= 0)).filter((v) => s.steps.indexOf(v) < 0);
+            assert.deepStrictEqual(lost, [], app + ' ' + s.key + ': ' + lost.join(', '));
+        }));
+    },
     'no profile: each app its own values'() {
         clear();
         Object.keys(FOLLOWS).forEach((app) => {
