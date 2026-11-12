@@ -121,12 +121,11 @@ module.exports = {
                 tach(o, 300, 392, 520, true), C.mCar(o) ? [] : pod(o, 'rpm', 1256, 392, 280, null), ranges(o));   // (an M car: its second box there)
         }
         // the layout's own strip: the tach left of the KOMBI's gear box, the left pod left of it, the right pod
-        // between it and the box (left out on an M car: the M KOMBI's second box sits there), the ranges right of
-        // the box
-        // (an M car: no gear in the tach, where the M KOMBI's first box shows its own)
-        const list = bg.concat(tach(o, 880, 392, 500, !C.mCar(o)), pod(o, 'speed', 404, 404, 330, 'clock'));
-        if (!C.mCar(o)) list.push(...pod(o, 'rpm', 1270, 392, 260, 'outside'));
-        return list.concat(ranges(o));
+        // between it and the box, the ranges right of the box
+        // (an M car: the tach left, clear of the M KOMBI's two boxes, which would sit on its face; the pods lower,
+        // under the boxes, as Arc tach's)
+        if (C.mCar(o)) return bg.concat(tach(o, 420, 392, 500, true), pod(o, 'speed', 916, 540, 200, 'clock'), pod(o, 'rpm', 1311, 556, 186, 'outside'), ranges(o));
+        return bg.concat(tach(o, 880, 392, 500, true), pod(o, 'speed', 404, 404, 330, 'clock'), pod(o, 'rpm', 1270, 392, 260, 'outside'), ranges(o));
     },
 };
 
