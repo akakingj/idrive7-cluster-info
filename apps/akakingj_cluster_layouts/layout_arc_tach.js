@@ -1,6 +1,6 @@
 'use strict';
 /**
- * layout_arc_tach.js - "Arc tach": the engine speed as a segmented arc three quarters round (from six o'clock up
+ * layout_arc_tach.js - "Arc tach": the engine speed as a solid arc, filling as it climbs, three quarters round (from six o'clock up
  * the left, over the top, down to three o'clock), its numerals 0 - 7 (Settings > Rev scale) inside it, the red
  * zone the shift point's (layout_common.shiftPoint: lower while the oil is cold) at its end; the digital speed in
  * the quarter it leaves open, under the red end; the main readout inside the arc; a round pod either side
@@ -16,7 +16,7 @@ const C = require('./layout_common');
 const TP = require('./layout_three_pods').parts;
 const { pod, ranges, lit, lbl, gearC, elecTxt } = TP;
 
-/* Three pods' colours, and the arc's: its unlit segments, the lit ones' gradient and the tip's glow */
+/* Three pods' colours, and the arc's: its unlit track, the lit part's gradient and the tip's glow */
 const ARC = {
     comfort: { fill0: '#e8ecf0', fill1: '#ffffff', tip: '#ff6a3a', track: '#202226', regen: '#3ddc84' },
     sport: { fill0: '#ffb0a0', fill1: '#ffe4dc', tip: '#ff3a1a', track: '#2a1412', regen: '#3ddc84' },
@@ -50,7 +50,7 @@ function arcTach(o, cx, cy, R, withGear, room) {
     const list = [
         {
             key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: 2 * half,
-            params: { u_geo: [cx - X, cy - Y, R, T], u_span: [A0, A1, s.max * 10, 0.32], u_marks: marks, u_red: [s.red / s.max], u_zero: [0], u_soft: [0.45] },
+            params: { u_geo: [cx - X, cy - Y, R, T], u_span: [A0, A1, 0, 0], u_marks: marks, u_red: [s.red / s.max], u_zero: [0], u_soft: [0.45] },
             colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.ev, fill1: t.ev, tip: kwOf(d) < -0.3 ? t.regen : t.ev }) : bandColours(t)),
             value: (d) => (evOff(d) ? C.kwFrac(d.kw, kwN(d)) : C.isNum(d.rpm) ? Math.min(1, d.rpm / 1000 / s.max) : 0), max: 1, sweep: true,
             // (the red zone where the shift point puts it now; on a plug-in hybrid in an electric mode the power's

@@ -71,7 +71,7 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   Speedometer gauge / Tach gauge setting) and Readout 1 / 2 in them over the car's own strip. With the map: the tach
   left, a pod right; with the car's own centre: the tach and one pod. On an M car the gear and the pod in the M
   boxes are left out.
-- Layout 'Arc tach' (an original design): the engine speed as a segmented arc three quarters round (0 to Max rpm,
+- Layout 'Arc tach' (an original design): the engine speed as a solid arc three quarters round, filling as it climbs (0 to Max rpm,
   from just left of six o'clock up the left, over the top, to three o'clock), the numerals inside it, a thin red arc
   inside it where the red zone starts now (the shift point's: lower while the oil is cold); the digital speed in the
   quarter the arc leaves open, under its red end; the Main readout inside the arc; Three pods' side pods either
