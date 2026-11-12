@@ -7,11 +7,29 @@
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 
 /**
+ * The shift point and the red zone now, as Cluster Layouts' (layout_common.shiftPoint) and the Redline app's fixed one
+ * work them out: the redline less `shiftBefore`; with the cold-engine guard on, pulled down to `coldLimit` with the oil
+ * at 30 °C and back up as it reaches `warmOil`; the red zone starts `shiftBefore` above it (the redline once warm).
+ * o: { redline, shiftBefore, coldGuard ('on' / 'off'), coldLimit, warmOil }; d: the data (its oil).
+ * -> { rpm, red, cold }. (tools/test_centre.js checks it gives what Cluster Layouts' does.)
+ */
+function shiftPoint(o, d) {
+    const num = (v, dflt) => (isNum(v) ? v : dflt);
+    const red = num(o && o.redline, 7000), before = Math.max(0, num(o && o.shiftBefore, 300));
+    const n = Math.max(2500, red - before), oil = d && d.oil, warm = num(o && o.warmOil, 80);
+    if (!o || o.coldGuard === 'off' || !isNum(oil) || oil >= warm) return { rpm: n, red, cold: false };
+    const cold = Math.min(num(o.coldLimit, 4500), n), f = Math.max(0, Math.min(1, (oil - 30) / Math.max(1, warm - 30)));
+    const rpm = Math.round((cold + (n - cold) * f) / 50) * 50;
+    return { rpm, red: Math.min(red, rpm + before), cold: true };
+}
+
+/**
  * Warm-up: how fast the oil is warming (°C a minute, over the last few minutes), when it reaches the target
- * temperature, and a safe rev limit that rises from the cold limit (at COLD_C) to the redline (at the target).
+ * temperature, and the rev limit for now: where the red zone starts (shiftPoint, above: from the cold limit with the
+ * oil at 30 °C up to the redline at the target, as Cluster Layouts' red zone and the Redline app).
  */
 class WarmUp {
-    constructor(o) { this.o = Object.assign({ target: 90, coldLimit: 3500, redline: 7000 }, o); this.hist = []; }
+    constructor(o) { this.o = Object.assign({ target: 80, coldLimit: 4500, redline: 6000, shiftBefore: 300, coldGuard: 'on' }, o); this.hist = []; }
     feed(t, d) {
         if (!isNum(d.oil)) return;
         const h = this.hist;
@@ -30,8 +48,7 @@ class WarmUp {
         if (!isNum(oil)) return { oil: null, ready: false, minutes: null, limit: null };
         const ready = oil >= o.target, r = this.rate();
         const minutes = ready ? 0 : r && r > 0.05 ? Math.min(99, (o.target - oil) / r) : null;
-        const COLD_C = 40, f = Math.max(0, Math.min(1, (oil - COLD_C) / (o.target - COLD_C)));
-        const limit = Math.round((o.coldLimit + (o.redline - o.coldLimit) * f) / 100) * 100;
+        const limit = shiftPoint({ redline: o.redline, shiftBefore: o.shiftBefore, coldGuard: o.coldGuard, coldLimit: o.coldLimit, warmOil: o.target }, d).red;
         return { oil, ready, minutes, limit };
     }
 }
@@ -92,4 +109,4 @@ class PerfTimer {
     state(t) { return { mode: this.mode, elapsed: this.run && this.mode === 'running' ? (t - this.run.t0) / 1000 : null, last: this.last, best: this.best, run: this.run }; }
 }
 
-module.exports = { WarmUp, CoolDown, PerfTimer, QUARTER_M };
+module.exports = { WarmUp, CoolDown, PerfTimer, QUARTER_M, shiftPoint };

@@ -39,19 +39,19 @@ const clear = () => { try { fs.unlinkSync(FILE); } catch (e) { /* none */ } };
 
 // the Car profile's names (profile.js KEYS) and the values it can set
 const PROFILE_VALUES = {
-    engine: ['auto', 'diesel', 'petrol'], redline: [0, 4000, 6000, 7000, 9000], rpmScale: [0, 5000, 7000, 10000],
-    coldLimit: [0, 2000, 4500, 5500], lightMode: ['shift', 'rev'], lightStart: [2000, 4000, 6000], warmOil: [60, 80, 100],
+    engine: ['auto', 'diesel', 'petrol'], redline: [0, 4000, 6000, 7000, 9000], shiftBefore: [0, 100, 300, 400, 1000], rpmScale: [0, 5000, 7000, 10000],
+    coldLimit: [0, 2000, 4500, 5500], lightMode: ['shift', 'rev'], lightStart: [2000, 4000, 6000], coldGuard: ['on', 'off'], warmOil: [60, 80, 100],
     warmCoolant: [60, 90], speedUnit: ['kmh', 'mph'], distUnit: ['km', 'mi'], tempUnit: ['c', 'f'],
     pressUnit: ['bar', 'psi', 'kpa'], fuelUnit: ['l100', 'kml', 'mpguk', 'mpgus'], torqueUnit: ['nm', 'lbft', 'kgm'],
     powerUnit: ['hp', 'ps', 'kw'],
 };
 // what each app follows (app.json "profile")
 const FOLLOWS = {
-    layouts: { redline: 'redline', rpmMax: 'rpmScale', coldLimit: 'coldLimit', warmOil: 'warmOil', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
-    centre: { redline: 'redline', coldLimit: 'coldLimit', warmTarget: 'warmOil', shiftFrom: 'lightStart', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
-    info: { tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit' },
+    layouts: { redline: 'redline', rpmMax: 'rpmScale', shiftBefore: 'shiftBefore', coldGuard: 'coldGuard', coldLimit: 'coldLimit', warmOil: 'warmOil', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
+    centre: { redline: 'redline', shiftBefore: 'shiftBefore', coldGuard: 'coldGuard', coldLimit: 'coldLimit', warmTarget: 'warmOil', shiftFrom: 'lightStart', speedUnit: 'speedUnit', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit', powerUnit: 'powerUnit' },
+    info: { warmOil: 'warmOil', tempUnit: 'tempUnit', torqueUnit: 'torqueUnit', pressUnit: 'pressUnit' },
 };
-const MINE = { speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'bar', powerUnit: 'kw', redline: 7000, rpmMax: 8000, coldLimit: 3500, warmOil: 90, warmTarget: 90, shiftFrom: 3000 };
+const MINE = { speedUnit: 'mph', tempUnit: 'f', torqueUnit: 'nm', pressUnit: 'bar', powerUnit: 'kw', redline: 7000, rpmMax: 8000, shiftBefore: 200, coldGuard: 'off', coldLimit: 3500, warmOil: 90, warmTarget: 90, shiftFrom: 3000 };
 
 const cases = {
     'each app follows the names it says, a known name of the Car profile each'() {
@@ -80,7 +80,7 @@ const cases = {
         const Ce = settingsIn('centre', MINE);
         assert.strictEqual(Ce.get('warmTarget'), 80, 'Oil warm at <- warmOil');
         assert.strictEqual(Ce.get('shiftFrom'), 4000, 'Shift light: starts at <- Rev bar from');
-        assert.strictEqual(Ce.get('shiftAt'), 5700, 'the flash point is the app\'s (no Car profile name)');
+        assert.strictEqual(Ce.get('shiftAt'), 0, 'the flash point the app\'s own (no Car profile name): Auto, the shift point from the profile\'s redline');
         const I = settingsIn('info', MINE);
         assert.deepStrictEqual([I.get('tempUnit'), I.get('torqueUnit'), I.get('pressUnit')], ['c', 'kgm', 'psi']);
     },
@@ -98,11 +98,21 @@ const cases = {
                     clear(); writeProfile({ [name]: v });
                     const s = settingsIn(app, MINE), got = s.get(key);
                     if (schema.type === 'choice') assert(schema.options.some((o) => o[0] === got), app + ' ' + key + ' = ' + got);
-                    else assert(typeof got === 'number' && got > 0, app + ' ' + key + ' = ' + got);
+                    else assert(typeof got === 'number' && (got > 0 || (schema.steps || []).indexOf(0) >= 0), app + ' ' + key + ' = ' + got);
                     assert.strictEqual(s.held(key), got === v, app + ' ' + key + ' ' + v);
                 });
             });
         });
+    },
+    'shift point before redline: 0 taken (one of its own values); the cold guard on / off; Centre\'s Auto flash point shown as Auto'() {
+        clear();
+        writeProfile({ shiftBefore: 0, coldGuard: 'off' });
+        const L = settingsIn('layouts', MINE), Ce = settingsIn('centre', Object.assign({}, MINE, { shiftAt: 0 }));
+        assert.strictEqual(L.get('shiftBefore'), 0); assert.strictEqual(L.held('shiftBefore'), true);
+        assert.strictEqual(L.get('coldGuard'), 'off'); assert.strictEqual(Ce.get('coldGuard'), 'off');
+        assert.strictEqual(Ce.display('shiftAt'), 'Auto (the shift point)');
+        writeProfile({ coldGuard: 'on' }); L._pollProfile();
+        assert.strictEqual(L.get('coldGuard'), 'on'); assert.strictEqual(L.get('shiftBefore'), 200, 'left out: the own value');
     },
     'held: not changed here (cycle, the drawn list), the own value as it was'() {
         clear();

@@ -1884,8 +1884,13 @@
       "label": "Shift light: flashes at",
       "type": "number",
       "unit": "rpm",
-      "default": 5700,
+      "default": 0,
+      "labels": {
+        "0": "Auto (the shift point)"
+      },
+      "reset": 1,
       "steps": [
+        0,
         4000,
         4500,
         5000,
@@ -1900,13 +1905,86 @@
       "section": "Shift light and warm-up"
     },
     {
+      "key": "redline",
+      "profile": "redline",
+      "label": "Red zone from (the redline)",
+      "type": "number",
+      "unit": "rpm",
+      "default": 6000,
+      "steps": [
+        5000,
+        5500,
+        6000,
+        6500,
+        7000,
+        7500,
+        8000
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "shiftBefore",
+      "profile": "shiftBefore",
+      "label": "Shift point: below the red zone by",
+      "type": "number",
+      "unit": "rpm",
+      "default": 300,
+      "steps": [
+        0,
+        100,
+        200,
+        300,
+        400,
+        500,
+        700,
+        1000
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "coldGuard",
+      "profile": "coldGuard",
+      "label": "Cold-engine rev guard",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "On"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "coldLimit",
+      "profile": "coldLimit",
+      "label": "Cold engine: shift point with the oil at 30 °C",
+      "type": "number",
+      "unit": "rpm",
+      "default": 4500,
+      "steps": [
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
       "key": "warmTarget",
       "profile": "warmOil",
-      "label": "Oil warm at (°C)",
+      "label": "Cold engine: oil warm at",
       "type": "number",
       "unit": "°C",
       "default": 80,
       "steps": [
+        60,
         70,
         75,
         80,
@@ -1914,38 +1992,6 @@
         90,
         95,
         100
-      ],
-      "section": "Shift light and warm-up"
-    },
-    {
-      "key": "coldLimit",
-      "profile": "coldLimit",
-      "label": "Rev limit while cold",
-      "type": "number",
-      "unit": "rpm",
-      "default": 4500,
-      "steps": [
-        2500,
-        3000,
-        3500,
-        4000,
-        4500
-      ],
-      "section": "Shift light and warm-up"
-    },
-    {
-      "key": "redline",
-      "profile": "redline",
-      "label": "Rev limit when warm",
-      "type": "number",
-      "unit": "rpm",
-      "default": 6000,
-      "steps": [
-        5500,
-        6000,
-        6500,
-        7000,
-        7500
       ],
       "section": "Shift light and warm-up"
     },

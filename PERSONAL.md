@@ -77,15 +77,22 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   quarter the arc leaves open, under its red end; the Main readout inside the arc; Three pods' side pods either
   side. With the map: the arc left, a pod right; the car's own centre: the arc and one pod; the layout's own strip
   on an M car: the pods lower, under its boxes. A plug-in hybrid in an electric mode: the arc reads the power.
-- Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile): the three apps follow what it sets in
-  /dev/shm/car-profile.json, as its apps do (kit/runtime/mgu.js Settings, app.json "profile"; checked every 3 s, a
-  change applied at once). Layouts: Red zone from (redline), Rev scale up to (rpmScale), Cold engine: shift point
-  (coldLimit), Cold engine: oil warm at (warmOil), the speed, temperature, torque, pressure and power units. Centre:
-  Rev limit when warm (redline), Rev limit while cold (coldLimit), Oil warm at (warmOil), Shift light: starts at
-  (lightStart), the five units. Info: the temperature, torque and pressure units. A setting the profile sets shows
-  its value and can't be changed in the app; one it leaves to each app (or its Auto, 0) or no Car profile: the app's
-  own, kept all along. Centre's settings per driver keep each driver's own values, not the profile's.
-  Not in the profile, the apps' own: Shift point below the red zone, Amber zone, Centre's Shift light: flashes at.
+- Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile 1.1.0): the three apps follow what it sets
+  in /dev/shm/car-profile.json, as its apps do (kit/runtime/mgu.js Settings, app.json "profile"; checked every 3 s, a
+  change applied at once). Layouts: Red zone from (redline), Shift point below the red zone by (shiftBefore), Rev
+  scale up to (rpmScale), Cold-engine rev guard (coldGuard), Cold engine: shift point (coldLimit), oil warm at
+  (warmOil), the speed, temperature, torque, pressure and power units. Centre: the same red line, shift point before
+  it, guard, cold limit and oil warm at, Shift light: starts at (lightStart), the five units. Info: Oil warm at and
+  the temperature, torque and pressure units. A setting the profile sets shows its value and can't be changed in the
+  app; one it leaves to each app (or its Auto, 0, where the setting has no 0) or no Car profile: the app's own, kept
+  all along. Centre's settings per driver keep each driver's own values, not the profile's.
+- One shift point everywhere: Layouts' red zone and shift warning, Centre's shift light (Shift light: flashes at:
+  Auto, the default, reset once) and its warm-up page's rev limit, worked out as the Redline app's fixed one (red line
+  less Shift point before redline; with the guard, from the cold limit at 30 °C oil up to normal at Oil warm at; the
+  red zone that far above it). tools/test_centre.js checks Centre's and Layouts' agree.
+- The oil amber while warming (60 °C up to Oil warm at), as the Redline app's HUD: Layouts' readouts and small gauges'
+  figures, Centre's oil tile, Info's panel. Too hot red (Info: before amber). The hot thresholds stay the cluster's
+  (Centre's Warnings, 130 / 118 / 115 °C; the Redline HUD's: 130 / 112 / 120).
 
 ## Demo
 `cluster_demo.bat` (Windows) or `node tools/cluster_demo.js`.

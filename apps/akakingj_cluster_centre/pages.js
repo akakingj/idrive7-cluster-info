@@ -13,6 +13,7 @@
  *      shift: { on, from, at }, badge, custom, warmTarget, redline }.
  */
 const { view, READINGS } = require('./readings');
+const { shiftPoint } = require('./features');
 
 const W = 1088, H = 480;
 const BOX = { x: 176, y: 30, w: 736, h: 420 };
@@ -46,8 +47,8 @@ function palette(accent, look) {
         track: '#1a222c', ev: '#3fb6ff', regen: '#2fd27a', green: '#2fd27a', yellow: '#ffc533', body: '#18212b', wheel: '#0b0f14', hair: '#1e2833',
     };
 }
-const levelColour = (t, level) => (level === 'warn' ? t.warn : level === 'cold' ? t.cold : level === 'none' ? t.dim : t.text);
-const levelAccent = (t, level) => (level === 'warn' ? t.warn : level === 'cold' ? t.cold : t.accent);
+const levelColour = (t, level) => (level === 'warn' ? t.warn : level === 'cold' ? t.cold : level === 'warm' ? t.yellow : level === 'none' ? t.dim : t.text);
+const levelAccent = (t, level) => (level === 'warn' ? t.warn : level === 'cold' ? t.cold : level === 'warm' ? t.yellow : t.accent);
 
 /* ---------- piece makers ---------- */
 const text = (key, group, x, y, w, h, txt, colors, extra) => Object.assign({ key, group, kind: 'text', x, y, w, h, text: txt, colors, align: 0.5 }, extra || {});
@@ -314,9 +315,10 @@ function pieces(o) {
         list.push(...pg.build(o, id));
     });
     if (o.shift && o.shift.on) {
-        const span = Math.max(500, o.shift.at - o.shift.from);
-        const lit = (d) => (isNum(d.rpm) ? Math.max(0, Math.min(1, (d.rpm - o.shift.from) / span)) : 0);
-        const flash = (d) => isNum(d.rpm) && d.rpm >= o.shift.at;
+        // flashes at the set rpm, or (0: Auto) at the shift point now (lower while the oil is cold)
+        const atOf = (d) => (o.shift.at > 0 ? o.shift.at : shiftPoint(o.shift.auto, d).rpm);
+        const lit = (d) => (isNum(d.rpm) ? Math.max(0, Math.min(1, (d.rpm - o.shift.from) / Math.max(500, atOf(d) - o.shift.from))) : 0);
+        const flash = (d) => isNum(d.rpm) && d.rpm >= atOf(d);
         list.push(text('gear', null, BOX.x, 26, 80, 42, (d) => gearOf(d), (t, d) => ({ color: [flash(d) ? t.warn : t.text, 1], glow: [flash(d) ? t.warn : t.accent, 0.45] }), { align: 0 }));
         const lh = Math.round(44 * ST.ledK);
         list.push({ key: 'shift', kind: 'leds', x: BOX.x + 96, y: 24 + (44 - lh) / 2, w: BOX.w - 192, h: lh, value: lit, max: 1, params: { u_count: [ST.ledShape ? 20 : 15], u_soft: [ST.soft], u_shape: [ST.ledShape] },

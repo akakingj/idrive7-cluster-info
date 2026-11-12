@@ -927,6 +927,7 @@
     },
     {
       "key": "shiftBefore",
+      "profile": "shiftBefore",
       "label": "Shift point: below the red zone by",
       "type": "number",
       "unit": "rpm",
@@ -962,6 +963,7 @@
     },
     {
       "key": "coldGuard",
+      "profile": "coldGuard",
       "label": "Cold engine: lower the shift point and red zone",
       "type": "choice",
       "default": "on",

@@ -113,6 +113,8 @@ class Settings {
         // kept, and is used again for a name the profile leaves to each app, a value this setting can't take (a number
         // of 0, the profile's "Auto", unless the setting has a label for 0), or no Car profile at all. The file is
         // looked at every 3 s; a change tells the onChange listeners as a change of the setting would.
+        // (0 is taken where it is one of the setting's own values: Shift point before redline 0, Shift light: flashes
+        // at 0 = Auto)
         this._prof = {}; this._profAt = 0; this._profBy = {};
         for (const s of this.schema) if (s.profile) this._profBy[s.key] = s;
         if (Object.keys(this._profBy).length) {
@@ -154,7 +156,7 @@ class Settings {
         if (v === undefined || v === null) return undefined;
         if (s.profileMap && Object.prototype.hasOwnProperty.call(s.profileMap, v)) v = s.profileMap[v];
         if (s.type === 'choice') return (s.options || []).some((o) => o[0] === v) ? v : undefined;
-        if (s.type === 'number') return typeof v === 'number' && isFinite(v) && (v > 0 || (v === 0 && !!s.labels && s.labels['0'] !== undefined)) ? v : undefined;
+        if (s.type === 'number') return typeof v === 'number' && isFinite(v) && (v > 0 || (v === 0 && ((!!s.labels && s.labels['0'] !== undefined) || (s.steps || []).indexOf(0) >= 0))) ? v : undefined;
         if (s.type === 'bool') return typeof v === 'boolean' ? v : undefined;
         return undefined;
     }
@@ -177,7 +179,7 @@ class Settings {
         const s = this.item(key), v = this.get(key);
         if (!s) return String(v);
         if (s.type === 'choice') { const o = (s.options || []).find((x) => x[0] === v); return o ? o[1] : String(v); }
-        if (s.type === 'number') return String(v) + (s.unit ? ' ' + s.unit : '') + (s.markDefault && v === s.default ? ' (default)' : '');
+        if (s.type === 'number') return (s.labels && s.labels[String(v)] !== undefined ? s.labels[String(v)] : String(v) + (s.unit ? ' ' + s.unit : '')) + (s.markDefault && v === s.default ? ' (default)' : '');
         if (s.type === 'bool') return v ? 'On' : 'Off';
         return String(v);
     }

@@ -125,7 +125,8 @@ def setting_options(s):
     else:
         steps = s.get('steps') or []
         unit = (' ' + s['unit']) if s.get('unit') else ''
-        values, labels = list(steps), [('%g' % v) + unit for v in steps]
+        named = s.get('labels') or {}     # "labels": {"0": "Auto"}: a value's own text
+        values, labels = list(steps), [named.get('%g' % v, ('%g' % v) + unit) for v in steps]
     if s.get('markDefault'):
         labels = [lb + ' (default)' if v == s.get('default') else lb for v, lb in zip(values, labels)]
     return values, labels

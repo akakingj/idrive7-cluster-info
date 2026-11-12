@@ -60,7 +60,7 @@ function decimals(kind, v, u) {
 
 /**
  * A reading's view now: { key, title, short, icon, value (converted, null none), text, unit, frac (0..1 on its
- * range), warnAt (0..1 where it turns too hot, 2 none), level: 'ok' | 'warn' | 'cold' | 'none' }. warn: thresholds set by the user ({ key: number } in °C /
+ * range), warnAt (0..1 where it turns too hot, 2 none), level: 'ok' | 'warn' | 'cold' | 'warm' | 'none' }. warn: thresholds set by the user ({ key: number } in °C /
  * bar), else the reading's own.
  */
 function view(key, d, u, warn) {
@@ -68,7 +68,10 @@ function view(key, d, u, warn) {
     if (!r) return { key, title: key, short: key.toUpperCase(), icon: 13, value: null, text: '--', unit: '', frac: 0, warnAt: 2, level: 'none' };
     const raw = d[key], v = convert(r.kind, raw, u);
     const hi = warn && isNum(warn[key + 'High']) ? warn[key + 'High'] : r.warnHigh, lo = warn && isNum(warn[key + 'Low']) ? warn[key + 'Low'] : r.warnLow;
-    const level = !isNum(raw) ? 'none' : isNum(hi) && raw >= hi ? 'warn' : isNum(lo) && raw <= lo ? 'warn' : isNum(r.cold) && raw < r.cold ? 'cold' : 'ok';
+    // (the oil 'warm' from cold up to Oil warm at, warn.oilWarm: the cold-engine guard's range, as Cluster Layouts and
+    // the Redline app's HUD)
+    const warmAt = key === 'oil' && warn && isNum(warn.oilWarm) ? warn.oilWarm : null;
+    const level = !isNum(raw) ? 'none' : isNum(hi) && raw >= hi ? 'warn' : isNum(lo) && raw <= lo ? 'warn' : isNum(r.cold) && raw < r.cold ? 'cold' : isNum(warmAt) && raw < warmAt ? 'warm' : 'ok';
     const text = isNum(v) ? (r.kind === 'kw' && v > 0.05 ? '+' : '') + v.toFixed(decimals(r.kind, v, u)) : '--';
     const lo2 = convert(r.kind, r.min, u), hi2 = convert(r.kind, r.max, u);
     const warnAt = isNum(hi) ? Math.max(0, Math.min(2, (convert(r.kind, hi, u) - lo2) / (hi2 - lo2))) : 2;

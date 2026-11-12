@@ -296,9 +296,10 @@ const READOUTS = {
 };
 const readoutOf = (k) => READOUTS[k] || null;
 /*
- * Temperatures in colour (Settings > Temperature colours): blue while cold, red when too hot, as Cluster Centre's
- * tiles (readings.js: oil and coolant cold under 60 °C, the gearbox oil under 50; hot from 130, 118, 115; the
- * intake air from 60). toneOf: 'cold', 'hot' or null for a reading now; toned: a piece's colours with it.
+ * Temperatures in colour (Settings > Temperature colours): blue while cold, the oil amber while warming, red when too
+ * hot, as Cluster Centre's tiles (readings.js: oil and coolant cold under 60 °C, the gearbox oil under 50; the oil
+ * warming up to Oil warm at; hot from 130, 118, 115; the intake air from 60). toneOf: 'cold', 'warm', 'hot' or null
+ * for a reading now; toned: a piece's colours with it.
  */
 /*
  * Temperature gauges as the car's own (Settings > Temperature gauges: C-H, the default): C at the cold end, H at the hot
@@ -324,10 +325,19 @@ function chMarks(key, cx, cy, r, a0, a1, size, colors) {
     return [mk('C', a0, 'C', colors), mk('H', a1, 'H', (t) => ({ color: [t.red || '#ff3b30', 1], glow: [t.red || '#ff3b30', 0.3] }))];
 }
 const TEMP_TONES = { oil: { cold: 60, hot: 130 }, coolant: { cold: 60, hot: 118 }, gearbox: { cold: 50, hot: 115 }, iat: { hot: 60 } };
-const TONE_RGB = { cold: '#4ab4ff', hot: '#ff3b30' };
-const toneOf = (k, d) => { const r = TEMP_TONES[k], v = d && d[k]; if (!r || !isNum(v)) return null; return isNum(r.hot) && v >= r.hot ? 'hot' : isNum(r.cold) && v < r.cold ? 'cold' : null; };
-const toned = (colors, k) => (t, d) => {
-    const c = typeof colors === 'function' ? colors(t, d) : colors, tone = toneOf(k, d);
+const TONE_RGB = { cold: '#4ab4ff', warm: '#ffc21a', hot: '#ff3b30' };
+// (the oil amber from cold up to Settings > Cold engine: oil warm at (warmOil), as the Redline app's HUD and Cluster
+// Centre's tiles: the cold-engine guard still lowering the shift point)
+const toneOf = (k, d, o) => {
+    const r = TEMP_TONES[k], v = d && d[k];
+    if (!r || !isNum(v)) return null;
+    if (isNum(r.hot) && v >= r.hot) return 'hot';
+    if (isNum(r.cold) && v < r.cold) return 'cold';
+    const warm = k === 'oil' && o ? setNum(o, 'warmOil') : NaN;      // (unset: 80, as the shift point's)
+    return isFinite(warm) && v < warm ? 'warm' : null;
+};
+const toned = (colors, k, o) => (t, d) => {
+    const c = typeof colors === 'function' ? colors(t, d) : colors, tone = toneOf(k, d, o);
     if (!tone || !c || !c.color) return c;
     const col = TONE_RGB[tone];
     return Object.assign({}, c, { color: [col, c.color[1]] }, c.glow ? { glow: [col, Math.min(0.3, c.glow[1])] } : {});

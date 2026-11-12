@@ -74,7 +74,7 @@ mgu.run({
         const eng = { onMs: 0, driveMs: 0, starts: 0, last: null, was: false, why: null };
         const extra = () => ({ warm: warm.state(data.data()), cool: cool.state(), perf: perf.state(Date.now()), eng: { onMs: eng.onMs, share: eng.driveMs > 60000 ? eng.onMs / eng.driveMs * 100 : null, starts: eng.starts, why: eng.why } });
         const feedOpts = () => {
-            Object.assign(warm.o, { target: num('warmTarget', 90), coldLimit: num('coldLimit', 3500), redline: num('redline', 6500) });
+            Object.assign(warm.o, { target: num('warmTarget', 80), coldLimit: num('coldLimit', 4500), redline: num('redline', 6000), shiftBefore: num('shiftBefore', 300), coldGuard: settings.get('coldGuard') });
             Object.assign(cool.o, { hardRpm: num('hardRpm', 4500) });
             perf.o.kmh = settings.get('speedUnit') === 'kmh';
         };
@@ -99,10 +99,12 @@ mgu.run({
         const options = () => ({
             look: settings.get('look'), fit: settings.get('fit'), pages: enabled(), style: settings.get('style'), accent: settings.get('accent'), size: settings.get('size'),
             units: { temp: settings.get('tempUnit'), press: settings.get('pressUnit'), speed: settings.get('speedUnit'), torque: settings.get('torqueUnit'), power: settings.get('powerUnit') },
-            warn: { oilHigh: num('oilHigh'), coolantHigh: num('coolantHigh'), iatHigh: num('iatHigh'), gearboxHigh: num('gearboxHigh'), battTempHigh: num('battTempHigh'), lpfpLow: num('lpfpLow') },
-            shift: { on: settings.get('shift') !== 'off', from: num('shiftFrom', 4000), at: num('shiftAt', 6200) },
+            warn: { oilWarm: num('warmTarget', 80), oilHigh: num('oilHigh'), coolantHigh: num('coolantHigh'), iatHigh: num('iatHigh'), gearboxHigh: num('gearboxHigh'), battTempHigh: num('battTempHigh'), lpfpLow: num('lpfpLow') },
+            // (flashes at: the set rpm, or 0 = Auto, the shift point now: features.js shiftPoint, as Cluster Layouts and Redline)
+            shift: { on: settings.get('shift') !== 'off', from: num('shiftFrom', 4000), at: num('shiftAt', 0),
+                auto: { redline: num('redline', 6000), shiftBefore: num('shiftBefore', 300), coldGuard: settings.get('coldGuard'), coldLimit: num('coldLimit', 4500), warmOil: num('warmTarget', 80) } },
             badge: settings.get('badge') !== 'off',
-            warmTarget: num('warmTarget', 90), redline: num('redline', 6500),
+            warmTarget: num('warmTarget', 80), redline: num('redline', 6000),
             custom: [1, 2].map((i) => ({ style: settings.get('c' + i + 'Style'), slots: [1, 2, 3, 4, 5, 6].slice(0, num('c' + i + 'Count', 4)).map((s) => settings.get('c' + i + 's' + s)).filter((k) => k && k !== 'none') })),
         });
         let page = enabled()[0] || null, pageAt = Date.now();

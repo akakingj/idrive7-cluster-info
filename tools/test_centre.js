@@ -16,7 +16,7 @@ const APP = path.join(__dirname, '..', 'apps', 'akakingj_cluster_centre');
 const RESERVED = ['u_mvp', 'u_mv', 'u_m', 'u_v', 'u_p', 'u_normal'];   // the renderer's matrix names (PROTOCOL.md)
 let ok = 0;
 const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
-const { WarmUp, CoolDown, PerfTimer, QUARTER_M } = require(path.join(APP, 'features'));
+const { WarmUp, CoolDown, PerfTimer, QUARTER_M, shiftPoint } = require(path.join(APP, 'features'));
 const { PAGES, pieces, palette, W, H } = require(path.join(APP, 'pages'));
 const { READINGS, view } = require(path.join(APP, 'readings'));
 const { sample } = require('./preview_centre');
@@ -28,8 +28,46 @@ check('warm-up: rate, minutes to the target, and the rev limit rising with the o
     const s = w.state({ oil: 62 });
     assert(Math.abs(w.rate() - 6) < 0.01);
     assert(Math.abs(s.minutes - 28 / 6) < 0.01 && !s.ready);
-    assert.strictEqual(s.limit, 4800);                                              // 3500 + 3000 * 22/50 = 4820, to 100 rpm
+    // where the red zone starts now: the shift point 3500 + (6200 - 3500) * 32/60 = 4940 (to 50: 4950), + 300
+    assert.strictEqual(s.limit, 5250);
     assert(w.state({ oil: 91 }).ready && w.state({ oil: 91 }).limit === 6500);
+    assert.strictEqual(new WarmUp({ target: 90, coldLimit: 3500, redline: 6500, coldGuard: 'off' }).state({ oil: 40 }).limit, 6500, 'guard off: the redline');
+});
+check('the shift point and red zone: the same as Cluster Layouts\' (layout_common.shiftPoint), for every setting', () => {
+    const LC = require(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'layout_common'));
+    let n = 0;
+    for (const redline of [5000, 6000, 6500, 7000, 8000]) for (const shiftBefore of [0, 300, 1000]) for (const coldGuard of ['on', 'off'])
+        for (const coldLimit of [3000, 4500, 5500]) for (const warmOil of [60, 80, 100]) for (const oil of [undefined, -10, 30, 45, 79.5, 80, 120]) {
+            const o = { redline, shiftBefore, coldGuard, coldLimit, warmOil };
+            const mine = shiftPoint(o, { oil }), theirs = LC.shiftPoint(Object.assign({ rpmMax: 10000 }, o), { oil });
+            assert.deepStrictEqual(mine, theirs, JSON.stringify(o) + ' oil ' + oil);
+            // the warm-up page's rev limit is that red zone
+            const w = new WarmUp({ target: warmOil, coldLimit, redline, shiftBefore, coldGuard });
+            if (oil !== undefined) assert.strictEqual(w.state({ oil }).limit, theirs.red);
+            n++;
+        }
+    assert(n > 1000);
+});
+check('the oil tile: blue while cold, amber while warming (to Oil warm at), as it is warm', () => {
+    const u = { temp: 'c', press: 'psi', speed: 'kmh', torque: 'kgm', power: 'hp' };
+    assert.strictEqual(view('oil', { oil: 50 }, u, { oilWarm: 80 }).level, 'cold');
+    assert.strictEqual(view('oil', { oil: 70 }, u, { oilWarm: 80 }).level, 'warm');
+    assert.strictEqual(view('oil', { oil: 85 }, u, { oilWarm: 80 }).level, 'ok');
+    assert.strictEqual(view('coolant', { coolant: 70 }, u, { oilWarm: 80 }).level, 'ok', 'the oil only');
+    assert.strictEqual(view('oil', { oil: 70 }, u).level, 'ok', 'no Oil warm at: as before');
+});
+check('the shift light: Auto flashes at the shift point now (lower while cold), a set rpm where it is set', () => {
+    const auto = { redline: 6000, shiftBefore: 300, coldGuard: 'on', coldLimit: 4500, warmOil: 80 };
+    const o = (at) => Object.assign({ pages: [], style: 'bar', accent: 'blue', size: 'normal', units: { temp: 'c', press: 'psi', speed: 'kmh', torque: 'kgm', power: 'hp' }, warn: {}, badge: false,
+        warmTarget: 80, redline: 6000, custom: [] }, { shift: { on: true, from: 4000, at, auto } });
+    const leds = (at) => pieces(o(at)).find((p) => p.key === 'shift');
+    const flashAt = (at, d) => leds(at).dyn(d).u_flash[0];
+    assert.strictEqual(flashAt(0, { rpm: 5650, oil: 90 }), 0); assert.strictEqual(flashAt(0, { rpm: 5700, oil: 90 }), 1, 'warm: 6000 - 300');
+    assert.strictEqual(flashAt(0, { rpm: 4500, oil: 30 }), 1, 'cold: the cold limit');
+    assert.strictEqual(flashAt(0, { rpm: 4400, oil: 30 }), 0);
+    assert.strictEqual(flashAt(6200, { rpm: 5900, oil: 30 }), 0, 'a set rpm: as set, cold or not');
+    assert.strictEqual(flashAt(6200, { rpm: 6200, oil: 30 }), 1);
+    assert(leds(0).value({ rpm: 4850, oil: 90 }) > 0.49 && leds(0).value({ rpm: 4850, oil: 90 }) < 0.51, 'lit halfway from 4000 to 5700');
 });
 check('cool-down: hard driving builds it (30 s to 3 min), gentle driving counts it down', () => {
     const c = new CoolDown({ hardRpm: 4500 });

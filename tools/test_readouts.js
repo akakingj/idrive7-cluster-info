@@ -148,10 +148,17 @@ check('temperatures in colour: blue while cold, red when hot, the piece\'s own c
     assert.strictEqual(c({}, { oil: 135 }).color[0], '#ff3b30');
     assert.strictEqual(c({}, { oil: 90 }).color[0], '#ffffff');
     assert.strictEqual(C.toned(base, 'iat')({}, { iat: 5 }).color[0], '#ffffff');
+    // the oil amber while warming: from 60 °C up to Oil warm at (the cold-engine guard's range), as the Redline HUD
+    const w = C.toned(base, 'oil', { warmOil: 80 });
+    assert.strictEqual(w({}, { oil: 59 }).color[0], '#4ab4ff');
+    assert.strictEqual(w({}, { oil: 70 }).color[0], '#ffc21a');
+    assert.strictEqual(w({}, { oil: 80 }).color[0], '#ffffff');
+    assert.strictEqual(C.toned(base, 'coolant', { warmOil: 80 })({}, { coolant: 70 }).color[0], '#ffffff', 'the oil only');
     const L = require(path.join(ROOT, 'apps', 'akakingj_cluster_layouts', 'layouts.js'));
     const ps = L.byId('analog_sport').pieces(o({ bottomStrip: 'stock', centre: 'info', infoA: 'oil', infoB: 'gearbox', gaugeRpm: 'gearbox', tempGauge: 'scale' }));
     const col = (k, d) => ps.find((p) => p.key === k).colors({ red: '#ff0000', text: '#ffb066', glow: '#ff7a1a', dim: '#999999' }, d).color[0];
     assert.strictEqual(col('clock', { oil: 30 }), '#4ab4ff');
+    assert.strictEqual(col('clock', { oil: 70 }), '#ffc21a', 'Oil warm at 80 (the default) passed on by layouts.js');
     assert.strictEqual(col('outside', { gearbox: 120 }), '#ff3b30');
     assert.strictEqual(col('oilNum', { gearbox: 40 }), '#4ab4ff');
     const off = L.byId('analog_sport').pieces(o({ bottomStrip: 'stock', centre: 'info', infoA: 'oil', tempTone: 'off' }));

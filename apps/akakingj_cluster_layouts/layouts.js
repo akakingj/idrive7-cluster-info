@@ -37,7 +37,7 @@ function finish(L, o, list) {
     return list.map((p) => {
         if (p.kind !== 'text') return p;
         const k = tones ? readingOf(p) : null;
-        if (k && C0.TEMP_TONES[k] && p.colors) return Object.assign({}, p, { colors: C0.toned(p.colors, k) });
+        if (k && C0.TEMP_TONES[k] && p.colors) return Object.assign({}, p, { colors: C0.toned(p.colors, k, o) });
         if (warn && (p.key === 'speedDigits' || p.key === 'gear') && p.colors) {
             const base = p.colors;
             return Object.assign({}, p, { colors: (t, d) => {
