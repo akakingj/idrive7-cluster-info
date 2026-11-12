@@ -83,7 +83,7 @@
     },
     {
       "key": "slot1",
-      "label": "Panel: first item",
+      "label": "First item",
       "type": "choice",
       "default": "boost",
       "options": [
@@ -123,11 +123,12 @@
           "torque",
           "Engine torque"
         ]
-      ]
+      ],
+      "section": "Panel items"
     },
     {
       "key": "slot2",
-      "label": "Panel: second item",
+      "label": "Second item",
       "type": "choice",
       "default": "torque",
       "options": [
@@ -167,11 +168,12 @@
           "torque",
           "Engine torque"
         ]
-      ]
+      ],
+      "section": "Panel items"
     },
     {
       "key": "slot3",
-      "label": "Panel: third item",
+      "label": "Third item",
       "type": "choice",
       "default": "oil",
       "options": [
@@ -211,7 +213,8 @@
           "torque",
           "Engine torque"
         ]
-      ]
+      ],
+      "section": "Panel items"
     },
     {
       "key": "bar",
@@ -231,7 +234,8 @@
           "off",
           "Never"
         ]
-      ]
+      ],
+      "section": "Panel items"
     },
     {
       "key": "underline",
@@ -251,7 +255,8 @@
           "on",
           "On the cluster and HUD"
         ]
-      ]
+      ],
+      "section": "Panel items"
     },
     {
       "key": "turnSignals",
@@ -267,11 +272,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "HUD"
     },
     {
       "key": "hudBrightness",
-      "label": "HUD panel and arrows: brightness",
+      "label": "Panel and arrows: brightness",
       "type": "number",
       "unit": "%",
       "default": 100,
@@ -279,11 +285,12 @@
         100,
         75,
         50
-      ]
+      ],
+      "section": "HUD"
     },
     {
       "key": "nightDim",
-      "label": "HUD panel and arrows: dimmer at night",
+      "label": "Panel and arrows: dimmer at night",
       "type": "choice",
       "default": "on",
       "options": [
@@ -295,7 +302,8 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "HUD"
     },
     {
       "key": "tempUnit",
@@ -311,7 +319,8 @@
           "c",
           "Celsius"
         ]
-      ]
+      ],
+      "section": "Units"
     },
     {
       "key": "torqueUnit",
@@ -331,7 +340,8 @@
           "lbft",
           "lb-ft"
         ]
-      ]
+      ],
+      "section": "Units"
     },
     {
       "key": "pressUnit",
@@ -355,7 +365,8 @@
           "kpa",
           "kPa"
         ]
-      ]
+      ],
+      "section": "Units"
     },
     {
       "key": "theme",
@@ -379,7 +390,8 @@
           "amber",
           "Night Amber"
         ]
-      ]
+      ],
+      "section": "Screen"
     },
     {
       "key": "layout",
@@ -395,7 +407,8 @@
           "standard",
           "Standard"
         ]
-      ]
+      ],
+      "section": "Screen"
     },
     {
       "key": "renderer",
@@ -411,7 +424,8 @@
           "software",
           "Software"
         ]
-      ]
+      ],
+      "section": "Screen"
     },
     {
       "key": "demo",
@@ -431,7 +445,8 @@
           "off",
           "Never"
         ]
-      ]
+      ],
+      "section": "Screen"
     }
   ],
   "requires": {

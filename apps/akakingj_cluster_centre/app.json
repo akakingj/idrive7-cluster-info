@@ -117,71 +117,6 @@
   ],
   "settings": [
     {
-      "key": "vehicle",
-      "label": "Vehicle",
-      "type": "choice",
-      "default": "ice",
-      "options": [
-        [
-          "auto",
-          "Auto (found from the car)"
-        ],
-        [
-          "phev",
-          "Plug-in hybrid (charge, electric range, battery power)"
-        ],
-        [
-          "ice",
-          "Petrol or diesel (boost, timing, torque, fuel rail)"
-        ]
-      ]
-    },
-    {
-      "key": "tankLitres",
-      "label": "Fuel tank size",
-      "type": "number",
-      "unit": "L",
-      "default": 59,
-      "steps": [
-        40,
-        42,
-        46,
-        50,
-        52,
-        55,
-        57,
-        59,
-        60,
-        63,
-        65,
-        66,
-        68,
-        69,
-        70,
-        74,
-        80,
-        83,
-        85,
-        90
-      ]
-    },
-    {
-      "key": "kwFast",
-      "label": "Battery power (kW)",
-      "type": "choice",
-      "default": "on",
-      "options": [
-        [
-          "on",
-          "Fast: between eDrive Live's readings from the car's speed and acceleration"
-        ],
-        [
-          "off",
-          "eDrive Live's readings only"
-        ]
-      ]
-    },
-    {
       "key": "show",
       "label": "Show in the cluster centre",
       "type": "choice",
@@ -199,7 +134,7 @@
     },
     {
       "key": "page_temps",
-      "label": "Page: Temperatures",
+      "label": "Temperatures",
       "type": "choice",
       "default": "on",
       "options": [
@@ -211,11 +146,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_fuel",
-      "label": "Page: Fuel and boost",
+      "label": "Fuel and boost",
       "type": "choice",
       "default": "on",
       "options": [
@@ -227,11 +163,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_warmup",
-      "label": "Page: Warm-up",
+      "label": "Warm-up",
       "type": "choice",
       "default": "on",
       "options": [
@@ -243,11 +180,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_cooldown",
-      "label": "Page: Turbo cool-down",
+      "label": "Turbo cool-down",
       "type": "choice",
       "default": "on",
       "options": [
@@ -259,11 +197,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_edrive",
-      "label": "Page: eDrive",
+      "label": "eDrive",
       "type": "choice",
       "default": "on",
       "options": [
@@ -275,11 +214,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_engine",
-      "label": "Page: Engine on / off",
+      "label": "Engine on / off",
       "type": "choice",
       "default": "on",
       "options": [
@@ -291,11 +231,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_steering",
-      "label": "Page: Steering and yaw",
+      "label": "Steering and yaw",
       "type": "choice",
       "default": "off",
       "options": [
@@ -307,11 +248,12 @@
           "off",
           "Off"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "page_timer",
-      "label": "Page: 0-60 and quarter mile",
+      "label": "0-60 and quarter mile",
       "type": "choice",
       "default": "off",
       "options": [
@@ -323,39 +265,8 @@
           "off",
           "Off"
         ]
-      ]
-    },
-    {
-      "key": "page_custom1",
-      "label": "Page: Custom page 1",
-      "type": "choice",
-      "default": "on",
-      "options": [
-        [
-          "on",
-          "On"
-        ],
-        [
-          "off",
-          "Off"
-        ]
-      ]
-    },
-    {
-      "key": "page_custom2",
-      "label": "Page: Custom page 2",
-      "type": "choice",
-      "default": "off",
-      "options": [
-        [
-          "on",
-          "On"
-        ],
-        [
-          "off",
-          "Off"
-        ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
       "key": "rotate",
@@ -387,107 +298,12 @@
           "60",
           "Every minute"
         ]
-      ]
+      ],
+      "section": "Pages"
     },
     {
-      "key": "look",
-      "label": "Look",
-      "type": "choice",
-      "default": "native",
-      "options": [
-        [
-          "native",
-          "Like the factory cluster (thin, no boxes)"
-        ],
-        [
-          "modern",
-          "Modern (glass cards, bold, glowing)"
-        ]
-      ]
-    },
-    {
-      "key": "fit",
-      "label": "Size in the centre",
-      "type": "choice",
-      "default": "clear",
-      "options": [
-        [
-          "clear",
-          "Between the stock readouts (smaller)"
-        ],
-        [
-          "full",
-          "The whole middle (the stock speed and range cover its edges)"
-        ]
-      ]
-    },
-    {
-      "key": "style",
-      "label": "Tiles on the built-in pages",
-      "type": "choice",
-      "default": "bar",
-      "options": [
-        [
-          "bar",
-          "Number and bar"
-        ],
-        [
-          "arc",
-          "Arc gauge"
-        ],
-        [
-          "number",
-          "Number only"
-        ]
-      ]
-    },
-    {
-      "key": "accent",
-      "label": "Colour",
-      "type": "choice",
-      "default": "blue",
-      "options": [
-        [
-          "blue",
-          "Blue"
-        ],
-        [
-          "white",
-          "White"
-        ],
-        [
-          "orange",
-          "Orange"
-        ],
-        [
-          "red",
-          "Red"
-        ],
-        [
-          "green",
-          "Green"
-        ]
-      ]
-    },
-    {
-      "key": "size",
-      "label": "Number size",
-      "type": "choice",
-      "default": "normal",
-      "options": [
-        [
-          "normal",
-          "Normal"
-        ],
-        [
-          "large",
-          "Large"
-        ]
-      ]
-    },
-    {
-      "key": "shift",
-      "label": "Shift light and gear at the top",
+      "key": "page_custom1",
+      "label": "Show this page",
       "type": "choice",
       "default": "on",
       "options": [
@@ -499,302 +315,12 @@
           "off",
           "Off"
         ]
-      ]
-    },
-    {
-      "key": "shiftFrom",
-      "label": "Shift light: starts at",
-      "type": "number",
-      "unit": "rpm",
-      "default": 4000,
-      "steps": [
-        2500,
-        3000,
-        3500,
-        4000,
-        4500,
-        5000,
-        5500
-      ]
-    },
-    {
-      "key": "shiftAt",
-      "label": "Shift light: flashes at",
-      "type": "number",
-      "unit": "rpm",
-      "default": 5700,
-      "steps": [
-        4000,
-        4500,
-        5000,
-        5500,
-        5700,
-        6000,
-        6200,
-        6500,
-        6800,
-        7000
-      ]
-    },
-    {
-      "key": "badge",
-      "label": "Cool-down countdown on every page",
-      "type": "choice",
-      "default": "on",
-      "options": [
-        [
-          "on",
-          "On"
-        ],
-        [
-          "off",
-          "Off"
-        ]
-      ]
-    },
-    {
-      "key": "warmTarget",
-      "label": "Oil warm at (°C)",
-      "type": "number",
-      "unit": "°C",
-      "default": 80,
-      "steps": [
-        70,
-        75,
-        80,
-        85,
-        90,
-        95,
-        100
-      ]
-    },
-    {
-      "key": "coldLimit",
-      "label": "Rev limit while cold",
-      "type": "number",
-      "unit": "rpm",
-      "default": 4500,
-      "steps": [
-        2500,
-        3000,
-        3500,
-        4000,
-        4500
-      ]
-    },
-    {
-      "key": "redline",
-      "label": "Rev limit when warm",
-      "type": "number",
-      "unit": "rpm",
-      "default": 6000,
-      "steps": [
-        5500,
-        6000,
-        6500,
-        7000,
-        7500
-      ]
-    },
-    {
-      "key": "hardRpm",
-      "label": "Cool-down: hard driving above",
-      "type": "number",
-      "unit": "rpm",
-      "default": 4500,
-      "steps": [
-        3500,
-        4000,
-        4500,
-        5000,
-        5500
-      ]
-    },
-    {
-      "key": "tempUnit",
-      "label": "Temperature unit",
-      "type": "choice",
-      "default": "c",
-      "options": [
-        [
-          "f",
-          "Fahrenheit"
-        ],
-        [
-          "c",
-          "Celsius"
-        ]
-      ]
-    },
-    {
-      "key": "pressUnit",
-      "label": "Pressure unit",
-      "type": "choice",
-      "default": "psi",
-      "options": [
-        [
-          "psi",
-          "psi"
-        ],
-        [
-          "bar",
-          "bar"
-        ],
-        [
-          "kpa",
-          "kPa"
-        ]
-      ]
-    },
-    {
-      "key": "speedUnit",
-      "label": "Speed and distance unit",
-      "type": "choice",
-      "default": "kmh",
-      "options": [
-        [
-          "mph",
-          "mph and miles"
-        ],
-        [
-          "kmh",
-          "km/h and km"
-        ]
-      ]
-    },
-    {
-      "key": "torqueUnit",
-      "label": "Torque unit",
-      "type": "choice",
-      "default": "kgm",
-      "options": [
-        [
-          "lbft",
-          "lb-ft"
-        ],
-        [
-          "nm",
-          "Nm"
-        ],
-        [
-          "kgm",
-          "kgm"
-        ]
-      ]
-    },
-    {
-      "key": "powerUnit",
-      "label": "Power unit",
-      "type": "choice",
-      "default": "hp",
-      "options": [
-        [
-          "hp",
-          "hp"
-        ],
-        [
-          "ps",
-          "PS"
-        ],
-        [
-          "kw",
-          "kW"
-        ]
-      ]
-    },
-    {
-      "key": "oilHigh",
-      "label": "Warn: oil above (°C)",
-      "type": "number",
-      "unit": "°C",
-      "default": 130,
-      "steps": [
-        110,
-        115,
-        120,
-        125,
-        130,
-        135,
-        140
-      ]
-    },
-    {
-      "key": "coolantHigh",
-      "label": "Warn: coolant above (°C)",
-      "type": "number",
-      "unit": "°C",
-      "default": 118,
-      "steps": [
-        105,
-        110,
-        115,
-        118,
-        120,
-        125
-      ]
-    },
-    {
-      "key": "iatHigh",
-      "label": "Warn: intake air above (°C)",
-      "type": "number",
-      "unit": "°C",
-      "default": 60,
-      "steps": [
-        40,
-        45,
-        50,
-        55,
-        60,
-        65,
-        70
-      ]
-    },
-    {
-      "key": "gearboxHigh",
-      "label": "Warn: gearbox above (°C)",
-      "type": "number",
-      "unit": "°C",
-      "default": 115,
-      "steps": [
-        100,
-        105,
-        110,
-        115,
-        120,
-        125
-      ]
-    },
-    {
-      "key": "battTempHigh",
-      "label": "Warn: battery above (°C)",
-      "type": "number",
-      "unit": "°C",
-      "default": 42,
-      "steps": [
-        35,
-        38,
-        40,
-        42,
-        45
-      ]
-    },
-    {
-      "key": "lpfpLow",
-      "label": "Warn: low pressure fuel below (bar)",
-      "type": "number",
-      "unit": "bar",
-      "default": 3.5,
-      "steps": [
-        2.5,
-        3,
-        3.5,
-        4,
-        4.5
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1Count",
-      "label": "Custom page 1: slots",
+      "label": "Slots",
       "type": "choice",
       "default": "4",
       "options": [
@@ -818,11 +344,12 @@
           "6",
           "6"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1Style",
-      "label": "Custom page 1: tiles",
+      "label": "Tiles",
       "type": "choice",
       "default": "bar",
       "options": [
@@ -838,11 +365,12 @@
           "number",
           "Number only"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1s1",
-      "label": "Custom page 1: slot 1",
+      "label": "Slot 1",
       "type": "choice",
       "default": "oil",
       "options": [
@@ -946,11 +474,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1s2",
-      "label": "Custom page 1: slot 2",
+      "label": "Slot 2",
       "type": "choice",
       "default": "coolant",
       "options": [
@@ -1054,11 +583,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1s3",
-      "label": "Custom page 1: slot 3",
+      "label": "Slot 3",
       "type": "choice",
       "default": "gearbox",
       "options": [
@@ -1162,11 +692,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1s4",
-      "label": "Custom page 1: slot 4",
+      "label": "Slot 4",
       "type": "choice",
       "default": "iat",
       "options": [
@@ -1270,11 +801,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1s5",
-      "label": "Custom page 1: slot 5",
+      "label": "Slot 5",
       "type": "choice",
       "default": "iatRise",
       "options": [
@@ -1378,11 +910,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
     },
     {
       "key": "c1s6",
-      "label": "Custom page 1: slot 6",
+      "label": "Slot 6",
       "type": "choice",
       "default": "outside",
       "options": [
@@ -1486,11 +1019,29 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 1"
+    },
+    {
+      "key": "page_custom2",
+      "label": "Show this page",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "on",
+          "On"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2Count",
-      "label": "Custom page 2: slots",
+      "label": "Slots",
       "type": "choice",
       "default": "4",
       "options": [
@@ -1514,11 +1065,12 @@
           "6",
           "6"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2Style",
-      "label": "Custom page 2: tiles",
+      "label": "Tiles",
       "type": "choice",
       "default": "bar",
       "options": [
@@ -1534,11 +1086,12 @@
           "number",
           "Number only"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2s1",
-      "label": "Custom page 2: slot 1",
+      "label": "Slot 1",
       "type": "choice",
       "default": "soc",
       "options": [
@@ -1642,11 +1195,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2s2",
-      "label": "Custom page 2: slot 2",
+      "label": "Slot 2",
       "type": "choice",
       "default": "kw",
       "options": [
@@ -1750,11 +1304,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2s3",
-      "label": "Custom page 2: slot 3",
+      "label": "Slot 3",
       "type": "choice",
       "default": "gearbox",
       "options": [
@@ -1858,11 +1413,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2s4",
-      "label": "Custom page 2: slot 4",
+      "label": "Slot 4",
       "type": "choice",
       "default": "boostActual",
       "options": [
@@ -1966,11 +1522,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2s5",
-      "label": "Custom page 2: slot 5",
+      "label": "Slot 5",
       "type": "choice",
       "default": "battTemp",
       "options": [
@@ -2074,11 +1631,12 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
       "key": "c2s6",
-      "label": "Custom page 2: slot 6",
+      "label": "Slot 6",
       "type": "choice",
       "default": "erange",
       "options": [
@@ -2182,23 +1740,435 @@
           "frange",
           "Fuel range"
         ]
-      ]
+      ],
+      "section": "Custom page 2"
     },
     {
-      "key": "demo",
-      "label": "Demo data",
+      "key": "look",
+      "label": "Look",
       "type": "choice",
-      "default": "off",
+      "default": "native",
+      "options": [
+        [
+          "native",
+          "Like the factory cluster (thin, no boxes)"
+        ],
+        [
+          "modern",
+          "Modern (glass cards, bold, glowing)"
+        ]
+      ],
+      "section": "Look and size"
+    },
+    {
+      "key": "fit",
+      "label": "Size in the centre",
+      "type": "choice",
+      "default": "clear",
+      "options": [
+        [
+          "clear",
+          "Between the stock readouts (smaller)"
+        ],
+        [
+          "full",
+          "The whole middle (the stock speed and range cover its edges)"
+        ]
+      ],
+      "section": "Look and size"
+    },
+    {
+      "key": "style",
+      "label": "Tiles on the built-in pages",
+      "type": "choice",
+      "default": "bar",
+      "options": [
+        [
+          "bar",
+          "Number and bar"
+        ],
+        [
+          "arc",
+          "Arc gauge"
+        ],
+        [
+          "number",
+          "Number only"
+        ]
+      ],
+      "section": "Look and size"
+    },
+    {
+      "key": "accent",
+      "label": "Colour",
+      "type": "choice",
+      "default": "blue",
+      "options": [
+        [
+          "blue",
+          "Blue"
+        ],
+        [
+          "white",
+          "White"
+        ],
+        [
+          "orange",
+          "Orange"
+        ],
+        [
+          "red",
+          "Red"
+        ],
+        [
+          "green",
+          "Green"
+        ]
+      ],
+      "section": "Look and size"
+    },
+    {
+      "key": "size",
+      "label": "Number size",
+      "type": "choice",
+      "default": "normal",
+      "options": [
+        [
+          "normal",
+          "Normal"
+        ],
+        [
+          "large",
+          "Large"
+        ]
+      ],
+      "section": "Look and size"
+    },
+    {
+      "key": "shift",
+      "label": "Shift light and gear at the top",
+      "type": "choice",
+      "default": "on",
       "options": [
         [
           "on",
-          "Always"
+          "On"
         ],
         [
           "off",
-          "Never"
+          "Off"
         ]
-      ]
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "shiftFrom",
+      "label": "Shift light: starts at",
+      "type": "number",
+      "unit": "rpm",
+      "default": 4000,
+      "steps": [
+        2500,
+        3000,
+        3500,
+        4000,
+        4500,
+        5000,
+        5500
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "shiftAt",
+      "label": "Shift light: flashes at",
+      "type": "number",
+      "unit": "rpm",
+      "default": 5700,
+      "steps": [
+        4000,
+        4500,
+        5000,
+        5500,
+        5700,
+        6000,
+        6200,
+        6500,
+        6800,
+        7000
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "warmTarget",
+      "label": "Oil warm at (°C)",
+      "type": "number",
+      "unit": "°C",
+      "default": 80,
+      "steps": [
+        70,
+        75,
+        80,
+        85,
+        90,
+        95,
+        100
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "coldLimit",
+      "label": "Rev limit while cold",
+      "type": "number",
+      "unit": "rpm",
+      "default": 4500,
+      "steps": [
+        2500,
+        3000,
+        3500,
+        4000,
+        4500
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "redline",
+      "label": "Rev limit when warm",
+      "type": "number",
+      "unit": "rpm",
+      "default": 6000,
+      "steps": [
+        5500,
+        6000,
+        6500,
+        7000,
+        7500
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "hardRpm",
+      "label": "Cool-down: hard driving above",
+      "type": "number",
+      "unit": "rpm",
+      "default": 4500,
+      "steps": [
+        3500,
+        4000,
+        4500,
+        5000,
+        5500
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "badge",
+      "label": "Cool-down countdown on every page",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "On"
+        ],
+        [
+          "off",
+          "Off"
+        ]
+      ],
+      "section": "Shift light and warm-up"
+    },
+    {
+      "key": "oilHigh",
+      "label": "Oil above (°C)",
+      "type": "number",
+      "unit": "°C",
+      "default": 130,
+      "steps": [
+        110,
+        115,
+        120,
+        125,
+        130,
+        135,
+        140
+      ],
+      "section": "Warnings"
+    },
+    {
+      "key": "coolantHigh",
+      "label": "Coolant above (°C)",
+      "type": "number",
+      "unit": "°C",
+      "default": 118,
+      "steps": [
+        105,
+        110,
+        115,
+        118,
+        120,
+        125
+      ],
+      "section": "Warnings"
+    },
+    {
+      "key": "iatHigh",
+      "label": "Intake air above (°C)",
+      "type": "number",
+      "unit": "°C",
+      "default": 60,
+      "steps": [
+        40,
+        45,
+        50,
+        55,
+        60,
+        65,
+        70
+      ],
+      "section": "Warnings"
+    },
+    {
+      "key": "gearboxHigh",
+      "label": "Gearbox above (°C)",
+      "type": "number",
+      "unit": "°C",
+      "default": 115,
+      "steps": [
+        100,
+        105,
+        110,
+        115,
+        120,
+        125
+      ],
+      "section": "Warnings"
+    },
+    {
+      "key": "battTempHigh",
+      "label": "Battery above (°C)",
+      "type": "number",
+      "unit": "°C",
+      "default": 42,
+      "steps": [
+        35,
+        38,
+        40,
+        42,
+        45
+      ],
+      "section": "Warnings"
+    },
+    {
+      "key": "lpfpLow",
+      "label": "Low pressure fuel below (bar)",
+      "type": "number",
+      "unit": "bar",
+      "default": 3.5,
+      "steps": [
+        2.5,
+        3,
+        3.5,
+        4,
+        4.5
+      ],
+      "section": "Warnings"
+    },
+    {
+      "key": "tempUnit",
+      "label": "Temperature unit",
+      "type": "choice",
+      "default": "c",
+      "options": [
+        [
+          "f",
+          "Fahrenheit"
+        ],
+        [
+          "c",
+          "Celsius"
+        ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "pressUnit",
+      "label": "Pressure unit",
+      "type": "choice",
+      "default": "psi",
+      "options": [
+        [
+          "psi",
+          "psi"
+        ],
+        [
+          "bar",
+          "bar"
+        ],
+        [
+          "kpa",
+          "kPa"
+        ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "speedUnit",
+      "label": "Speed and distance unit",
+      "type": "choice",
+      "default": "kmh",
+      "options": [
+        [
+          "mph",
+          "mph and miles"
+        ],
+        [
+          "kmh",
+          "km/h and km"
+        ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "torqueUnit",
+      "label": "Torque unit",
+      "type": "choice",
+      "default": "kgm",
+      "options": [
+        [
+          "lbft",
+          "lb-ft"
+        ],
+        [
+          "nm",
+          "Nm"
+        ],
+        [
+          "kgm",
+          "kgm"
+        ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "powerUnit",
+      "label": "Power unit",
+      "type": "choice",
+      "default": "hp",
+      "options": [
+        [
+          "hp",
+          "hp"
+        ],
+        [
+          "ps",
+          "PS"
+        ],
+        [
+          "kw",
+          "kW"
+        ]
+      ],
+      "section": "Units and clock"
     },
     {
       "key": "timeZone",
@@ -2258,7 +2228,8 @@
           "utc+9",
           "Korea / Japan (UTC+9)"
         ]
-      ]
+      ],
+      "section": "Units and clock"
     },
     {
       "key": "clock",
@@ -2274,7 +2245,76 @@
           "24",
           "24-hour"
         ]
-      ]
+      ],
+      "section": "Units and clock"
+    },
+    {
+      "key": "vehicle",
+      "label": "Vehicle",
+      "type": "choice",
+      "default": "ice",
+      "options": [
+        [
+          "auto",
+          "Auto (found from the car)"
+        ],
+        [
+          "phev",
+          "Plug-in hybrid (charge, electric range, battery power)"
+        ],
+        [
+          "ice",
+          "Petrol or diesel (boost, timing, torque, fuel rail)"
+        ]
+      ],
+      "section": "Car"
+    },
+    {
+      "key": "tankLitres",
+      "label": "Fuel tank size",
+      "type": "number",
+      "unit": "L",
+      "default": 59,
+      "steps": [
+        40,
+        42,
+        46,
+        50,
+        52,
+        55,
+        57,
+        59,
+        60,
+        63,
+        65,
+        66,
+        68,
+        69,
+        70,
+        74,
+        80,
+        83,
+        85,
+        90
+      ],
+      "section": "Car"
+    },
+    {
+      "key": "kwFast",
+      "label": "Battery power (kW)",
+      "type": "choice",
+      "default": "on",
+      "options": [
+        [
+          "on",
+          "Fast: between eDrive Live's readings from the car's speed and acceleration"
+        ],
+        [
+          "off",
+          "eDrive Live's readings only"
+        ]
+      ],
+      "section": "Car"
     },
     {
       "key": "eFull",
@@ -2297,7 +2337,25 @@
         40,
         45,
         50
-      ]
+      ],
+      "section": "Car"
+    },
+    {
+      "key": "demo",
+      "label": "Demo data",
+      "type": "choice",
+      "default": "off",
+      "options": [
+        [
+          "on",
+          "Always"
+        ],
+        [
+          "off",
+          "Never"
+        ]
+      ],
+      "section": "Car"
     }
   ],
   "config": {

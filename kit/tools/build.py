@@ -151,6 +151,12 @@ def fetch_assets(adir, assets):
         open(dst, 'wb').write(data)
 
 
+def full_label(s):
+    """A setting's label with its section ahead of it (the sections are the app's own settings sheet's)."""
+    sec = s.get('section')
+    return s['label'] if not sec or s['label'].startswith(sec) else sec + ': ' + s['label']
+
+
 def build_ui(spec, language='en'):
     """screens/settings -> (application.xml, uiDescription.json, strings, screen meta)"""
     app = spec['id']
@@ -193,7 +199,7 @@ def build_ui(spec, language='en'):
         for s in spec['settings']:
             name = 'SET_' + s['key'].upper()
             if s['type'] == 'bool':
-                items.append(comp('checkbox', name, rows=[text_row('SET_' + s['key'], s['label'])]))
+                items.append(comp('checkbox', name, rows=[text_row('SET_' + s['key'], full_label(s))]))
             elif s['type'] in ('choice', 'number'):
                 # a drop-down with every value, as BMW's parking app settings: rows = options
                 # (ItemText), HeaderText = the setting, SelectedItem = the chosen row (mgu.js sets it)
@@ -202,7 +208,8 @@ def build_ui(spec, language='en'):
                 items.append((did, [f'            <component id="{did}" type="dropDownMenu"/>'], {
                     'type': 'dropDownMenu', 'name': name,
                     'rows': [{'ItemText': {'value': hmi_text(lb), 'type': 'Text'}} for lb in labels],
-                    'cells': {'HeaderText': {'value': hmi_text(s['label']), 'type': 'Text'},
+                    # (the HMI's own list is one list: a setting's section, app.json, ahead of its label there)
+                    'cells': {'HeaderText': {'value': hmi_text(full_label(s)), 'type': 'Text'},
                               'SelectedItem': {'value': values.index(s['default']) if s['default'] in values else 0, 'type': 'UInt'}},
                 }))
             else:

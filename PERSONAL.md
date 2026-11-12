@@ -55,7 +55,10 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   (not M, Sport, GT3, Track).
 - Settings in sections (the app's own settings page): Show, Layout and Colours at the top, then Display, Readouts and
   gauges, Red zone and shift, Units and clock, Car, each opening its own list (kit/runtime/sheet.js: a setting's
-  "section" in app.json; none: one list, as before).
+  "section" in app.json; none: one list, as before). Cluster Centre: Show, then Pages, Custom page 1, Custom page 2,
+  Look and size, Shift light and warm-up, Warnings, Units and clock, Car. Cluster Info: Show and Panel position, then
+  Panel items, HUD, Units, Screen. The HMI's own list (only without the renderer) stays one list, each heading
+  with its section ahead ('Custom page 1: Slot 1').
 - Engine power = crankshaft torque (FES statusActualValueTorque2) x rpm / 9549: a calculation; on a tuned car
   (JB4) it may differ from the real power.
 - Accelerator pedal and throttle, apart (the pedal is the driver's request, the throttle the valve's opening): both
