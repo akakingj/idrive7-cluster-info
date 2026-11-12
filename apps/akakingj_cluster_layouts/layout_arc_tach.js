@@ -1,15 +1,16 @@
 'use strict';
 /**
- * layout_arc_tach.js - "Arc tach": the engine speed as a wide segmented arc over a large digital speed, its
- * numerals 0 - 7 (Settings > Rev scale) inside the arc, the red zone the shift point's (layout_common.shiftPoint:
- * lower while the oil is cold); the main readout under the speed; a round pod either side (layout_three_pods' pods:
- * the coolant left, the oil right by default, C - H; Readout 1 / 2 in them over the car's own strip).
- * An original design (akakingj's build).
+ * layout_arc_tach.js - "Arc tach": the engine speed as a segmented arc three quarters round (from six o'clock up
+ * the left, over the top, down to three o'clock), its numerals 0 - 7 (Settings > Rev scale) inside it, the red
+ * zone the shift point's (layout_common.shiftPoint: lower while the oil is cold) at its end; the digital speed in
+ * the quarter it leaves open, under the red end; the main readout inside the arc; a round pod either side
+ * (layout_three_pods' pods: the coolant left, the oil right by default, C - H; Readout 1 / 2 in them over the car's
+ * own strip). An original design (akakingj's build).
  *
- * The car's own bottom strip (the default): the arc centred, its top clear of the camera's cowl and its ends
- * above the strip, a pod either side. The layout's own strip: the arc left, the pods between it and the KOMBI's
- * gear box (on an M car lower, under its boxes), the ranges right of the box. The map: the arc left of it, a pod
- * right. The stock centre: the arc left, a pod right of the KOMBI's centre.
+ * The car's own bottom strip (the default): the arc and the speed in the middle, its top clear of the camera's cowl
+ * and its foot above the strip, a pod either side. The layout's own strip: the arc left, the pods between it and
+ * the KOMBI's gear box (on an M car lower, under its boxes), the ranges right of the box. The map: the arc left of
+ * it, a pod right. The stock centre: the arc left, a pod right of the KOMBI's centre.
  */
 const C = require('./layout_common');
 const TP = require('./layout_three_pods').parts;
@@ -24,30 +25,32 @@ const ARC = {
 const PALETTES = Object.fromEntries(Object.keys(TP.PALETTES).map((k) => [k, Object.assign({}, TP.PALETTES[k], ARC[k])]));
 const bandColours = (t) => ({ track: t.track, fill0: t.fill0, fill1: t.fill1, redc: t.red, tip: t.tip, tick: t.minor, num: t.num, neg: t.regen });
 
-/* the arc's sweep: 117 degrees either side of twelve o'clock (its ends a little below its centre) */
-const SPAN = 117;
+/* the arc's sweep: three quarters of a circle, from (just left of) six o'clock up the left, over the top and
+ * down to three o'clock, where the red zone ends; the quarter it leaves open, under that end, holds the digital speed */
+const A0 = -170, A1 = 90;   // (its foot a little left of six o'clock: the shader's angles wrap at six)
 const kwOf = (d) => (C.isNum(d.kw) ? d.kw : 0);
 const kwN = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 30) * 30, in: r.in }; };
 
 /**
- * The arc tach round (cx, cy), radius R (the band's centre line): the band, its numerals inside it, and inside
- * that the gear (withGear: where the KOMBI's strip doesn't show it) or the scale's unit, the digital speed, its
- * unit and the main readout. On a plug-in hybrid in an electric mode the arc reads the battery's power (0 a
- * quarter along, regeneration below it in green), as Modern wide's.
+ * The arc tach round (cx, cy), radius R (the band's centre line): the band, its numerals inside it; in the
+ * quarter it leaves open (bottom right, under the red end) the digital speed and its unit, `room` px right of cx
+ * for them; inside the arc the gear (withGear: where the KOMBI's strip doesn't show it) or the scale's unit, and
+ * the main readout. On a plug-in hybrid in an electric mode the arc reads the battery's power (0 a quarter along,
+ * regeneration below it in green), as Modern wide's.
  */
-function arcTach(o, cx, cy, R, withGear) {
-    const k = R / 320, s = C.rpmScale(o), T = Math.round(40 * k);
-    const numH = Math.round(30 * k), numAt = -(T / 2 + Math.round(34 * k));
-    // (the layer with room round the band for its glow)
-    const pad = Math.round(30 * k), half = R + T / 2 + pad, below = Math.ceil(R * Math.cos((180 - SPAN) * Math.PI / 180) + T / 2 + pad);
-    const X = Math.round(cx - half), Y = Math.round(cy - half);
+function arcTach(o, cx, cy, R, withGear, room) {
+    const k = R / 240, s = C.rpmScale(o), T = Math.round(38 * k);
+    const numH = Math.round(26 * k), numAt = -(T / 2 + Math.round(30 * k));
+    // (the layer square round the circle, with room round the band for its glow)
+    const half = Math.round(R + T / 2 + 30 * k), X = Math.round(cx - half), Y = Math.round(cy - half);
     const evOff = (d) => C.electric(o, d);
     const marks = [s.max, 1, numH, numAt];
-    const redSpan = (red) => [-SPAN + 2 * SPAN * Math.min(1, red / s.max), SPAN, 0, 0];
+    const redSpan = (red) => [A0 + (A1 - A0) * Math.min(1, red / s.max), A1, 0, 0];
+    const sx = cx + Math.round(0.1 * R), sw = Math.round(room - 0.1 * R);
     const list = [
         {
-            key: 'rpmArc', kind: 'band', x: X, y: Y, w: Math.round(2 * half), h: Math.round(half + below),
-            params: { u_geo: [cx - X, cy - Y, R, T], u_span: [-SPAN, SPAN, s.max * 10, 0.32], u_marks: marks, u_red: [s.red / s.max], u_zero: [0], u_soft: [0.45] },
+            key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: 2 * half,
+            params: { u_geo: [cx - X, cy - Y, R, T], u_span: [A0, A1, s.max * 10, 0.32], u_marks: marks, u_red: [s.red / s.max], u_zero: [0], u_soft: [0.45] },
             colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.ev, fill1: t.ev, tip: kwOf(d) < -0.3 ? t.regen : t.ev }) : bandColours(t)),
             value: (d) => (evOff(d) ? C.kwFrac(d.kw, kwN(d)) : C.isNum(d.rpm) ? Math.min(1, d.rpm / 1000 / s.max) : 0), max: 1, sweep: true,
             // (the red zone where the shift point puts it now; on a plug-in hybrid in an electric mode the power's
@@ -57,20 +60,22 @@ function arcTach(o, cx, cy, R, withGear) {
         },
         {
             // the red zone marked inside the band, lit or not: a thin red arc from where it starts now
-            key: 'rpmRedZone', kind: 'band', x: X, y: Y, w: Math.round(2 * half), h: Math.round(half + below),
+            key: 'rpmRedZone', kind: 'band', x: X, y: Y, w: 2 * half, h: 2 * half,
             params: { u_geo: [cx - X, cy - Y, R - T / 2 - Math.round(8 * k), Math.max(4, Math.round(6 * k))], u_span: redSpan(s.red), u_marks: [0, 0, 0, 0], u_red: [2], u_soft: [1] },
             colors: (t) => ({ track: t.red, fill0: t.red, fill1: t.red, redc: t.red, tip: t.red, tick: t.red, num: t.red }),
             value: () => 1, max: 1,
             dyn: (d) => ({ u_span: redSpan(Math.min(s.red, C.shiftPoint(o, d).red / 1000)) }),
             visible: (d) => !evOff(d),
         },
-        C.text('speedDigits', cx - Math.round(170 * k), cy - Math.round(86 * k), Math.round(340 * k), Math.round(150 * k), (d) => C.speedText(o, d), lit),
-        C.text('speedDigitsUnit', cx - Math.round(80 * k), cy + Math.round(72 * k), Math.round(160 * k), Math.round(24 * k), C.speedUnit(o), lbl, { tracking: 0.12 }),
-        C.text('kwNow', cx - Math.round(130 * k), cy + Math.round(118 * k), Math.round(260 * k), Math.round(40 * k), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
-        C.text('kwNowLbl', cx - Math.round(130 * k), cy + Math.round(162 * k), Math.round(260 * k), Math.round(16 * k), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
+        // the digital speed in the open quarter, under the arc's red end
+        C.text('speedDigits', sx, cy + Math.round(0.14 * R), sw, Math.round(0.6 * R), (d) => C.speedText(o, d), lit),
+        C.text('speedDigitsUnit', sx, cy + Math.round(0.78 * R), sw, Math.round(0.1 * R), C.speedUnit(o), lbl, { tracking: 0.12 }),
+        // the main readout inside the arc, at its middle
+        C.text('kwNow', cx - Math.round(0.5 * R), cy - Math.round(0.1 * R), Math.round(R), Math.round(0.19 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
+        C.text('kwNowLbl', cx - Math.round(0.5 * R), cy + Math.round(0.11 * R), Math.round(R), Math.round(0.07 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
     ];
-    if (withGear) list.push(C.text('gear', cx - Math.round(60 * k), cy - Math.round(176 * k), Math.round(120 * k), Math.round(66 * k), C.gearText, gearC));
-    else list.push(C.text('rpmUnit', cx - Math.round(110 * k), cy - Math.round(140 * k), Math.round(220 * k), Math.round(20 * k), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
+    if (withGear) list.push(C.text('gear', cx - Math.round(0.25 * R), cy - Math.round(0.5 * R), Math.round(0.5 * R), Math.round(0.26 * R), C.gearText, gearC));
+    else list.push(C.text('rpmUnit', cx - Math.round(0.4 * R), cy - Math.round(0.36 * R), Math.round(0.8 * R), Math.round(0.08 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
     return list;
 }
 
@@ -87,7 +92,7 @@ module.exports = {
             // strip); the readouts above the map, the ranges under it
             const top = C.MAP.y, bot = C.MAP.y + C.MAP.h, st = C.strip(o);
             return C.aroundMap().map((r, i) => C.flat('bg' + i, r.x, r.y, r.w, r.h, 'bg')).concat(
-                arcTach(o, 208, 430, 160, !st),
+                arcTach(o, 180, 400, 150, !st, 230),
                 st ? pod(o, 'rpm', 1712, 404, 330, null) : pod(o, 'rpm', 1792, 500, 236, null), [
                     C.text('clock', 520, top - 76, 200, 34, C.clock, lit),
                     C.text('outside', 1200, top - 76, 200, 34, (d) => C.outsideText(o, d.outside), lit),
@@ -99,17 +104,17 @@ module.exports = {
         if (C.strip(o)) {
             // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the arc
             // centred, its top under the camera's cowl and its ends above the strip, a pod either side
-            return bg.concat(arcTach(o, 960, 466, 316, false), pod(o, 'speed', 448, 404, 340, 'clock'), pod(o, 'rpm', 1472, 404, 340, 'outside'));
+            return bg.concat(arcTach(o, 880, 386, 230, false, 360), pod(o, 'speed', 420, 404, 330, 'clock'), pod(o, 'rpm', 1490, 404, 330, 'outside'));
         }
         if (o.centre === 'stock') {
             // the KOMBI's own centre between: the arc left, the right pod right of it, the ranges right of the box
             return [C.flat('bg', 0, 0, 566, 720, 'bg'), C.flat('bgR', 1104, 0, 816, 720, 'bg')].concat(
-                arcTach(o, 284, 430, 228, true), C.mCar(o) ? [] : pod(o, 'rpm', 1256, 392, 280, null), ranges(o));   // (an M car: its second box there)
+                arcTach(o, 250, 400, 200, true, 300), C.mCar(o) ? [] : pod(o, 'rpm', 1256, 392, 280, null), ranges(o));   // (an M car: its second box there)
         }
         // the layout's own strip: the arc left, the pods between it and the KOMBI's gear box (an M car: lower,
         // under the M KOMBI's two boxes), the ranges right of the box
         const m = C.mCar(o);
-        return bg.concat(arcTach(o, 470, 440, 288, true),
+        return bg.concat(arcTach(o, 430, 390, 230, true, 340),
             m ? pod(o, 'speed', 916, 540, 200, 'clock') : pod(o, 'speed', 960, 410, 290, 'clock'),
             m ? pod(o, 'rpm', 1311, 556, 186, 'outside') : pod(o, 'rpm', 1262, 410, 270, 'outside'),
             ranges(o));
