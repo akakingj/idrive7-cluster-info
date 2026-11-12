@@ -105,7 +105,8 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
 - Too hot, one set of temperatures: the Car profile's Too hot group (oil, coolant, gearbox) sets Layouts', Centre's
   Warnings and Info's, and Redline's (HUD and page), M Vitals' and Warm-Up's (oil) too. Unset, each keeps its own
   default (the cluster 130 / 118 / 115 °C, Redline 130 / 112 / 120, M Vitals 125 / 112 / 120, Warm-Up oil 125).
-  Red at that temperature and above everywhere.
+  Red at that temperature and above everywhere. Its choices: oil and coolant 110-140 °C, gearbox 80-130 (in 5s);
+  each app's list takes all of them.
 
 ## Demo
 `cluster_demo.bat` (Windows) or `node tools/cluster_demo.js`.

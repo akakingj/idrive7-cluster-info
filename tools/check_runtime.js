@@ -52,9 +52,9 @@ SETS.push({ tag: 'M cluster', cluster: 'm', bottomStrip: 'layout' });
 SETS.push({ tag: 'plug-in hybrid', vehicle: 'phev' });
 SETS.push({ tag: 'shift warning, no colours', shiftWarn: 'on', tempTone: 'off' });
 SETS.push({ tag: 'shift warning, gauges', shiftWarn: 'on', gaugeSpeed: 'coolant', gaugeRpm: 'gearbox', infoA: 'oil', infoB: 'coolant', infoMain: 'gearbox' });
-// the Car profile's too-hot ends, on C - H and on the scales, with the temperatures as readouts and small gauges
-SETS.push({ tag: 'too hot low, C-H', hotOil: 110, hotCoolant: 105, hotGearbox: 100, gaugeSpeed: 'coolant', gaugeRpm: 'oil', infoA: 'gearbox', infoB: 'coolant' });
-SETS.push({ tag: 'too hot high, scales', hotOil: 140, hotCoolant: 120, hotGearbox: 130, tempGauge: 'scale', gaugeSpeed: 'gearbox', gaugeRpm: 'coolant', infoMain: 'oil' });
+// the Car profile's too-hot ends (oil and coolant 110-140, gearbox 80-130), on C - H and on the scales, with the temperatures as readouts and small gauges
+SETS.push({ tag: 'too hot low, C-H', hotOil: 110, hotCoolant: 110, hotGearbox: 80, gaugeSpeed: 'coolant', gaugeRpm: 'oil', infoA: 'gearbox', infoB: 'coolant' });
+SETS.push({ tag: 'too hot high, scales', hotOil: 140, hotCoolant: 140, hotGearbox: 130, tempGauge: 'scale', gaugeSpeed: 'gearbox', gaugeRpm: 'coolant', infoMain: 'oil' });
 SETS.push({ tag: 'scales, own gauges', tempGauge: 'scale' });
 
 const bad = (v) => typeof v === 'number' && !isFinite(v);

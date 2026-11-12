@@ -41,7 +41,7 @@ const clear = () => { try { fs.unlinkSync(FILE); } catch (e) { /* none */ } };
 const PROFILE_VALUES = {
     engine: ['auto', 'diesel', 'petrol'], redline: [0, 4000, 6000, 7000, 9000], shiftBefore: [0, 100, 300, 400, 1000], rpmScale: [0, 5000, 7000, 10000],
     coldLimit: [0, 2000, 4500, 5500], lightMode: ['shift', 'rev'], lightStart: [2000, 4000, 6000], coldGuard: ['on', 'off'], warmOil: [60, 80, 100],
-    warmCoolant: [60, 90], hotOil: [110, 125, 140], hotCoolant: [105, 112, 120], hotGearbox: [100, 115, 130], speedUnit: ['kmh', 'mph'], distUnit: ['km', 'mi'], tempUnit: ['c', 'f'],
+    warmCoolant: [60, 90], hotOil: [110, 125, 140], hotCoolant: [110, 125, 140], hotGearbox: [80, 100, 130], speedUnit: ['kmh', 'mph'], distUnit: ['km', 'mi'], tempUnit: ['c', 'f'],
     pressUnit: ['bar', 'psi', 'kpa'], fuelUnit: ['l100', 'kml', 'mpguk', 'mpgus'], torqueUnit: ['nm', 'lbft', 'kgm'],
     powerUnit: ['hp', 'ps', 'kw'],
 };
@@ -64,12 +64,12 @@ const cases = {
         });
     },
     'every number the Car profile can give is in the setting\'s own list (its drop-down and the HMI\'s list show it)'() {
-        // (the Car profile's steps, as its app.json in akakingj/idrive7-apps car-profile 1.2.0)
+        // (the Car profile's steps, as its app.json in akakingj/idrive7-apps car-profile 1.2.1)
         const STEPS = { redline: [0, 4000, 4500, 5000, 5500, 5800, 6000, 6200, 6500, 6800, 7000, 7200, 7500, 7800, 8000, 8500, 9000],
             shiftBefore: [0, 100, 200, 300, 400, 500, 700, 800, 1000], rpmScale: [0, 5000, 6000, 7000, 8000, 9000, 10000],
             coldLimit: [0, 2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500], lightStart: [2000, 2500, 3000, 3500, 4000, 4500, 5000, 5500, 6000],
             warmOil: [60, 70, 75, 80, 85, 90, 100], warmCoolant: [60, 70, 75, 80, 85, 90],
-            hotOil: [110, 115, 120, 125, 130, 135, 140], hotCoolant: [105, 108, 110, 112, 115, 118, 120], hotGearbox: [100, 105, 110, 115, 120, 125, 130] };
+            hotOil: [110, 115, 120, 125, 130, 135, 140], hotCoolant: [110, 115, 120, 125, 130, 135, 140], hotGearbox: [80, 85, 90, 95, 100, 105, 110, 115, 120, 125, 130] };
         Object.keys(FOLLOWS).forEach((app) => schemaOf(app).filter((s) => s.profile && s.type === 'number').forEach((s) => {
             const lost = STEPS[s.profile].filter((v) => v > 0 || (v === 0 && (s.steps || []).indexOf(0) >= 0)).filter((v) => s.steps.indexOf(v) < 0);
             assert.deepStrictEqual(lost, [], app + ' ' + s.key + ': ' + lost.join(', '));
@@ -99,11 +99,11 @@ const cases = {
     },
     'too hot: the profile\'s oil / coolant / gearbox temperatures to all three apps (Layouts, Centre\'s Warnings, Info)'() {
         clear();
-        writeProfile({ hotOil: 125, hotCoolant: 112, hotGearbox: 120 });
+        writeProfile({ hotOil: 125, hotCoolant: 120, hotGearbox: 90 });
         const L = settingsIn('layouts', MINE), Ce = settingsIn('centre', MINE), I = settingsIn('info', MINE);
-        assert.deepStrictEqual(['hotOil', 'hotCoolant', 'hotGearbox'].map((k) => L.get(k)), [125, 112, 120]);
-        assert.deepStrictEqual(['oilHigh', 'coolantHigh', 'gearboxHigh'].map((k) => Ce.get(k)), [125, 112, 120]);
-        assert.deepStrictEqual(['hotOil', 'hotCoolant', 'hotGearbox'].map((k) => I.get(k)), [125, 112, 120]);
+        assert.deepStrictEqual(['hotOil', 'hotCoolant', 'hotGearbox'].map((k) => L.get(k)), [125, 120, 90]);
+        assert.deepStrictEqual(['oilHigh', 'coolantHigh', 'gearboxHigh'].map((k) => Ce.get(k)), [125, 120, 90]);
+        assert.deepStrictEqual(['hotOil', 'hotCoolant', 'hotGearbox'].map((k) => I.get(k)), [125, 120, 90]);
         clear(); L._pollProfile();
         assert.strictEqual(L.get('hotOil'), 135, 'gone: the own value');
     },
