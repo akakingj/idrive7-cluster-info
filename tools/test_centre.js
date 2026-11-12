@@ -28,8 +28,8 @@ check('warm-up: rate, minutes to the target, and the rev limit rising with the o
     const s = w.state({ oil: 62 });
     assert(Math.abs(w.rate() - 6) < 0.01);
     assert(Math.abs(s.minutes - 28 / 6) < 0.01 && !s.ready);
-    // where the red zone starts now: the shift point 3500 + (6200 - 3500) * 32/60 = 4940 (to 50: 4950), + 300
-    assert.strictEqual(s.limit, 5250);
+    // the shift point now (as Redline's cold LIMIT and Warm-Up's): 3500 + (6200 - 3500) * 32/60 = 4940, to 50: 4950
+    assert.strictEqual(s.limit, 4950);
     assert(w.state({ oil: 91 }).ready && w.state({ oil: 91 }).limit === 6500);
     assert.strictEqual(new WarmUp({ target: 90, coldLimit: 3500, redline: 6500, coldGuard: 'off' }).state({ oil: 40 }).limit, 6500, 'guard off: the redline');
 });
@@ -41,9 +41,9 @@ check('the shift point and red zone: the same as Cluster Layouts\' (layout_commo
             const o = { redline, shiftBefore, coldGuard, coldLimit, warmOil };
             const mine = shiftPoint(o, { oil }), theirs = LC.shiftPoint(Object.assign({ rpmMax: 10000 }, o), { oil });
             assert.deepStrictEqual(mine, theirs, JSON.stringify(o) + ' oil ' + oil);
-            // the warm-up page's rev limit is that red zone
+            // the warm-up page's rev limit: that shift point while cold, the redline once warm
             const w = new WarmUp({ target: warmOil, coldLimit, redline, shiftBefore, coldGuard });
-            if (oil !== undefined) assert.strictEqual(w.state({ oil }).limit, theirs.red);
+            if (oil !== undefined) assert.strictEqual(w.state({ oil }).limit, theirs.cold ? theirs.rpm : redline);
             n++;
         }
     assert(n > 1000);

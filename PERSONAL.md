@@ -86,10 +86,16 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   the temperature, torque and pressure units. A setting the profile sets shows its value and can't be changed in the
   app; one it leaves to each app (or its Auto, 0, where the setting has no 0) or no Car profile: the app's own, kept
   all along. Centre's settings per driver keep each driver's own values, not the profile's.
-- One shift point everywhere: Layouts' red zone and shift warning, Centre's shift light (Shift light: flashes at:
-  Auto, the default, reset once) and its warm-up page's rev limit, worked out as the Redline app's fixed one (red line
-  less Shift point before redline; with the guard, from the cold limit at 30 °C oil up to normal at Oil warm at; the
-  red zone that far above it). tools/test_centre.js checks Centre's and Layouts' agree.
+- One shift point everywhere, as the idrive7-apps kit's (engine.js Engine.coldShift, Redline's and Warm-Up's): the red
+  line less Shift point before redline; with the guard, from the cold limit at 30 °C oil up to normal at Oil warm at.
+  Layouts' shift warning and Centre's shift light (Shift light: flashes at: Auto, the default, reset once) flash there;
+  Centre's warm-up page shows it as its rev limit while cold (Redline's cold LIMIT, Warm-Up's rev limit), the redline
+  once warm; Layouts' red zone starts Shift point before redline above it. tools/test_centre.js checks Centre's and
+  Layouts' agree.
+- The HUD shared with Redline: while another app holds it (the idrive7-apps kit's claim, /dev/shm/mgu-hud/<id>, fresh
+  6 s: Redline's HUD on), Cluster Info's panel on the HUD and its turn arrows step aside (Redline's tach sits where the
+  arrows go), back once the claim goes stale; Info's status page says who holds it. Info doesn't claim the HUD or stand
+  on it, so Redline's HUD is never switched off for it.
 - The oil amber while warming (60 °C up to Oil warm at), as the Redline app's HUD: Layouts' readouts and small gauges'
   figures, Centre's oil tile, Info's panel. Too hot red (Info: before amber). The hot thresholds stay the cluster's
   (Centre's Warnings, 130 / 118 / 115 °C; the Redline HUD's: 130 / 112 / 120).

@@ -25,8 +25,9 @@ function shiftPoint(o, d) {
 
 /**
  * Warm-up: how fast the oil is warming (°C a minute, over the last few minutes), when it reaches the target
- * temperature, and the rev limit for now: where the red zone starts (shiftPoint, above: from the cold limit with the
- * oil at 30 °C up to the redline at the target, as Cluster Layouts' red zone and the Redline app).
+ * temperature, and the rev limit for now: while the oil is cold the shift point (shiftPoint, above: from the cold limit
+ * with the oil at 30 °C up to the redline less shiftBefore at the target), the number the Redline app shows as its cold
+ * LIMIT and Warm-Up as its rev limit; the redline once warm (or with the guard off).
  */
 class WarmUp {
     constructor(o) { this.o = Object.assign({ target: 80, coldLimit: 4500, redline: 6000, shiftBefore: 300, coldGuard: 'on' }, o); this.hist = []; }
@@ -48,7 +49,9 @@ class WarmUp {
         if (!isNum(oil)) return { oil: null, ready: false, minutes: null, limit: null };
         const ready = oil >= o.target, r = this.rate();
         const minutes = ready ? 0 : r && r > 0.05 ? Math.min(99, (o.target - oil) / r) : null;
-        const limit = shiftPoint({ redline: o.redline, shiftBefore: o.shiftBefore, coldGuard: o.coldGuard, coldLimit: o.coldLimit, warmOil: o.target }, d).red;
+        // (while cold the shift point, as the Redline app's cold LIMIT and Warm-Up's rev limit; the redline once warm)
+        const sp = shiftPoint({ redline: o.redline, shiftBefore: o.shiftBefore, coldGuard: o.coldGuard, coldLimit: o.coldLimit, warmOil: o.target }, d);
+        const limit = sp.cold ? sp.rpm : o.redline;
         return { oil, ready, minutes, limit };
     }
 }

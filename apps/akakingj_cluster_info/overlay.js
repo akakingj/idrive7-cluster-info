@@ -310,11 +310,34 @@ function startOverlay(ctx, lv, opts) {
     const where = () => (settings.get('show') === 'off' ? 'off' : settings.get('place') || 'bottom');
     // 'map': on the display the Waze map is on, while it shows; 'hud': on the HUD whenever there is something to show
     const onHud = () => settings.get('show') === 'hud';
+    /*
+     * The HUD taken by another app: the idrive7-apps kit's HUD claims (kit/runtime/hud_claim.js), a file
+     * /dev/shm/mgu-hud/<app id> an app holding the HUD (Redline's HUD) touches every 2 s, counting for 6 s. While one is
+     * fresh this app gives way on the HUD, as that protocol's standing app does: no panel and no turn arrows there
+     * (Redline's tach sits where the arrows go, the middle of the glass), back once the claim goes stale. Looked at once
+     * a second. (This app doesn't claim the HUD, nor stand on it: Redline's HUD isn't switched off for it.)
+     */
+    const claimsDir = opts.hudClaims || process.env.MGU_HUD_CLAIMS || '/dev/shm/mgu-hud';
+    let taken = { at: -1e9, by: [] };
+    const hudTaken = () => {
+        const tm = now();
+        if (tm - taken.at < 1000) return taken.by.length > 0;
+        let by = [];
+        try {
+            by = fs.readdirSync(claimsDir).filter((f) => !/\.standing$|\.tmp$/.test(f)).filter((f) => {
+                try { return tm - fs.statSync(path.join(claimsDir, f)).mtime.getTime() < 6000; } catch (e) { return false; }
+            });
+        } catch (e) { by = []; }      // (no folder: nobody holds it)
+        if (by.join() !== taken.by.join()) log.info(by.length ? 'HUD held by ' + by.join(', ') + ': the panel and arrows step aside there' : 'HUD free again');
+        taken = { at: tm, by };
+        return by.length > 0;
+    };
     /** Where the badge goes now: { target, pct } (the map's place it sits in), null for nowhere. */
     const place = () => {
         // (the HUD size chosen in Waze on cluster, even while its map is on the cluster: the panel stays put)
-        if (onHud()) return { target: 'hud', pct: map.pct, hx: map.hx, hy: map.hy };
-        return map.showing ? { target: map.target, pct: map.pct, hx: map.hx, hy: map.hy } : null;
+        const pl = onHud() ? { target: 'hud', pct: map.pct, hx: map.hx, hy: map.hy }
+            : map.showing ? { target: map.target, pct: map.pct, hx: map.hx, hy: map.hy } : null;
+        return pl && pl.target === 'hud' && hudTaken() ? null : pl;
     };
     let CR = opts.ClusterRender;
     let cr = null, ref = 0, geo = '', cv = null, last = null, visible = false, lastT = 0, lastKey = '';
@@ -441,7 +464,7 @@ function startOverlay(ctx, lv, opts) {
      * they stay visible (opacity 0 between flashes) so the HUD's slot is kept while they blink. */
     const arrows = { left: 0, right: 0 };
     let arrowsShown = false, blinkFrom = 0, lastDir = 'off', lastPhase = null, offSince = 0;
-    const signalsOn = () => settings.get('turnSignals') !== 'off' && typeof lv.indicator === 'function';
+    const signalsOn = () => settings.get('turnSignals') !== 'off' && typeof lv.indicator === 'function' && !hudTaken();
     function arrowLayers() {
         if (arrows.left || !client()) return !!arrows.left;
         ['left', 'right'].forEach((d) => {
@@ -492,6 +515,7 @@ function startOverlay(ctx, lv, opts) {
         status: () => ({
             renderer: cr ? (cr.ready ? 'connected' : 'connecting') : 'not needed yet',
             map: map.showing ? 'showing on ' + map.target + (map.target === 'hud' ? ' (' + (map.pct || 'standard') + (map.pct ? ' %' : '') + ')' : '') : statusText ? 'not showing' : 'no Waze on cluster status',
+            hud: hudTaken() ? 'held by ' + taken.by.join(', ') + ' (panel and arrows step aside)' : 'free',
         }),
         /** The turn signal arrows: { shown, phase } (phase true: lit). */
         arrows: () => ({ shown: arrowsShown, phase: lastPhase, refs: Object.assign({}, arrows) }),

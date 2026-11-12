@@ -96,7 +96,8 @@ class FakeCR extends EventEmitter {
     const lv = { power: () => (kw === null ? null : pw(kw)), limits: () => ({ outMax: 100, inMax: 60 }), keepFast: () => { fast++; }, indicator: () => ind, night: () => night, extras: () => extras };
     let night = false, extras = [];
     const wait = (ms) => new Promise((r) => setTimeout(r, ms || 30));
-    const ov = startOverlay({ settings, log, theme: () => theme }, lv, { statusPath: status, ClusterRender: FakeCR, now: () => t, setInterval: () => 0, clearInterval: () => {} });
+    const claims = path.join(dir, 'mgu-hud'); fs.mkdirSync(claims);
+    const ov = startOverlay({ settings, log, theme: () => theme }, lv, { statusPath: status, ClusterRender: FakeCR, now: () => t, setInterval: () => 0, clearInterval: () => {}, hudClaims: claims });
     const step = async () => { ov._read(); await wait(); };
 
     await step();
@@ -266,6 +267,22 @@ class FakeCR extends EventEmitter {
     check('then hidden (the HUD slot let go)', () => assert(!ov.arrows().shown && !la.visible));
     settings.v.turnSignals = 'off'; ind = 'right'; t += 10; ov._arrowTick();
     check('setting off: no arrows', () => assert(!ov.arrows().shown));
+    // another app holding the HUD (the idrive7-apps kit's claim: Redline's HUD): the arrows and a panel on the HUD step aside
+    settings.v.turnSignals = 'on'; ind = 'off'; t += 1300; ov._arrowTick();
+    const touch = (f, at) => { fs.writeFileSync(path.join(claims, f), ''); fs.utimesSync(path.join(claims, f), at / 1000, at / 1000); };
+    touch('redline', t); touch('cluster_functions.standing', t);
+    t += 1100; ind = 'right'; ov._arrowTick();
+    check('the HUD held by Redline: no turn arrows there', () => assert(!ov.arrows().shown));
+    check('the status says who holds it', () => assert(/held by redline/.test(ov.status().hud), ov.status().hud));
+    settings.v.show = 'hud'; t += 300; ov._tick();
+    check('the HUD held: no panel on the HUD', () => assert.strictEqual(ov.shown(), false));
+    settings.v.show = 'map'; t += 300; ov._tick();
+    check('the Waze map on the HUD (status: target hud): the panel on it steps aside too', () => assert.strictEqual(ov.shown(), false));
+    kw = 40; write({ state: 'showing', target: 'map', hud_width_pct: 0 }); await step(); t += 300; ov._tick();
+    check('the Waze map on the cluster: the panel there, not affected', () => assert.strictEqual(ov.shown(), true));
+    t += 6000; ov._arrowTick();       // (not touched for 6 s: Redline's HUD gone)
+    check('the claim gone stale: the arrows back', () => assert(ov.arrows().shown));
+    check('and the status says free', () => assert.strictEqual(ov.status().hud, 'free'));
     ov.stop();
 
     if (process.argv[2]) {
