@@ -42,14 +42,25 @@ function arcTach(o, cx, cy, R, withGear, room) {
     const k = R / 240, s = C.rpmScale(o), T = Math.round(30 * k);
     const numH = Math.round(32 * k), numAt = -(T / 2 + Math.round(32 * k));
     // (the layer square round the circle, with room round the band for its glow)
-    const half = Math.round(R + T / 2 + 30 * k), X = Math.round(cx - half), Y = Math.round(cy - half);
+    // (cut at the car's own strip's line: only its glow's edge reached below it, over the strip and the warning
+    // lights)
+    const half = Math.round(R + T / 2 + 30 * k), X = Math.round(cx - half), Y = Math.round(cy - half), H = Math.min(2 * half, C.STRIP_Y - Y);
     const evOff = (d) => C.electric(o, d);
     const marks = [s.max, 1, numH, numAt];
     const redSpan = (red) => [A0 + (A1 - A0) * Math.min(1, red / s.max), A1, 0, 0];
+    // the red zone's strip: where it starts now (the shift point's), shown only while it has a length (none with the
+    // red line at the scale's end: a zero sweep would divide by zero in the shader); its layer just round the part
+    // of the circle it can reach (from where the coldest oil puts it, layout_common.shiftPoint at 30 °C)
+    const redNow = (d) => Math.min(s.red, C.shiftPoint(o, d).red / 1000);
+    const rr = R - T / 2 - Math.round(8 * k), rw = Math.max(4, Math.round(6 * k));
+    const aLow = redSpan(Math.min(s.red, C.shiftPoint(o, { oil: 30 }).red / 1000))[0];
+    const xs = [], ys = [];
+    for (let a = aLow; a <= A1 + 0.01; a += Math.max(0.5, (A1 - aLow) / 64)) for (const r of [rr - rw, rr + rw]) { xs.push(cx + r * Math.sin(a * Math.PI / 180)); ys.push(cy - r * Math.cos(a * Math.PI / 180)); }
+    const RX = Math.floor(Math.min(...xs) - 6), RY = Math.floor(Math.min(...ys) - 6), RW = Math.ceil(Math.max(...xs) + 6) - RX, RH = Math.ceil(Math.max(...ys) + 6) - RY;
     const sx = cx + Math.round(0.04 * R), sw = Math.round(room - 0.04 * R);
     const list = [
         {
-            key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: 2 * half,
+            key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: H,
             params: { u_geo: [cx - X, cy - Y, R, T], u_span: [A0, A1, 0, 0], u_marks: marks, u_red: [s.red / s.max], u_zero: [0], u_soft: [0.45] },
             colors: (t, d) => (evOff(d) ? Object.assign(bandColours(t), { fill0: t.ev, fill1: t.ev, tip: kwOf(d) < -0.3 ? t.regen : t.ev }) : bandColours(t)),
             value: (d) => (evOff(d) ? C.kwFrac(d.kw, kwN(d)) : C.isNum(d.rpm) ? Math.min(1, d.rpm / 1000 / s.max) : 0), max: 1, sweep: true,
@@ -60,12 +71,12 @@ function arcTach(o, cx, cy, R, withGear, room) {
         },
         {
             // the red zone marked inside the band, lit or not: a thin red arc from where it starts now
-            key: 'rpmRedZone', kind: 'band', x: X, y: Y, w: 2 * half, h: 2 * half,
-            params: { u_geo: [cx - X, cy - Y, R - T / 2 - Math.round(8 * k), Math.max(4, Math.round(6 * k))], u_span: redSpan(s.red), u_marks: [0, 0, 0, 0], u_red: [2], u_soft: [1] },
+            key: 'rpmRedZone', kind: 'band', x: RX, y: RY, w: RW, h: RH,
+            params: { u_geo: [cx - RX, cy - RY, rr, rw], u_span: redSpan(s.red), u_marks: [0, 0, 0, 0], u_red: [2], u_soft: [1] },
             colors: (t) => ({ track: t.red, fill0: t.red, fill1: t.red, redc: t.red, tip: t.red, tick: t.red, num: t.red }),
             value: () => 1, max: 1,
-            dyn: (d) => ({ u_span: redSpan(Math.min(s.red, C.shiftPoint(o, d).red / 1000)) }),
-            visible: (d) => !evOff(d),
+            dyn: (d) => { const sp = redSpan(redNow(d)); return { u_span: sp[1] - sp[0] >= 1 ? sp : [A1 - 1, A1, 0, 0] }; },
+            visible: (d) => !evOff(d) && redNow(d) < s.max - 0.01,
         },
         // the digital speed in the open quarter, under the arc's red end
         C.text('speedDigits', sx, cy + Math.round(0.12 * R), sw, Math.round(0.72 * R), (d) => C.speedText(o, d), lit),
