@@ -102,9 +102,11 @@ module.exports = {
             );
         }
         if (C.strip(o)) {
-            // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the arc
-            // centred, its top under the camera's cowl and its ends above the strip, a pod either side
-            return bg.concat(arcTach(o, 912, 388, 234, false, 340), pod(o, 'speed', 440, 404, 330, 'clock'), pod(o, 'rpm', 1480, 404, 330, 'outside'));
+            // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the three
+            // circles symmetric, the arc's centred on the screen (its top clear of the camera's cowl, its foot above
+            // the strip), a pod either side as far from it, their centres level with its
+            const CX = 960, CY = 388, POD_DX = 520;
+            return bg.concat(arcTach(o, CX, CY, 234, false, 330), pod(o, 'speed', CX - POD_DX, CY, 330, 'clock'), pod(o, 'rpm', CX + POD_DX, CY, 330, 'outside'));
         }
         if (o.centre === 'stock') {
             // the KOMBI's own centre between: the arc left, the right pod right of it, the ranges right of the box
