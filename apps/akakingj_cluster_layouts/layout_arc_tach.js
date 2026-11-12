@@ -4,7 +4,7 @@
  * the left, over the top, down to three o'clock), its numerals 0 - 7 (Settings > Rev scale) inside it, the red
  * zone the shift point's (layout_common.shiftPoint: lower while the oil is cold) at its end; the digital speed in
  * the quarter it leaves open, under the red end; the main readout inside the arc; a round pod either side
- * (layout_three_pods' pods: the coolant left, the oil right by default, C - H; Readout 1 / 2 in them over the car's
+ * (pods.js: the coolant left, the oil right by default, C - H; Readout 1 / 2 in them over the car's
  * own strip). An original design (akakingj's build).
  *
  * The car's own bottom strip (the default): the arc and the speed in the middle, its top clear of the camera's cowl
@@ -13,10 +13,10 @@
  * it, a pod right. The stock centre: the arc left, a pod right of the KOMBI's centre.
  */
 const C = require('./layout_common');
-const TP = require('./layout_three_pods').parts;
+const TP = require('./pods');
 const { pod, ranges, lit, lbl, gearC, elecTxt } = TP;
 
-/* Three pods' colours, and the arc's: its unlit track, the lit part's gradient and the tip's glow */
+/* the pods' colours (pods.js), and the arc's: its unlit track, the lit part's gradient and the tip's glow */
 const ARC = {
     comfort: { fill0: '#e8ecf0', fill1: '#ffffff', tip: '#ff6a3a', track: '#202226', regen: '#3ddc84' },
     sport: { fill0: '#ffb0a0', fill1: '#ffe4dc', tip: '#ff3a1a', track: '#2a1412', regen: '#3ddc84' },

@@ -54,6 +54,8 @@ mgu.run({
         const clockNow = () => { clock.setZone(settings.get('timeZone')); clock.setTwelve(settings.get('clock') !== '24'); };
         clockNow();
         settings.onChange((k) => { if (k === 'timeZone' || k === 'clock') clockNow(); });
+        // Three pods is gone (akakingj's build): a layout saved as it is Arc tach now
+        ['layout', 'layoutSport', 'layoutEco'].forEach((k) => { if (settings.get(k) === 'three_pods') settings.set(k, 'arc_tach'); });
         const showing = () => settings.get('show') === 'on';
         // every reading (data.js, shared with Cluster Centre): the car's signals, the engine unit over UDS for
         // what a layout needs (layout.needs), eDrive Live's charge and power while shown

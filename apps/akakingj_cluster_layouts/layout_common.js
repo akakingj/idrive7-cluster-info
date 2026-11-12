@@ -277,7 +277,8 @@ const powerUnitText = (o) => ({ hp: 'hp', ps: 'PS', kw: 'kW' })[powerOf(o)];
 const tempOf = (k) => (o, d) => tempText(o, d[k]);
 const numOrOff = (f) => (o, d) => (d.engineOn === false ? 'OFF' : f(o, d));
 /*
- * The readouts a petrol or diesel car's displays can pick (Settings > Readout 1, Readout 2, Main readout):
+ * The readouts a petrol or diesel car's displays can pick (Settings > Readout 1, Readout 2, Main readout; 'off':
+ * Nothing, in each of them):
  * short: the name where room is short; long: where there is room; num: the figures; unit: after them (none for
  * the temperatures and the pedal, whose figures carry theirs); frac: 0..1 for a bar under it; needs: what the engine
  * unit must read for it (data.js).
@@ -293,6 +294,8 @@ const READOUTS = {
     throttle: { short: 'THR', long: 'THROTTLE', num: (o, d) => (isNum(d.throttle) ? Math.round(d.throttle) + '%' : '--'), frac: (d) => (isNum(d.throttle) ? d.throttle / 100 : 0), needs: ['throttle'] },
     pedal: { short: 'PDL', long: 'PEDAL', num: (o, d) => (isNum(d.pedal) ? Math.round(d.pedal) + '%' : '--'), frac: (d) => (isNum(d.pedal) ? d.pedal / 100 : 0), needs: ['pedal'] },
     timing: { short: 'TIM', long: 'TIMING', num: (o, d) => timingText(d), frac: (d) => (isNum(d.timing) ? (d.timing + 10) / 50 : 0), needs: ['timing'] },
+    // the gear as the selector has it: P R N, or D / S / M with its number (gearText; '-' while unknown)
+    gear: { short: 'GEAR', long: 'GEAR', num: (o, d) => gearText(d), frac: (d) => (isNum(d.gear) && d.gear > 0 ? d.gear / 8 : 0) },
 };
 const readoutOf = (k) => READOUTS[k] || null;
 /*
@@ -369,8 +372,8 @@ function fitText(p, fam, room) {
 /** The readings at their widest figures (three-figure temperatures, the most negative timing and boost ...): what a
  * readout's box is sized to hold (layouts.js), and what tools/check_fit.js measures every text with. */
 const READOUT_SAMPLES = [
-    { oil: 150, coolant: 130, iat: 79, gearbox: 140, boostActual: 1.6, enginePower: 199, torque: 449, pedal: 100, throttle: 100, timing: -10, fuelPct: 100, rpm: 7000, speed: 250, engineOn: true, outside: -20 },
-    { oil: 8, coolant: 8, iat: -9, gearbox: 8, boostActual: -0.65, enginePower: 0, torque: 0, pedal: 0, throttle: 0, timing: 8.5, fuelPct: 5, rpm: 800, speed: 0, engineOn: true, outside: 9 },
+    { oil: 150, coolant: 130, iat: 79, gearbox: 140, boostActual: 1.6, enginePower: 199, torque: 449, pedal: 100, throttle: 100, timing: -10, fuelPct: 100, rpm: 7000, speed: 250, engineOn: true, outside: -20, stage: 'D', mode: 'M', gear: 8 },
+    { oil: 8, coolant: 8, iat: -9, gearbox: 8, boostActual: -0.65, enginePower: 0, torque: 0, pedal: 0, throttle: 0, timing: 8.5, fuelPct: 5, rpm: 800, speed: 0, engineOn: true, outside: 9, stage: 'P' },
 ];
 const nameOf = (r, o, long) => { const n = long ? r.long : r.short; return typeof n === 'function' ? n(o) : n; };
 /** A readout on one line, its name first: 'IAT 31°', 'BST 14.5' ('INTAKE AIR 31°', 'BOOST 14.5 psi' where it
@@ -417,16 +420,19 @@ const gaugeOf = (o, which) => {
     });
 };
 const mainKey = (o) => (readoutOf(o && o.infoMain) ? o.infoMain : 'torque');
+/** Settings > Centre readout: under the speed is Nothing: the main readout's figures, name and bar left empty */
+const mainOff = (o) => !!(o && o.infoMain === 'off');
 const focus = {
     /** a petrol or diesel car's main readout (Settings > Main readout: the engine torque by default), with its unit */
     power: (o) => {
         if (!engineFocus(o)) return kwText;
+        if (mainOff(o)) return '';
         const r = readoutOf(mainKey(o));
         return (d) => { const n = r.num(o, d); return n + (r.unit && n !== '--' && n !== 'OFF' ? ' ' + r.unit(o) : ''); };
     },
-    powerLabel: (o, long) => (engineFocus(o) ? nameOf(readoutOf(mainKey(o)), o, true).replace('ENGINE ', long ? 'ENGINE ' : '') : (long ? 'BATTERY POWER' : 'POWER')),
+    powerLabel: (o, long) => (engineFocus(o) ? mainOff(o) ? '' : nameOf(readoutOf(mainKey(o)), o, true).replace('ENGINE ', long ? 'ENGINE ' : '') : (long ? 'BATTERY POWER' : 'POWER')),
     /** 0..1 for the main readout's bar (the torque to 450 Nm by default), or none (the eDrive layouts draw their own centre-zero bar) */
-    mainFrac: (o) => { const r = readoutOf(mainKey(o)); return (d) => Math.max(0, Math.min(1, r.frac(d) || 0)); },
+    mainFrac: (o) => { if (mainOff(o)) return () => 0; const r = readoutOf(mainKey(o)); return (d) => Math.max(0, Math.min(1, r.frac(d) || 0)); },
     torqueFrac: (d) => (isNum(d.torque) ? Math.max(0, Math.min(1, d.torque / 450)) : 0),
     charge: (o) => (engineFocus(o) ? timingText : socText),
     chargeLabel: (o) => (engineFocus(o) ? 'TIMING' : 'CHARGE'),

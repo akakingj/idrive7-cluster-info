@@ -212,10 +212,6 @@
           "Classic M"
         ],
         [
-          "three_pods",
-          "Three pods"
-        ],
-        [
           "arc_tach",
           "Arc tach"
         ]
@@ -304,10 +300,6 @@
           "Classic M"
         ],
         [
-          "three_pods",
-          "Three pods"
-        ],
-        [
           "arc_tach",
           "Arc tach"
         ]
@@ -371,10 +363,6 @@
         [
           "classic",
           "Classic M"
-        ],
-        [
-          "three_pods",
-          "Three pods"
         ],
         [
           "arc_tach",
@@ -572,6 +560,10 @@
         [
           "timing",
           "Ignition timing"
+        ],
+        [
+          "gear",
+          "Gear (D / S / M and its number)"
         ]
       ],
       "section": "Readouts and gauges"
@@ -625,6 +617,10 @@
         [
           "timing",
           "Ignition timing"
+        ],
+        [
+          "gear",
+          "Gear (D / S / M and its number)"
         ]
       ],
       "section": "Readouts and gauges"
@@ -636,6 +632,10 @@
       "default": "torque",
       "options": [
         [
+          "off",
+          "Nothing"
+        ],
+        [
           "iat",
           "Intake air temperature"
         ],
@@ -674,6 +674,10 @@
         [
           "timing",
           "Ignition timing"
+        ],
+        [
+          "gear",
+          "Gear (D / S / M and its number)"
         ]
       ],
       "section": "Readouts and gauges"
@@ -685,6 +689,10 @@
       "default": "coolant",
       "options": [
         [
+          "off",
+          "Nothing"
+        ],
+        [
           "iat",
           "Intake air temperature"
         ],
@@ -723,6 +731,10 @@
         [
           "timing",
           "Ignition timing"
+        ],
+        [
+          "gear",
+          "Gear (D / S / M and its number)"
         ]
       ],
       "section": "Readouts and gauges"

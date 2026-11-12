@@ -39,6 +39,19 @@ check('readouts: every choice, short', () => {
     assert.strictEqual(t('timing'), 'TIM 6.0°');
     assert.strictEqual(C.stripInfoA(o({ infoA: 'off' }), narrow), '');
 });
+check('the gear as a readout: D / S / M and its number, P R N; Nothing under the speed', () => {
+    const g = (x) => Object.assign({}, d, x);
+    assert.strictEqual(C.stripInfoA(o({ infoA: 'gear' }), narrow)(g({ stage: 'D', mode: 'D', gear: 4 })), 'GEAR D4');
+    assert.strictEqual(C.stripInfoA(o({ infoA: 'gear' }), narrow)(g({ stage: 'D', mode: 'S', gear: 3 })), 'GEAR S3');
+    assert.strictEqual(C.stripInfoA(o({ infoA: 'gear' }), narrow)(g({ stage: 'D', mode: 'M', gear: 2 })), 'GEAR M2');
+    assert.strictEqual(C.stripInfoA(o({ infoA: 'gear' }), narrow)(g({ stage: 'P', gear: 0 })), 'GEAR P');
+    assert.strictEqual(C.focus.power(o({ infoMain: 'gear' }))(g({ stage: 'D', mode: 'M', gear: 5 })), 'M5');
+    assert.strictEqual(C.focus.powerLabel(o({ infoMain: 'gear' }), true), 'GEAR');
+    assert.strictEqual(C.focus.power(o({ infoMain: 'off' })), '');
+    assert.strictEqual(C.focus.powerLabel(o({ infoMain: 'off' }), true), '');
+    assert.strictEqual(C.focus.mainFrac(o({ infoMain: 'off' }))(d), 0);
+    assert.strictEqual(C.readout(o(), 'off', { w: 300, h: 40 }, true), '');
+});
 check('power unit: hp, PS or kW', () => {
     assert.strictEqual(C.stripInfoA(o({ infoA: 'power', powerUnit: 'ps' }), narrow)(d), 'PS 214');
     assert.strictEqual(C.stripInfoA(o({ infoA: 'power', powerUnit: 'kw' }), narrow)(d), 'KW 157');

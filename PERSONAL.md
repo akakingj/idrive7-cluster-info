@@ -33,7 +33,8 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
 ## Added
 - Layouts > Readout 1 / Readout 2 / Main readout (petrol or diesel): the centre display's top left and right (where the
   time and outside temperature were over the car's own bottom strip) and the line under the digital speed: intake
-  air, gearbox oil (TRANS), oil, coolant, boost, engine power, torque, throttle, accelerator pedal, timing.
+  air, gearbox oil (TRANS), oil, coolant, boost, engine power, torque, throttle, accelerator pedal, timing, the gear
+  (GEAR D4 / S3 / M2, P R N), or Nothing (each of them, under the speed too).
   Classic M: Centre readout: bottom line (the coolant by default). Short names where
   the box is narrow (IAT 31°, TRANS 78°, BST 14.5, HP 211).
 - Layouts > Speedometer gauge / Tach gauge: the small gauge in the analog dials (Analog sport, Digital round, Retro,
@@ -69,16 +70,12 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   read twice a round while shown and kept 8 s (a round can take 3 s or more while driving). The car's
   `AcceleratorPedal` signal is not used (its scaling unconfirmed). Check against Live Data.
 - Centre: engine power and the accelerator pedal for the custom pages' slots.
-- Layout 'Three pods' (an original design): a big centre tach (to Max rpm, 7000) with the digital speed in its face
-  and the Main readout at its foot; a separate pod either side with the coolant and oil gauges (C - H, or the
-  Speedometer gauge / Tach gauge setting) and Readout 1 / 2 in them over the car's own strip. With the map: the tach
-  left, a pod right; with the car's own centre: the tach and one pod. The layout's own strip on an M car: the tach
-  left, the pods lower, under its boxes.
 - Layout 'Arc tach' (an original design): the engine speed as a solid arc three quarters round, filling as it climbs (0 to Max rpm,
   from just left of six o'clock up the left, over the top, to three o'clock), the numerals inside it, a thin red arc
   inside it where the red zone starts now (the shift point's: lower while the oil is cold); the digital speed in the
-  quarter the arc leaves open, under its red end; the Main readout inside the arc; Three pods' side pods either
-  side. With the map: the arc left, a pod right; the car's own centre: the arc and one pod; the layout's own strip
+  quarter the arc leaves open, under its red end; the Main readout inside the arc; a round pod either side
+  (pods.js: the coolant and oil gauges, C - H, or the Speedometer gauge / Tach gauge setting; Readout 1 / 2 in them
+  over the car's own strip). Three pods (a big centre tach and two pods) was removed: a layout saved as it is Arc tach. With the map: the arc left, a pod right; the car's own centre: the arc and one pod; the layout's own strip
   on an M car: the pods lower, under its boxes. A plug-in hybrid in an electric mode: the arc reads the power.
 - Car profile (akakingj/idrive7-apps, branch car-profile, apps/car_profile 1.2.0): the three apps follow what it sets
   in /dev/shm/car-profile.json, as its apps do (kit/runtime/mgu.js Settings, app.json "profile"; checked every 3 s, a
