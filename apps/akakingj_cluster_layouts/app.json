@@ -210,6 +210,10 @@
         [
           "classic",
           "Classic M"
+        ],
+        [
+          "three_pods",
+          "Three pods"
         ]
       ]
     },
@@ -294,6 +298,10 @@
         [
           "classic",
           "Classic M"
+        ],
+        [
+          "three_pods",
+          "Three pods"
         ]
       ],
       "section": "Display"
@@ -355,6 +363,10 @@
         [
           "classic",
           "Classic M"
+        ],
+        [
+          "three_pods",
+          "Three pods"
         ]
       ],
       "section": "Display"

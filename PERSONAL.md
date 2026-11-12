@@ -66,6 +66,11 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   read twice a round while shown and kept 8 s (a round can take 3 s or more while driving). The car's
   `AcceleratorPedal` signal is not used (its scaling unconfirmed). Check against Live Data.
 - Centre: engine power and the accelerator pedal for the custom pages' slots.
+- Layout 'Three pods' (an original design): a big centre tach (to Max rpm, 7000) with the digital speed in its face
+  and the Main readout at its foot; a separate pod either side with the coolant and oil gauges (C - H, or the
+  Speedometer gauge / Tach gauge setting) and Readout 1 / 2 in them over the car's own strip. With the map: the tach
+  left, a pod right; with the car's own centre: the tach and one pod. On an M car the gear and the pod in the M
+  boxes are left out.
 
 ## Demo
 `cluster_demo.bat` (Windows) or `node tools/cluster_demo.js`.
