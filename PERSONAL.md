@@ -72,6 +72,12 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
   read twice a round while shown and kept 8 s (a round can take 3 s or more while driving). The car's
   `AcceleratorPedal` signal is not used (its scaling unconfirmed). Check against Live Data.
 - Centre: engine power and the accelerator pedal for the custom pages' slots.
+- Layout 'Twin cowl' (an original design after the idea of a twin-dial cluster with a raised centre cowl): the tach
+  left and the speedometer right, each with a ring of ice-blue light inside its scale and a red needle; between them
+  a chrome arch over two small round gauges (the coolant C - H and the fuel E - F; Settings > Small gauge in the tach /
+  in the speedometer pick others) and a pale grey display with dark figures: the speed, the gear (not over the car's
+  strip), the fuel range (over the strip: Centre readout: bottom line), the time and the outside temperature (over
+  the strip: Readout 1 / 2). An M car: the dials swapped (the tach under the M boxes), no arch on the full screen.
 - Layout 'Arc tach' (an original design): the engine speed as a solid arc three quarters round, filling as it climbs (0 to Max rpm,
   from just left of six o'clock up the left, over the top, to three o'clock), the numerals inside it, a thin red arc
   inside it where the red zone starts now (the shift point's: lower while the oil is cold); the digital speed in the

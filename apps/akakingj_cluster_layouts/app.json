@@ -2,7 +2,7 @@
   "id": "akakingj_cluster_layouts",
   "title": "AK Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.28.6",
+  "version": "0.28.7",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "AKCL",
@@ -214,6 +214,10 @@
         [
           "arc_tach",
           "Arc tach"
+        ],
+        [
+          "twin_cowl",
+          "Twin cowl"
         ]
       ]
     },
@@ -302,6 +306,10 @@
         [
           "arc_tach",
           "Arc tach"
+        ],
+        [
+          "twin_cowl",
+          "Twin cowl"
         ]
       ],
       "section": "Display"
@@ -367,6 +375,10 @@
         [
           "arc_tach",
           "Arc tach"
+        ],
+        [
+          "twin_cowl",
+          "Twin cowl"
         ]
       ],
       "section": "Display"
