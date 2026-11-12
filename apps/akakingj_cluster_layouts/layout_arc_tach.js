@@ -8,9 +8,10 @@
  * own strip). An original design (akakingj's build).
  *
  * The car's own bottom strip (the default): the arc and the speed in the middle, its top clear of the camera's cowl
- * and its foot above the strip, a pod either side. The layout's own strip: the arc left, the pods between it and
- * the KOMBI's gear box (on an M car lower, under its boxes), the ranges right of the box. The map: the arc left of
- * it, a pod right. The stock centre: the arc left, a pod right of the KOMBI's centre.
+ * and its foot above the strip, a pod either side, the three joined: each circle's rim cut where the next one's
+ * meets it, one outline round them (rims). The layout's own strip: the arc left, the two pods joined on to it in
+ * a row up to the KOMBI's gear box (an M car: apart, lower, under its boxes), the ranges right of the box. The map:
+ * the arc left of it, a pod right. The stock centre: the arc left, a pod right of the KOMBI's centre.
  */
 const C = require('./layout_common');
 const TP = require('./pods');
@@ -39,7 +40,7 @@ const kwN = (d) => { const r = C.kwRange(d); return { out: Math.ceil(r.out / 30)
  * the main readout. On a plug-in hybrid in an electric mode the arc reads the battery's power (0 a quarter along,
  * regeneration below it in green), as Modern wide's.
  */
-function arcTach(o, cx, cy, R, withGear, room) {
+function arcTach(o, cx, cy, R, withGear, room, inside) {
     const k = R / 240, s = C.rpmScale(o), T = Math.round(30 * k);
     const numH = Math.round(32 * k), numAt = -(T / 2 + Math.round(32 * k));
     // (the layer square round the circle, with room round the band for its glow)
@@ -59,6 +60,8 @@ function arcTach(o, cx, cy, R, withGear, room) {
     for (let a = aLow; a <= A1 + 0.01; a += Math.max(0.5, (A1 - aLow) / 64)) for (const r of [rr - rw, rr + rw]) { xs.push(cx + r * Math.sin(a * Math.PI / 180)); ys.push(cy - r * Math.cos(a * Math.PI / 180)); }
     const RX = Math.floor(Math.min(...xs) - 6), RY = Math.floor(Math.min(...ys) - 6), RW = Math.ceil(Math.max(...xs) + 6) - RX, RH = Math.ceil(Math.max(...ys) + 6) - RY;
     const sx = cx + Math.round(0.04 * R), sw = Math.round(room - 0.04 * R);
+    // (inside: the speed within the circle round the arc, smaller - joined, a rim round it)
+    const sy = inside ? [0.2, 0.42, 0.66, 0.08] : [0.12, 0.72, 0.86, 0.1];
     const list = [
         {
             key: 'rpmArc', kind: 'band', x: X, y: Y, w: 2 * half, h: H,
@@ -80,8 +83,8 @@ function arcTach(o, cx, cy, R, withGear, room) {
             visible: (d) => !evOff(d) && redNow(d) < s.max - 0.01,
         },
         // the digital speed in the open quarter, under the arc's red end
-        C.text('speedDigits', sx, cy + Math.round(0.12 * R), sw, Math.round(0.72 * R), (d) => C.speedText(o, d), lit),
-        C.text('speedDigitsUnit', sx, cy + Math.round(0.86 * R), sw, Math.round(0.1 * R), C.speedUnit(o), lbl, { tracking: 0.12 }),
+        C.text('speedDigits', sx, cy + Math.round(sy[0] * R), sw, Math.round(sy[1] * R), (d) => C.speedText(o, d), lit),
+        C.text('speedDigitsUnit', sx, cy + Math.round(sy[2] * R), sw, Math.round(sy[3] * R), C.speedUnit(o), lbl, { tracking: 0.12 }),
         // the main readout inside the arc, at its middle
         C.text('kwNow', cx - Math.round(0.55 * R), cy - Math.round(0.16 * R), Math.round(1.1 * R), Math.round(0.24 * R), C.focus.power(o), (t, d) => (C.engineFocus(o) ? lit(t) : kwOf(d) < -0.3 ? { color: [t.regen, 1], glow: [t.regen, 0.3] } : elecTxt(t))),
         C.text('kwNowLbl', cx - Math.round(0.5 * R), cy + Math.round(0.11 * R), Math.round(R), Math.round(0.075 * R), C.focus.powerLabel(o, true), lbl, { tracking: 0.1 }),
@@ -89,6 +92,73 @@ function arcTach(o, cx, cy, R, withGear, room) {
     if (withGear) list.push(C.text('gear', cx - Math.round(0.25 * R), cy - Math.round(0.5 * R), Math.round(0.5 * R), Math.round(0.26 * R), C.gearText, gearC));
     else list.push(C.text('rpmUnit', cx - Math.round(0.4 * R), cy - Math.round(0.4 * R), Math.round(0.8 * R), Math.round(0.08 * R), (d) => (evOff(d) ? 'kW' : 'x1000 rpm'), (t, d) => (evOff(d) ? elecTxt(t) : lbl(t)), { tracking: 0.1 }));
     return list;
+}
+
+/**
+ * The rims of circles joined in a row: [{ x, y, r }] (r: the rim's middle line), each drawn as a thin satin band
+ * all round but where another of them overlaps it, so where two meet their rims end on each other in a point and
+ * one outline goes round them all. Thickness w px.
+ */
+function rims(circles, w) {
+    const out = [];
+    const wrap = (a) => ((a + 540) % 360) - 180;
+    circles.forEach((c, i) => {
+        // the gaps: towards each circle that overlaps this one, as wide as the overlap's chord
+        const gaps = [];
+        circles.forEach((e, j) => {
+            if (i === j) return;
+            const D = Math.hypot(e.x - c.x, e.y - c.y);
+            if (!(D < c.r + e.r && D > Math.abs(c.r - e.r))) return;
+            const half = Math.acos((D * D + c.r * c.r - e.r * e.r) / (2 * D * c.r)) * 180 / Math.PI;
+            gaps.push({ at: Math.atan2(e.x - c.x, -(e.y - c.y)) * 180 / Math.PI, half });
+        });
+        const open = (a) => gaps.every((g) => Math.abs(wrap(a - g.at)) > g.half);
+        // the arcs left, each within -180 .. 180 (the band's angles wrap at six o'clock)
+        const runs = [];
+        let from = null;
+        for (let a = -180; a <= 180.001; a += 0.25) {
+            if (open(a) && a < 180) { if (from === null) from = a; continue; }
+            if (from !== null && a - from >= 1) runs.push([from, Math.min(180, a)]);
+            from = null;
+        }
+        runs.forEach((sp, n) => {
+            const xs = [], ys = [];
+            for (let a = sp[0]; a <= sp[1] + 0.01; a += Math.max(0.5, (sp[1] - sp[0]) / 48)) {
+                for (const r of [c.r - w, c.r + w]) { xs.push(c.x + r * Math.sin(a * Math.PI / 180)); ys.push(c.y - r * Math.cos(a * Math.PI / 180)); }
+            }
+            const X = Math.floor(Math.min(...xs) - 4), Y = Math.floor(Math.min(...ys) - 4);
+            const W = Math.ceil(Math.max(...xs) + 4) - X, H = Math.min(C.STRIP_Y, Math.ceil(Math.max(...ys) + 4)) - Y;
+            if (H <= 0) return;
+            out.push({
+                key: 'rim' + i + '_' + n, kind: 'band', x: X, y: Y, w: W, h: H,
+                params: { u_geo: [c.x - X, c.y - Y, c.r, w], u_span: [sp[0], sp[1], 0, 0], u_marks: [0, 0, 0, 0], u_red: [2], u_zero: [0], u_soft: [1] },
+                colors: (t) => ({ track: t.bezel2, fill0: t.bezel, fill1: t.bezel, redc: t.bezel, tip: t.bezel2, tick: t.bezel, num: t.bezel }),
+                value: () => 1, max: 1,
+            });
+        });
+    });
+    return out;
+}
+
+/**
+ * The arc, its circle's rim and pods joined on to it in a row (rims): the arc round (cx, cy), radius R (its band's
+ * middle line); then each pod [which, readKey, rim radius], left (side -1) or right (+1) of the one before, its
+ * rim overlapping that one's by `bite` px. A pod's dial sits inside its rim clear of the overlap.
+ */
+function joined(o, cx, cy, R, withGear, pods) {
+    const k = R / 240, T = Math.round(30 * k), bite = Math.round(20 * k), rimW = Math.max(3, Math.round(5 * k));
+    const RC = Math.round(R + T / 2 + bite + 8 * k);       // the arc's circle: clear of its band, and of the pods' bite
+    const circles = [{ x: cx, y: cy, r: RC }];
+    const list = [];
+    const ends = { '-1': { x: cx, r: RC }, '1': { x: cx, r: RC } };
+    pods.forEach(([which, readKey, r, side]) => {
+        const e = ends[side], x = Math.round(e.x + side * (e.r + r - bite));
+        circles.push({ x, y: cy, r });
+        list.push(...pod(o, which, x, cy, 2 * (r - bite - Math.round(10 * k)), readKey, true));
+        ends[side] = { x, r };
+    });
+    // (the speed in the arc's open quarter, inside its circle)
+    return list.concat(arcTach(o, cx, cy, R, withGear, Math.round(0.86 * R), true), rims(circles, rimW));
 }
 
 module.exports = {
@@ -114,11 +184,10 @@ module.exports = {
             );
         }
         if (C.strip(o)) {
-            // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the three
-            // circles symmetric, the arc's centred on the screen (its top clear of the camera's cowl, its foot above
-            // the strip), a pod either side as far from it, their centres level with its
-            const CX = 960, CY = 388, POD_DX = 520;
-            return bg.concat(arcTach(o, CX, CY, 234, false, 330), pod(o, 'speed', CX - POD_DX, CY, 330, 'clock'), pod(o, 'rpm', CX + POD_DX, CY, 330, 'outside'));
+            // over the car's own strip (layout_common.STRIP_Y), which shows the gear and the ranges: the arc's circle
+            // centred on the screen (its rim's foot above the strip), a pod joined on either side, their centres level
+            // (its rim from just under the camera's cowl, NOTCH, to just over the strip)
+            return bg.concat(joined(o, 960, 387, 214, false, [['speed', 'clock', 158, -1], ['rpm', 'outside', 158, 1]]));
         }
         if (o.centre === 'stock') {
             // the KOMBI's own centre between: the arc left, the right pod right of it, the ranges right of the box
@@ -127,10 +196,8 @@ module.exports = {
         }
         // the layout's own strip: the arc left, the pods between it and the KOMBI's gear box (an M car: lower,
         // under the M KOMBI's two boxes), the ranges right of the box
-        const m = C.mCar(o);
-        return bg.concat(arcTach(o, 430, 390, 230, true, 340),
-            m ? pod(o, 'speed', 916, 540, 200, 'clock') : pod(o, 'speed', 960, 410, 290, 'clock'),
-            m ? pod(o, 'rpm', 1311, 556, 186, 'outside') : pod(o, 'rpm', 1262, 410, 270, 'outside'),
-            ranges(o));
+        // (an M car: the pods apart, lower, under the M KOMBI's two boxes)
+        if (C.mCar(o)) return bg.concat(arcTach(o, 430, 390, 230, true, 340), pod(o, 'speed', 916, 540, 200, 'clock'), pod(o, 'rpm', 1311, 556, 186, 'outside'), ranges(o));
+        return bg.concat(joined(o, 400, 380, 222, true, [['speed', 'clock', 150, 1], ['rpm', 'outside', 138, 1]]), ranges(o));
     },
 };

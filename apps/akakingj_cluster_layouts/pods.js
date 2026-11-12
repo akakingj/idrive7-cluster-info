@@ -33,16 +33,17 @@ const elecTxt = (t) => ({ color: [t.ev, 1], glow: [t.ev, 0.3] });
  * A side pod, size S centred (cx, cy): one gauge across its top (Settings > Small gauge in the speedometer for the
  * left, in the tach for the right; else the coolant, the oil), C - H for a temperature (Settings > Temperature
  * gauges), its name under the pivot, and under that a readout (`readKey`: the time's or the outside
- * temperature's place, layouts.js puts Readout 1 / 2 there over the car's own strip).
+ * temperature's place, layouts.js puts Readout 1 / 2 there over the car's own strip). bare: no rim of its own and
+ * its face the background's (Arc tach's joined circles draw the rim round it: layout_arc_tach.js rims).
  */
-function pod(o, which, cx, cy, S, readKey) {
+function pod(o, which, cx, cy, S, readKey, bare) {
     const k = S / 360, temp = which === 'speed' ? 'coolant' : 'oil', tempRed = C.hotAt(o, temp);
     const g = C.gaugeOf(o, which), tk = g ? g.key : temp, ch = C.chOf(o, tk);
     const list = [
         {
             key: temp + 'Dial', kind: 'dial', x: cx - S / 2, y: cy - S / 2, w: S, h: S,
-            params: { u_scale: [100, 50, 12.5, ch ? C.chRed(o, ch) * 100 : g ? Math.min(101, g.redFrac * 100) : tempRed - 40], u_arc: [-110, 110, 0, 0], u_needle_dim: [128 * k, 26 * k, 10 * k, 3.5], u_look: [0.85, 0.85, 0, 0], u_look2: [Math.max(5, Math.round(11 * k)), S / 640, 0.75, 0.8] },
-            colors: dialColours, value: ch ? (d) => C.chFrac(ch, d[ch]) * 100 : g ? (d) => g.frac(d) * 100 : (d) => (C.isNum(d[temp]) ? Math.max(0, d[temp] - 40) : 0), max: 100, sweep: true,
+            params: { u_scale: [100, 50, 12.5, ch ? C.chRed(o, ch) * 100 : g ? Math.min(101, g.redFrac * 100) : tempRed - 40], u_arc: [-110, 110, 0, 0], u_needle_dim: [128 * k, 26 * k, 10 * k, 3.5], u_look: [0.85, 0.85, 0, 0], u_look2: bare ? [0, S / 640, 0, 0] : [Math.max(5, Math.round(11 * k)), S / 640, 0.75, 0.8] },
+            colors: bare ? (t) => Object.assign(dialColours(t), { face0: t.bg, face1: t.bg }) : dialColours, value: ch ? (d) => C.chFrac(ch, d[ch]) * 100 : g ? (d) => g.frac(d) * 100 : (d) => (C.isNum(d[temp]) ? Math.max(0, d[temp] - 40) : 0), max: 100, sweep: true,
         },
         C.text(temp + 'Lbl', cx - 80, cy + Math.round(30 * k), 160, Math.round(17 * k), g ? g.label : temp === 'oil' ? 'OIL' : 'COOLANT', lbl, { tracking: 0.16 }),
     ];
