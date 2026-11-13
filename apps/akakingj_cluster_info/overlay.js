@@ -39,9 +39,9 @@ const HUD_MAX_PCT = 85;           // the HUD map's widest (waze-on-cluster hud_w
 // turn signal arrows on the HUD: small, a pair at the top middle, inside the standard map's top edge
 const ARROW = { w: 30, h: 24, y: 146, left: 349, right: 421 };   // the cluster's proportions (5:4)
 const INDICATOR_GREEN = '#22d046';   // the cluster's indicator green
-// the lane change warning beside the arrows: a car (seen from behind) outside each arrow, amber while one is beside or
+// the lane change warning beside the arrows: a car (seen from above) outside each arrow, amber while one is beside or
 // coming up behind on that side, red and flashing with the arrows while the turn signal points at it
-const LCW = { w: 30, h: 24, y: 146, left: 349 - 38, right: 421 + 30 + 8 };
+const LCW = { w: 20, h: 34, y: 141, left: 349 - 32, right: 421 + 30 + 12 };
 const LCW_AMBER = '#ffb000', LCW_RED = '#ff2a1a';
 const EXTRA_COL = 1.0;            // an extra value's column, of the panel's height (fits "188°")             // an extra value's column, of the meter's base width
 const NIGHT_DIM = 0.6;            // the HUD extras at night, of their brightness by day
@@ -247,15 +247,23 @@ function drawPower(cv, t, pw, outMax, inMax, x, w, h, L, bar) {
     cv.fillRect(Math.round(x0) - 1, by - 3, 2, bh + 6, t.text);
 }
 
-/** A car seen from behind, w x h, in col on a transparent ground (the lane change warning's sign). */
+/**
+ * A car seen from above, nose up, w x h, in col on a transparent ground (the lane change warning's sign): the body
+ * with its mirrors, the windscreen and the rear window in a dark shade of col (dark on the HUD reads as glass).
+ */
 function drawCarSign(cv, col) {
     const w = cv.w, h = cv.h;
     cv.clear([0, 0, 0, 0]);
-    // the cabin (a trapezoid), the body under it, and the two tyres below the body
-    cv.convex([[w * 0.26, h * 0.40], [w * 0.36, h * 0.08], [w * 0.64, h * 0.08], [w * 0.74, h * 0.40]], col);
-    cv.roundRect(w * 0.06, h * 0.38, w * 0.88, h * 0.38, h * 0.10, col);
-    cv.fillRect(w * 0.12, h * 0.72, w * 0.18, h * 0.24, col);
-    cv.fillRect(w * 0.70, h * 0.72, w * 0.18, h * 0.24, col);
+    const rgb = [1, 3, 5].map((i) => parseInt(col.slice(i, i + 2), 16));
+    const dark = '#' + rgb.map((v) => Math.round(v * 0.22).toString(16).padStart(2, '0')).join('');
+    const bx = w * 0.12, bw = w * 0.76;
+    cv.roundRect(bx, h * 0.02, bw, h * 0.96, w * 0.30, col);                       // the body
+    cv.fillRect(0, h * 0.30, w * 0.14, h * 0.08, col);                             // the mirrors
+    cv.fillRect(w * 0.86, h * 0.30, w * 0.14, h * 0.08, col);
+    cv.convex([[w * 0.22, h * 0.30], [w * 0.78, h * 0.30], [w * 0.70, h * 0.43], [w * 0.30, h * 0.43]], dark);   // windscreen
+    cv.convex([[w * 0.30, h * 0.74], [w * 0.70, h * 0.74], [w * 0.76, h * 0.84], [w * 0.24, h * 0.84]], dark);   // rear window
+    cv.fillRect(w * 0.20, h * 0.47, w * 0.05, h * 0.22, dark);                     // the side windows
+    cv.fillRect(w * 0.75, h * 0.47, w * 0.05, h * 0.22, dark);
 }
 
 /**
