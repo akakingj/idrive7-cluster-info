@@ -60,6 +60,23 @@ SETS.push({ tag: 'shift warning, gauges', shiftWarn: 'on', gaugeSpeed: 'coolant'
 SETS.push({ tag: 'too hot low, C-H', hotOil: 110, hotCoolant: 110, hotGearbox: 80, gaugeSpeed: 'coolant', gaugeRpm: 'oil', infoA: 'gearbox', infoB: 'coolant' });
 SETS.push({ tag: 'too hot high, scales', hotOil: 140, hotCoolant: 140, hotGearbox: 130, tempGauge: 'scale', gaugeSpeed: 'gearbox', gaugeRpm: 'coolant', infoMain: 'oil' });
 SETS.push({ tag: 'scales, own gauges', tempGauge: 'scale' });
+// FUZZ=n: n more sets, each every choice and number setting picked at random from its list (seeded, so a problem
+// found can be run again: FUZZ_SEED)
+if (process.env.FUZZ) {
+    let seed = Number(process.env.FUZZ_SEED || 1) >>> 0;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    const pick = (a) => a[Math.floor(rnd() * a.length)];
+    for (let i = 0; i < Number(process.env.FUZZ); i++) {
+        const set = { tag: 'fuzz ' + i };
+        SPEC.settings.forEach((s) => {
+            if (s.type === 'choice' && s.options) set[s.key] = pick(s.options)[0];
+            else if (s.type === 'number' && s.steps) set[s.key] = pick(s.steps);
+            else if (s.type === 'bool') set[s.key] = rnd() < 0.5;
+        });
+        if (set.redline && set.rpmMax && Number(set.rpmMax) <= Number(set.redline)) set.rpmMax = Number(set.redline) + 1000;
+        SETS.push(set);
+    }
+}
 
 const bad = (v) => typeof v === 'number' && !isFinite(v);
 const problems = new Map();

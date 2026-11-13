@@ -2,7 +2,7 @@
   "id": "akakingj_cluster_layouts",
   "title": "AK Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.28.8",
+  "version": "0.28.9",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "AKCL",

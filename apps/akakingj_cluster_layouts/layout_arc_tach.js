@@ -189,7 +189,8 @@ module.exports = {
     title: 'Arc tach',
     palette: (lookId) => PALETTES[lookId] || PALETTES.comfort,
     gearText: C.gearText,
-    stripFuel: false,   // (its own fuel gauge, the right dial)
+    // (its own fuel gauge, the right dial - unless Small gauge in the tach puts another reading there: then the strip's)
+    stripFuel: (o) => { const g = C.gaugeOf(o, 'rpm'); return !!g && g.key !== 'fuel'; },
     speedGauge: false,  // (the speed in figures only)
 
     pieces(o) {

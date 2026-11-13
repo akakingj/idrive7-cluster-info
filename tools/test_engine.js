@@ -157,7 +157,8 @@ LAYOUTS.forEach((L) => ['phev', 'ice'].forEach((vehicle) => check(L.id + ' (' + 
     const ps = L.pieces(o), keys = ps.map((p) => p.key);
     assert(!keys.some((k) => /^(fuel|elec|frange|erange)(Lbl|L)?$/.test(k)), 'range numbers: ' + keys.filter((k) => /fuel|elec|range/.test(k)).join(' '));
     // (Retro, M, Sport and Classic M: their own fuel gauges; M, Sport and Classic M their own charge, in their own look)
-    assert.strictEqual(keys.indexOf('stripFuel') >= 0, L.stripFuel !== false && !L.ownStripGauges, 'fuel gauge');
+    // (Arc tach and Twin cowl: stripFuel a function - their own fuel gauge unless a Small gauge setting puts another reading there)
+    assert.strictEqual(keys.indexOf('stripFuel') >= 0, (typeof L.stripFuel === 'function' ? L.stripFuel(o) : L.stripFuel !== false) && !L.ownStripGauges, 'fuel gauge');
     assert.strictEqual(keys.indexOf('stripSoc') >= 0, vehicle !== 'ice' && !L.ownStripGauges, 'charge gauge');
     assert(ps.length <= 60, ps.length + ' pieces');
     const dials = ps.filter((p) => (p.key === 'speed' || p.key === 'rpm') && p.kind === 'dial');
