@@ -107,6 +107,17 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
     handlers.statusCarSpeed2({ speedVehicleCentreOfGravity: Math.round(52 * 1.609344 / 0.015625) });
     await sleep(300);
     check('the readings come again: the layout back', () => assert(effects().length > 0 && effects().every((l) => l.opts.visible === true)));
+    // the car locked and left: the layout comes off (nobody sees it, the cluster can sleep); someone back in: on again
+    // (switched off first: the engine and the car stopped, then locked; the car counts as running 30 s after it last ran)
+    handlers.statusEngineSpeed2({ actualValueRPMEngineCrankshaft: 0 });
+    handlers.statusCarSpeed2({ speedVehicleCentreOfGravity: 0 });
+    handlers.VehicleCondition({ statusConditionVehicle: 'PARKEN_BN_IO' });
+    await sleep(31500);
+    check('the car locked and left: the layout off', () => assert.strictEqual(effects().length, 0, effects().length + ' layers'));
+    handlers.VehicleCondition({ statusConditionVehicle: 'WOHNEN' });
+    handlers.statusCarSpeed2({ speedVehicleCentreOfGravity: 0 });
+    await sleep(300);
+    check('someone in the car again: the layout back', () => assert(effects().length > 0));
     console.log(ok + ' passed');
     process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

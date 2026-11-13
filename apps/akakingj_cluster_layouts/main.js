@@ -116,7 +116,8 @@ mgu.run({
             font: () => layout.font || 'bold',
             options, log, live, data,
             theme: () => themeNow(),
-            enabled: showing,
+            // (not while the car is locked and left: nobody sees it, and the cluster can sleep)
+            enabled: () => showing() && !D.awake().parked,
             sweep: () => settings.get('sweep') !== 'off',
             target: 'panel',
             onFresh: D.onFresh,

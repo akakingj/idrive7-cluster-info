@@ -121,7 +121,8 @@ mgu.run({
             live: () => data.car.data().demo || (!frozen(data.car.data(), lastSample, Date.now()) && (data.car.subs.some((s) => s.available) || data.car.lastCar > 0)),
             // not while Cluster Layouts covers the whole panel (the pages would be hidden under it and take the
             // renderer's layers the layout needs)
-            enabled: () => showing() && !!page && !blockedByLayout(),
+            // (not while the car is locked and left: nobody sees it, and the cluster can sleep)
+            enabled: () => showing() && !!page && !blockedByLayout() && !data.awake().parked,
             sweep: () => false,
             group: page,
         });

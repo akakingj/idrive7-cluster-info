@@ -204,6 +204,8 @@ mgu.run({
             },
             /** The kW meter's slot (0-2 among the slots in use; values with a lower slot go before it). */
             powerAt() { return Math.max(0, slots().indexOf('power')); },
+            /** The car locked and left: the panel comes off (nobody sees it, and the cluster can sleep). */
+            parked: () => awake.parked(),
             keepFast() { if (!awake.off()) providers.want({ power: slots().indexOf('power') >= 0 || (settings.get('underline') || 'off') !== 'off', values: chosen() }); },
             indicator: () => live.indicator,
             night: () => live.night === true,

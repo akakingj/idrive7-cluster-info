@@ -463,7 +463,7 @@ function startOverlay(ctx, lv, opts) {
     };
     const si = opts.setInterval || setInterval, ci = opts.clearInterval || clearInterval;
     const poll = si(() => { watch(); readStatus(); }, POLL_MS);
-    const draw = si(() => { if (where() !== 'off' && place()) { lv.keepFast(); tick(); } else hide(); }, FRAME_MS);
+    const draw = si(() => { if (where() !== 'off' && place() && !(lv.parked && lv.parked())) { lv.keepFast(); tick(); } else hide(); }, FRAME_MS);
     watch();
     readStatus();
     process.on('exit', () => { hide(); });

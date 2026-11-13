@@ -142,7 +142,11 @@ function startData(ctx, opts) {
     const numberIn = (v, re) => { const ls = leaves(v).filter((l) => typeof l.v === 'number'); const m = ls.find((l) => re.test(l.key)) || ls[0]; return m ? m.v : undefined; };
     const car = new Car(ctx, ['rpm', 'speed', 'temps', 'gear', 'torque', 'accel']);
     // shown and the car switched on: the only time anything is asked of the car's units or of eDrive Live
-    const awake = Awake.watch(ctx, log, { sample: () => { const c = car.data(); return { speed: c.speed, rpm: c.rpm }; } });
+    // (moving or running from the car's own samples while they still come: the last rpm kept after the samples stopped
+    // - the engine switched off without a last 0 - counted the car as running for ever, and it was asked of while parked)
+    let sampleAt = 0;
+    car.onSample(() => { sampleAt = Date.now(); });
+    const awake = Awake.watch(ctx, log, { sample: () => { if (Date.now() - sampleAt > 3000) return {}; const c = car.data(); return { speed: c.speed, rpm: c.rpm }; } });
     const active = () => (!opts || !opts.shown || opts.shown()) && awake.on();
     car.onSample(() => fresh_());
     const x = { at: {} };          // readings that are not the kit's: value and when it came

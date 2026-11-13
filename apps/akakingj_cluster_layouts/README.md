@@ -372,7 +372,7 @@ the KOMBI carries about 11.5 MB/s for everything, including the HMI's own conten
 - **The stock cluster comes back by itself** when the app stops, when the render service stops (its layers
   go with the connection), when *Show on the cluster* is off, while the car's signals do not answer, and while
   they stop coming with the engine running or the car moving (3 s without a speed / rpm sample: the last speed
-  would otherwise stay up).
+  would otherwise stay up), and while the car is locked and left (nobody sees it, and the cluster can sleep).
 - The speed is the car's speed signal (`Vehicle2.statusCarSpeed2`, the centre of gravity), not the
   cluster's indicated speed, which by law reads a little high: expect this layout to read a few % below the
   stock speedometer.
