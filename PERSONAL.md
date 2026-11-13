@@ -31,6 +31,9 @@ Remove the original Cluster Layouts / Centre / Info (or turn their Show off): bo
 | Info | Panel slots 1-3 | power, battery, oil > boost, torque, oil |
 
 ## Added
+- Layouts, Centre > Fuel % from: Engine unit (default; its own tank level, OBD PID 0x2F, the % Live Data shows) or
+  Litres / tank size (the car's whole litres over Fuel tank size: a few % lower on a G20). The litres stay the fallback
+  while the engine unit doesn't answer.
 - Layouts > Readout 1 / Readout 2 / Main readout (petrol or diesel): the centre display's top left and right (where the
   time and outside temperature were over the car's own bottom strip) and the line under the digital speed: intake
   air, gearbox oil (TRANS), oil, coolant, boost, engine power, torque, throttle, accelerator pedal, timing, the gear

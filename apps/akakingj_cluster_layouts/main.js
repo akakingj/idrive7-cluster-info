@@ -290,7 +290,8 @@ mgu.run({
                     + '   ·   boost ' + LC.pressNum(o, d.boostActual) + ' ' + LC.pressLabel(o) + '   ·   intake ' + tmp(d.iat) + '   ·   gearbox ' + tmp(d.gearbox) + '   ·   power ' + LC.powerNum(o, d.enginePower) + ' ' + LC.powerUnitText(o)]
                     : ['Shared by apps', D.status().providers + '   ·   diagnostic link ' + D.status().diag + '   ·   charge ' + (isNum(d.soc) ? Math.round(d.soc) + '%' : '--') + '   ·   power ' + (isNum(d.kw) ? d.kw.toFixed(1) + ' kW' : '--')],
                 ['Drive mode (car)', (d.driveMode || '-') + '   ·   raw: ' + rawOf('statusFESVehicleDynamicSwitchHMI') + '  ' + rawOf('statusSwitchDriveDynamicSport2')],
-                ['Range (car)', 'fuel ' + (isNum(d.frange) ? Math.round(d.frange) : '--') + '  electric ' + (isNum(d.erange) ? Math.round(d.erange) : '--') + '   ·   raw: ' + rawOf('statusRangeTankStatus')],
+                ['Range (car)', 'fuel ' + (isNum(d.frange) ? Math.round(d.frange) : '--') + '  electric ' + (isNum(d.erange) ? Math.round(d.erange) : '--')
+                    + '   ·   tank ' + (isNum(d.fuelPct) ? Math.round(d.fuelPct) + '% (' + (d.fuelPctFrom === 'engine' ? 'engine unit' : 'litres') + ')' : '--') + '   ·   raw: ' + rawOf('statusRangeTankStatus')],
             ];
             cv.text(((ctx.spec && ctx.spec.title) || 'Cluster Layouts') + ' ' + ((ctx.spec && ctx.spec.version) || ''), 48, 80, 44, t.text, { font: 'bold', literal: true });
             lines.forEach(([k, v], i) => {

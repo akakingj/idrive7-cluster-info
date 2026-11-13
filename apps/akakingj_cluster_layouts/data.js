@@ -31,7 +31,7 @@ const Awake = require('./kit/awake');
 
 const isNum = (v) => typeof v === 'number' && isFinite(v);
 const PROGRAMS = { S_MINUS_PROGRAMM: 'S', M_MINUS_PROGRAMM: 'M', 1: 'S', 2: 'M' };
-const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs', 'pedal', 'throttle'];
+const DME_KEYS = ['iat', 'hpfp', 'lpfp', 'timing', 'boostCtl', 'egs', 'pedal', 'throttle', 'tank'];
 /* (read twice a round while shown: they move with the right foot) */
 const FAST_KEYS = ['pedal', 'throttle'];
 
@@ -363,6 +363,8 @@ function startData(ctx, opts) {
         // (the pedal: the engine unit's own normalised pedal angle, as Live Data reads it; the car's pedal signal's
         // scaling is unconfirmed, its value kept apart and used only when the engine unit has none)
         // (the throttle: the throttle valve's opening, its lower stop 0 %, as Live Data reads it - not the pedal)
+        // (the tank: the engine unit's own fill in %, OBD PID 0x2F, as Live Data's 'Fuel tank level' reads it)
+        if (k === 'tank') { if (v !== null) put('fuelPctDme', Math.max(0, Math.min(100, v))); return v; }
         const pct = k === 'pedal' || k === 'throttle';
         if (v !== null) put(k === 'egs' ? 'gearbox' : pct ? k + 'Dme' : k, pct ? Math.max(0, Math.min(100, v)) : v);
         return v;
@@ -484,9 +486,15 @@ function startData(ctx, opts) {
                 const full = Number(ctx.settings && ctx.settings.get && ctx.settings.get('eFull')) || Number(cfg.eFullMiles) || 31;
                 o.erange = Math.max(0, o.soc) / 100 * full * 1.609344; o.erangeEst = true;
             }
-            // the tank's fill, 0..100 %: its litres over its size (config.tankLitres: 69 for an X5 45e)
+            // the tank's fill, 0..100 %: the engine unit's own (OBD tank level, the one Live Data shows) while it
+            // answers, else the car's litres over the tank's size (config.tankLitres: 69 for an X5 45e). The two
+            // differ by a few % (the car's litres are whole litres, its gauge's own reckoning): Settings > Fuel %
+            // from picks one.
             const tank = Number(setting('tankLitres')) || Number(cfg.tankLitres) || 69;   // Settings > Fuel tank size
-            o.fuelPct = isNum(o.fuelLevel) ? Math.max(0, Math.min(100, o.fuelLevel / tank * 100)) : undefined;
+            const byLitres = isNum(o.fuelLevel) ? Math.max(0, Math.min(100, o.fuelLevel / tank * 100)) : undefined;
+            const byDme = !d.demo && setting('fuelFrom') !== 'litres' && fresh('fuelPctDme', 60000) ? x.fuelPctDme : undefined;
+            o.fuelPct = isNum(byDme) ? byDme : byLitres;
+            o.fuelPctFrom = isNum(byDme) ? 'engine' : isNum(byLitres) ? 'litres' : undefined;
             if (o.engineOn === undefined && Date.now() - (x.at.engineState || 0) < 60000) o.engineOn = x.engineState === 'on';
             if (x.startWhy) o.startWhy = x.startWhy;
             // the cruise control: on with a set speed (the head-up display's), off at 0

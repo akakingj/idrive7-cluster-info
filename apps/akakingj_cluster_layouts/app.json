@@ -2,7 +2,7 @@
   "id": "akakingj_cluster_layouts",
   "title": "AK Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.28.9",
+  "version": "0.28.10",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "AKCL",
@@ -1353,6 +1353,23 @@
       "section": "Car"
     },
     {
+      "key": "fuelFrom",
+      "label": "Fuel % from",
+      "type": "choice",
+      "default": "engine",
+      "options": [
+        [
+          "engine",
+          "Engine unit (OBD tank level)"
+        ],
+        [
+          "litres",
+          "Litres / tank size"
+        ]
+      ],
+      "section": "Car"
+    },
+    {
       "key": "kwFast",
       "label": "Battery power (kW)",
       "type": "choice",
@@ -1479,7 +1496,7 @@
       }
     },
     "dme": {
-      "comment": "Intake / fuel values from the engine unit (DME, ecu 18 = 0x12) with UDS 0x22. F4xx = the standard OBD PIDs (F40F = PID 0x0F); a candidate with \"obd\" instead of \"did\" asks for the same PID with OBD service 01 (some engine units refuse the F4xx identifiers with NRC 31). Candidates are tried in order; the first plausible one wins. value = raw * factor + offset (bar / deg C). If a tile says 'not available from this DME', add your engine's BMW-specific DID here. boost: tried in order when the sport display sends no boost (setting 'Boost from'); absolute pressure in kPa, the outside air pressure (baro) is subtracted. boostTarget / boostActual: boost pressure setpoint and actual (absolute kPa, baro subtracted), BMW DIDs first, then OBD PID 0x70; the tile only shows when the target answers. loadTarget / loadActual: requested and actual relative air charge in %. timing: OBD PID 0x0E, degrees before top dead centre. misfire: OBD service 06 monitor results (MID A2 = cylinder 1, A3 = cylinder 2 ...), tid 0C = misfires this driving cycle (0B = average of the last 10 cycles); engine units that only speak UDS are asked 0x22 F6A2... egs: gearbox temperature from the gearbox unit (EGS); give each candidate its \"ecu\". pedal: the normalised accelerator pedal angle in % (DIDs 5814 / 480B, then OBD PID 0x49). throttle: the throttle valve's opening in % from its lower stop (DIDs 4600 / 5858, then OBD PID 0x11).",
+      "comment": "Intake / fuel values from the engine unit (DME, ecu 18 = 0x12) with UDS 0x22. F4xx = the standard OBD PIDs (F40F = PID 0x0F); a candidate with \"obd\" instead of \"did\" asks for the same PID with OBD service 01 (some engine units refuse the F4xx identifiers with NRC 31). Candidates are tried in order; the first plausible one wins. value = raw * factor + offset (bar / deg C). If a tile says 'not available from this DME', add your engine's BMW-specific DID here. boost: tried in order when the sport display sends no boost (setting 'Boost from'); absolute pressure in kPa, the outside air pressure (baro) is subtracted. boostTarget / boostActual: boost pressure setpoint and actual (absolute kPa, baro subtracted), BMW DIDs first, then OBD PID 0x70; the tile only shows when the target answers. loadTarget / loadActual: requested and actual relative air charge in %. timing: OBD PID 0x0E, degrees before top dead centre. misfire: OBD service 06 monitor results (MID A2 = cylinder 1, A3 = cylinder 2 ...), tid 0C = misfires this driving cycle (0B = average of the last 10 cycles); engine units that only speak UDS are asked 0x22 F6A2... egs: gearbox temperature from the gearbox unit (EGS); give each candidate its \"ecu\". pedal: the normalised accelerator pedal angle in % (DIDs 5814 / 480B, then OBD PID 0x49). throttle: the throttle valve's opening in % from its lower stop (DIDs 4600 / 5858, then OBD PID 0x11). tank: the fuel tank's fill in % (OBD PID 0x2F), shown in place of the litres over the tank's size (setting 'Fuel % from').",
       "ecu": 18,
       "iat": [
         {
@@ -1875,6 +1892,28 @@
           "min": 0,
           "max": 100,
           "note": "OBD PID 0x11, absolute throttle position"
+        }
+      ],
+      "tank": [
+        {
+          "did": "F42F",
+          "bytes": 1,
+          "at": 0,
+          "factor": 0.392157,
+          "offset": 0,
+          "min": 0,
+          "max": 100,
+          "note": "fuel tank level (OBD PID 0x2F) over UDS, the engine unit's own fill in %"
+        },
+        {
+          "obd": "2F",
+          "bytes": 1,
+          "at": 0,
+          "factor": 0.392157,
+          "offset": 0,
+          "min": 0,
+          "max": 100,
+          "note": "the same PID with OBD service 01, as Live Data's 'Fuel tank level' reads it"
         }
       ]
     },
