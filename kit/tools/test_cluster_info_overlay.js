@@ -290,31 +290,31 @@ class FakeCR extends EventEmitter {
     check('the claim gone stale: the arrows back', () => assert(ov.arrows().shown));
     check('and the status says free', () => assert.strictEqual(ov.status().hud, 'free'));
 
-    /* the lane change warning: a car sign outside the arrow, amber; red and flashing with the turn signal toward it */
+    /* the lane change warning: outside the arrow, this car and the other's bonnet, while the car says so (turn signal or not) */
     let lw = null;
     lv.laneChange = () => lw;
     ind = 'off'; t += 1300; ov._arrowTick(); ov._lcwTick();
-    check('no warning: no sign', () => assert.deepStrictEqual(ov.lcw().shown, {}));
+    check('no warning: no sign', () => assert(!ov.lcw().refs.left && !ov.lcw().refs.right));
     lw = { left: true, right: false }; t += 10; ov._lcwTick();
-    const lam = cr.layers.get(ov.lcw().refs.leftamber), lrd = cr.layers.get(ov.lcw().refs.leftred);
-    check('a car on the left: the left sign amber, outside the left arrow, on the HUD', () => {
-        assert(lam.target === 'hud' && lam.visible && lam.opacity === 1 && !lrd.visible);
-        assert(lam.x + lam.w <= cr.layers.get(refs.left).x, 'outside the arrow');
-        assert.strictEqual(ov.lcw().shown.right || 'off', 'off');
+    const lsg = cr.layers.get(ov.lcw().refs.left);
+    check('a car on the left: the left sign on, outside the left arrow, on the HUD, no turn signal needed', () => {
+        assert(lsg.target === 'hud' && lsg.visible && lsg.opacity === 1);
+        assert(lsg.x + lsg.w <= cr.layers.get(refs.left).x, 'outside the arrow');
+        assert(!ov.lcw().shown.right);
     });
-    ind = 'left'; ov._arrowTick(); ov._lcwTick();
-    check('turn signal toward it: red, lit with the arrow', () => assert(lrd.visible && lrd.opacity === 1 && !lam.visible));
-    t += 400; ov._arrowTick(); ov._lcwTick();
-    check('and dark with it', () => assert(lrd.visible && lrd.opacity === 0));
-    ind = 'right'; t += 10; ov._arrowTick(); ov._lcwTick();
-    check('turn signal the other way: amber again', () => assert(lam.visible && lam.opacity === 1 && !lrd.visible));
+    const n1 = cr.log.length;
+    ind = 'left'; ov._arrowTick(); ov._lcwTick(); t += 400; ov._arrowTick(); ov._lcwTick();
+    check('turn signal toward it: the sign as it was, nothing sent for it', () => assert(lsg.visible && lsg.opacity === 1 && !cr.log.slice(n1).some((e) => e[0] === 'set' && e[1] === ov.lcw().refs.left)));
+    lw = { left: false, right: true }; t += 10; ov._lcwTick();
+    const rsg = cr.layers.get(ov.lcw().refs.right), rar = cr.layers.get(refs.right);
+    check('the car now on the right: left off, right on, outside the right arrow', () => assert(!lsg.visible && rsg.visible && rsg.x >= rar.x + rar.w));
     lw = null; t += 10; ov._lcwTick();
-    check('the warning gone: no sign', () => assert(!lam.visible && !lrd.visible));
+    check('the warning gone: no sign', () => assert(!lsg.visible && !rsg.visible));
     lw = { left: true, right: true }; settings.v.blindSpot = 'off'; t += 10; ov._lcwTick();
-    check('setting off: no sign', () => assert(!cr.layers.get(ov.lcw().refs.rightamber || -1) || !cr.layers.get(ov.lcw().refs.rightamber).visible));
+    check('setting off: no sign', () => assert(!lsg.visible && !rsg.visible));
     settings.v.blindSpot = 'on'; settings.v.show = 'off'; ind = 'left'; t += 10; ov._arrowTick(); ov._lcwTick();
     t += 1300; ov._arrowTick();
-    check('Show the panel Off: no sign and no arrows either (one switch)', () => assert(!lam.visible && !lrd.visible && !ov.arrows().shown));
+    check('Show the panel Off: no sign and no arrows either (one switch)', () => assert(!lsg.visible && !rsg.visible && !ov.arrows().shown));
     settings.v.show = 'map';
     ov.stop();
 

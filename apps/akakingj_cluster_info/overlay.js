@@ -39,10 +39,10 @@ const HUD_MAX_PCT = 85;           // the HUD map's widest (waze-on-cluster hud_w
 // turn signal arrows on the HUD: small, a pair at the top middle, inside the standard map's top edge
 const ARROW = { w: 30, h: 24, y: 146, left: 349, right: 421 };   // the cluster's proportions (5:4)
 const INDICATOR_GREEN = '#22d046';   // the cluster's indicator green
-// the lane change warning beside the arrows: a car (seen from above) outside each arrow, amber while one is beside or
-// coming up behind on that side, red and flashing with the arrows while the turn signal points at it
-const LCW = { w: 20, h: 34, y: 141, left: 349 - 32, right: 421 + 30 + 12 };
-const LCW_AMBER = '#ffb000', LCW_RED = '#ff2a1a';
+// the lane change warning beside the arrows: outside each arrow, while the car says one is beside or coming up behind on
+// that side (turn signal or not), this car in yellow and the other's bonnet in red behind it, outward
+const LCW = { w: 34, h: 44, y: 134, left: 349 - 40, right: 421 + 30 + 6 };
+const LCW_SELF = '#ffd200', LCW_OTHER = '#ff2a1a';
 const EXTRA_COL = 1.0;            // an extra value's column, of the panel's height (fits "188°")             // an extra value's column, of the meter's base width
 const NIGHT_DIM = 0.6;            // the HUD extras at night, of their brightness by day
 // the cluster's own arrow, measured over 39 flashes of a video (G05): 640 ms a flash, lit 335 of them. By the head
@@ -248,22 +248,34 @@ function drawPower(cv, t, pw, outMax, inMax, x, w, h, L, bar) {
 }
 
 /**
- * A car seen from above, nose up, w x h, in col on a transparent ground (the lane change warning's sign): the body
- * with its mirrors, the windscreen and the rear window in a dark shade of col (dark on the HUD reads as glass).
+ * A car seen from above, nose up, its box at x, y, w x h, in col: the body with its mirrors, the windscreen, side and
+ * rear windows in a dark shade of col (dark on the HUD reads as glass). What falls off the canvas is cut off.
  */
-function drawCarSign(cv, col) {
-    const w = cv.w, h = cv.h;
-    cv.clear([0, 0, 0, 0]);
+function drawCar(cv, x, y, w, h, col) {
     const rgb = [1, 3, 5].map((i) => parseInt(col.slice(i, i + 2), 16));
     const dark = '#' + rgb.map((v) => Math.round(v * 0.22).toString(16).padStart(2, '0')).join('');
-    const bx = w * 0.12, bw = w * 0.76;
-    cv.roundRect(bx, h * 0.02, bw, h * 0.96, w * 0.30, col);                       // the body
-    cv.fillRect(0, h * 0.30, w * 0.14, h * 0.08, col);                             // the mirrors
-    cv.fillRect(w * 0.86, h * 0.30, w * 0.14, h * 0.08, col);
-    cv.convex([[w * 0.22, h * 0.30], [w * 0.78, h * 0.30], [w * 0.70, h * 0.43], [w * 0.30, h * 0.43]], dark);   // windscreen
-    cv.convex([[w * 0.30, h * 0.74], [w * 0.70, h * 0.74], [w * 0.76, h * 0.84], [w * 0.24, h * 0.84]], dark);   // rear window
-    cv.fillRect(w * 0.20, h * 0.47, w * 0.05, h * 0.22, dark);                     // the side windows
-    cv.fillRect(w * 0.75, h * 0.47, w * 0.05, h * 0.22, dark);
+    const X = (f) => x + w * f, Y = (f) => y + h * f;
+    const rect = (x0, y0, ww, hh, c) => { const a = Math.max(0, y0), b = Math.min(cv.h, y0 + hh); if (b > a) cv.fillRect(x0, a, ww, b - a, c); };
+    // the body: its rounded nose, down to its tail or to the canvas' foot
+    cv.roundRect(X(0.12), Y(0.02), w * 0.76, Math.min(h * 0.96, cv.h - Y(0.02) + w * 0.30), w * 0.30, col);
+    rect(x, Y(0.30), w * 0.14, h * 0.08, col);                                       // the mirrors
+    rect(X(0.86), Y(0.30), w * 0.14, h * 0.08, col);
+    if (Y(0.43) <= cv.h) cv.convex([[X(0.22), Y(0.30)], [X(0.78), Y(0.30)], [X(0.70), Y(0.43)], [X(0.30), Y(0.43)]], dark);   // windscreen
+    if (Y(0.84) <= cv.h) cv.convex([[X(0.30), Y(0.74)], [X(0.70), Y(0.74)], [X(0.76), Y(0.84)], [X(0.24), Y(0.84)]], dark);   // rear window
+    rect(X(0.20), Y(0.47), w * 0.05, h * 0.22, dark);                                // the side windows
+    rect(X(0.75), Y(0.47), w * 0.05, h * 0.22, dark);
+}
+/**
+ * The lane change warning's sign for one side, on a transparent ground: this car (yellow) ahead, and the one coming up
+ * in the lane beside (red) behind it and outward - to the left on the left side, to the right on the right - only its
+ * bonnet showing, cut off at the sign's foot.
+ */
+function drawLaneSign(cv, side) {
+    cv.clear([0, 0, 0, 0]);
+    const cw = Math.round(cv.w * 0.50), ch = Math.round(cv.h * 0.70);
+    const inner = side === 'left' ? cv.w - cw : 0, outer = side === 'left' ? 0 : cv.w - cw;
+    drawCar(cv, inner, 0, cw, ch, LCW_SELF);
+    drawCar(cv, outer, cv.h - Math.round(ch * 0.48), cw, ch, LCW_OTHER);   // its front half: bonnet, mirrors, windscreen
 }
 
 /**
@@ -546,36 +558,26 @@ function startOverlay(ctx, lv, opts) {
     const lcwShown = {};
     const lcwOn = () => settings.get('blindSpot') !== 'off' && settings.get('show') !== 'off' && !(lv.parked && lv.parked())
         && typeof lv.laneChange === 'function' && !hudTaken();
-    function lcwLayer(side, col) {
-        const k = side + col;
-        if (lcwRefs[k] !== undefined || !client()) return lcwRefs[k];
+    function lcwLayer(side) {
+        if (lcwRefs[side] !== undefined || !client()) return lcwRefs[side];
         const c = new Canvas(LCW.w, LCW.h);
-        drawCarSign(c, col === 'red' ? LCW_RED : LCW_AMBER);
+        drawLaneSign(c, side);
         const ref = cr.image({ target: 'hud', klass: 'overlay', z: 12, x: LCW[side], y: LCW.y, w: LCW.w, h: LCW.h, iw: LCW.w, ih: LCW.h, visible: false, opacity: 0 });
         if (ref) cr.pixels(ref, null, Buffer.from(c.d.buffer, c.d.byteOffset, c.d.length));
-        lcwRefs[k] = ref || null;
-        return lcwRefs[k];
+        lcwRefs[side] = ref || null;
+        return lcwRefs[side];
     }
-    /** One side's sign: 'off', 'amber', 'red' (lit) or 'dark' (red, between flashes); only a change goes to the renderer. */
-    function lcwSet(side, want) {
-        if ((lcwShown[side] || 'off') === want) return;
-        const amber = want === 'off' && !lcwRefs[side + 'amber'] ? null : lcwLayer(side, 'amber');
-        const red = want === 'off' && !lcwRefs[side + 'red'] ? null : lcwLayer(side, 'red');
-        if ((want !== 'off' && (!amber || !red)) || !cr) return;
-        const lit = hudOpacity();
-        if (amber) cr.set(amber, { visible: want === 'amber', opacity: want === 'amber' ? lit : 0 });
-        if (red) cr.set(red, { visible: want === 'red' || want === 'dark', opacity: want === 'red' ? lit : 0 });
-        lcwShown[side] = want;
+    /** One side's sign on or off; only a change goes to the renderer. */
+    function lcwSet(side, on) {
+        if (!!lcwShown[side] === on) return;
+        const ref = on || lcwRefs[side] ? lcwLayer(side) : null;
+        if ((on && !ref) || !cr) return;
+        if (ref) cr.set(ref, { visible: on, opacity: on ? hudOpacity() : 0 });
+        lcwShown[side] = on;
     }
     function lcwTick() {
         const w = lcwOn() ? lv.laneChange() : null;
-        const dir = typeof lv.indicator === 'function' ? lv.indicator() || 'off' : 'off', tm = now();
-        const flashOn = (tm - blinkFrom) % (BLINK_ON_MS + BLINK_OFF_MS) < BLINK_ON_MS;
-        ['left', 'right'].forEach((side) => {
-            if (!w || !w[side]) return lcwSet(side, 'off');
-            const toward = dir === side || dir === 'both';
-            lcwSet(side, toward ? (flashOn ? 'red' : 'dark') : 'amber');
-        });
+        ['left', 'right'].forEach((side) => lcwSet(side, !!(w && w[side])));
     }
     const lcwTimer = si(lcwTick, ARROW_TICK_MS);
     process.on('exit', () => { hideArrows(); });
@@ -585,7 +587,7 @@ function startOverlay(ctx, lv, opts) {
         shown: () => visible,
         /** The Waze map as status.json says: { showing, target, pct }. */
         map: () => Object.assign({}, map),
-        stop() { ci(poll); ci(draw); ci(arrowTimer); ci(lcwTimer); if (watcher) watcher.close(); hide(); hideArrows(); ['left', 'right'].forEach((d) => lcwSet(d, 'off')); if (cr) cr.close(); },
+        stop() { ci(poll); ci(draw); ci(arrowTimer); ci(lcwTimer); if (watcher) watcher.close(); hide(); hideArrows(); ['left', 'right'].forEach((d) => lcwSet(d, false)); if (cr) cr.close(); },
         /** For the diagnostics: the renderer link and the Waze map as status.json says. */
         status: () => ({
             renderer: cr ? (cr.ready ? 'connected' : 'connecting') : 'not needed yet',
