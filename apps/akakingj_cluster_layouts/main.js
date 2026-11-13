@@ -20,7 +20,7 @@
 const clock = require('./clock');
 const mgu = require('./kit/mgu');
 const { ClusterRender } = require('./cluster_render_client');
-const { startCluster, STALE_MS } = require('./engine');
+const { startCluster, STALE_MS, frozen } = require('./engine');
 const { byId, layoutFor } = require('./layouts');
 const { lookNow } = require('./themes');
 const { startData } = require('./data');
@@ -86,8 +86,13 @@ mgu.run({
         });
         /** Live: demo data on, or the car's signals answer (a parked car sends nothing new for minutes, so a
          * provider that is there counts), or a value came in the last STALE_MS. */
+        // (and not while the samples stopped with the car running: engine.js frozen() - the last speed would stay up)
+        let lastSample = 0;
+        car.onSample(() => { lastSample = Date.now(); });
         const live = () => {
-            if (car.data().demo) return true;
+            const cd = car.data();
+            if (cd.demo) return true;
+            if (frozen(cd, lastSample, Date.now())) return false;
             return car.subs.some((s) => s.available) || (car.lastCar > 0 && Date.now() - car.lastCar < STALE_MS);
         };
         // (Settings > Layout, or the one set for the drive mode now: Layout in Sport / in ECO PRO, layouts.layoutFor)

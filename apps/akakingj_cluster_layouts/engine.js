@@ -402,4 +402,19 @@ function startCluster(opts) {
     return api;
 }
 
-module.exports = { startCluster, TARGET: DEFAULT_TARGET, STALE_MS, SWEEP_MS };
+/*
+ * Readings that stopped coming in while the car runs: the car's services still there (the layout counts as live),
+ * yet no speed / rpm / acceleration sample for FROZEN_MS while the engine turns or the car moves. The layout would go
+ * on showing the last speed: it hides instead, and the stock cluster is back until the samples come again. (Parked
+ * with the engine off nothing new comes for minutes: that is not frozen.)
+ *   frozen(d, lastSampleMs, nowMs) -> true while that is so (d: the car's last readings, rpm and speed)
+ */
+const FROZEN_MS = 3000;
+function frozen(d, lastSampleMs, nowMs) {
+    if (!d || d.demo || !lastSampleMs) return false;
+    const n = (v) => typeof v === 'number' && isFinite(v);
+    const running = (n(d.rpm) && d.rpm > 300) || (n(d.speed) && d.speed > 3);
+    return running && nowMs - lastSampleMs > FROZEN_MS;
+}
+
+module.exports = { startCluster, TARGET: DEFAULT_TARGET, STALE_MS, SWEEP_MS, FROZEN_MS, frozen };

@@ -101,6 +101,12 @@ const check = (name, fn) => { fn(); ok++; console.log('ok   ' + name); };
         const texts = eng()._pieces().filter((p) => p.text !== null).map((p) => p.text);
         assert(texts.some((x) => /^BATT /.test(x)) && texts.some((x) => /^GEARBOX /.test(x)) && !texts.some((x) => /^48°/.test(x)), JSON.stringify(texts));
     });
+    // the samples stop with the engine running (the services still there): the last speed must not stay up
+    await sleep(3000 + 1500 + 300);
+    check('readings stopped while driving: the layout hides, the stock cluster back', () => assert.strictEqual(effects().length, 0, effects().length + ' layers'));
+    handlers.statusCarSpeed2({ speedVehicleCentreOfGravity: Math.round(52 * 1.609344 / 0.015625) });
+    await sleep(300);
+    check('the readings come again: the layout back', () => assert(effects().length > 0 && effects().every((l) => l.opts.visible === true)));
     console.log(ok + ' passed');
     process.exit(0);
 })().catch((e) => { console.error(e); process.exit(1); });

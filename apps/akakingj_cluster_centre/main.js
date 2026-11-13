@@ -17,7 +17,7 @@ const fs = require('fs');
 const path = require('path');
 const mgu = require('./kit/mgu');
 const { ClusterRender } = require('./cluster_render_client');
-const { startCluster } = require('./engine');
+const { startCluster, frozen } = require('./engine');
 const { startData } = require('./data');
 const presence = require('./presence');
 const { PAGES, pieces, palette, W: SW, H: SH } = require('./pages');
@@ -67,6 +67,9 @@ mgu.run({
         settings.onChange((k) => { if (k === 'timeZone' || k === 'clock') clockNow(); });
         const showing = () => settings.get('show') === 'on';
         const data = startData(ctx, { shown: showing });
+        // (the car's last speed / rpm / acceleration sample: engine.js frozen() hides the pages while they stopped coming)
+        let lastSample = 0;
+        data.car.onSample(() => { lastSample = Date.now(); });
         const num = (k, dflt) => { const v = Number(settings.get(k)); return isFinite(v) ? v : dflt; };
 
         /* ---------- what is worked out from the readings ---------- */
@@ -115,7 +118,7 @@ mgu.run({
             layout: () => layout, options, log, data: all, onFresh: data.onFresh,
             theme: () => palette(settings.get('accent'), settings.get('look')),
             font: () => (settings.get('look') === 'modern' ? 'bold' : 'light'),
-            live: () => data.car.data().demo || data.car.subs.some((s) => s.available) || data.car.lastCar > 0,
+            live: () => data.car.data().demo || (!frozen(data.car.data(), lastSample, Date.now()) && (data.car.subs.some((s) => s.available) || data.car.lastCar > 0)),
             // not while Cluster Layouts covers the whole panel (the pages would be hidden under it and take the
             // renderer's layers the layout needs)
             enabled: () => showing() && !!page && !blockedByLayout(),
