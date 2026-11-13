@@ -39,6 +39,10 @@ const HUD_MAX_PCT = 85;           // the HUD map's widest (waze-on-cluster hud_w
 // turn signal arrows on the HUD: small, a pair at the top middle, inside the standard map's top edge
 const ARROW = { w: 30, h: 24, y: 146, left: 349, right: 421 };   // the cluster's proportions (5:4)
 const INDICATOR_GREEN = '#22d046';   // the cluster's indicator green
+// the lane change warning beside the arrows: a car (seen from behind) outside each arrow, amber while one is beside or
+// coming up behind on that side, red and flashing with the arrows while the turn signal points at it
+const LCW = { w: 30, h: 24, y: 146, left: 349 - 38, right: 421 + 30 + 8 };
+const LCW_AMBER = '#ffb000', LCW_RED = '#ff2a1a';
 const EXTRA_COL = 1.0;            // an extra value's column, of the panel's height (fits "188°")             // an extra value's column, of the meter's base width
 const NIGHT_DIM = 0.6;            // the HUD extras at night, of their brightness by day
 // the cluster's own arrow, measured over 39 flashes of a video (G05): 640 ms a flash, lit 335 of them. By the head
@@ -241,6 +245,17 @@ function drawPower(cv, t, pw, outMax, inMax, x, w, h, L, bar) {
         else cv.roundRect(X(kw), by, x0 - X(kw), bh, bh / 2, GO);
     }
     cv.fillRect(Math.round(x0) - 1, by - 3, 2, bh + 6, t.text);
+}
+
+/** A car seen from behind, w x h, in col on a transparent ground (the lane change warning's sign). */
+function drawCarSign(cv, col) {
+    const w = cv.w, h = cv.h;
+    cv.clear([0, 0, 0, 0]);
+    // the cabin (a trapezoid), the body under it, and the two tyres below the body
+    cv.convex([[w * 0.26, h * 0.40], [w * 0.36, h * 0.08], [w * 0.64, h * 0.08], [w * 0.74, h * 0.40]], col);
+    cv.roundRect(w * 0.06, h * 0.38, w * 0.88, h * 0.38, h * 0.10, col);
+    cv.fillRect(w * 0.12, h * 0.72, w * 0.18, h * 0.24, col);
+    cv.fillRect(w * 0.70, h * 0.72, w * 0.18, h * 0.24, col);
 }
 
 /**
@@ -474,7 +489,9 @@ function startOverlay(ctx, lv, opts) {
      * they stay visible (opacity 0 between flashes) so the HUD's slot is kept while they blink. */
     const arrows = { left: 0, right: 0 };
     let arrowsShown = false, blinkFrom = 0, lastDir = 'off', lastPhase = null, offSince = 0;
-    const signalsOn = () => settings.get('turnSignals') !== 'off' && typeof lv.indicator === 'function' && !hudTaken();
+    // (with the app: Show the panel Off takes the arrows off too, and so does the car locked and left)
+    const signalsOn = () => settings.get('turnSignals') !== 'off' && settings.get('show') !== 'off' && !(lv.parked && lv.parked())
+        && typeof lv.indicator === 'function' && !hudTaken();
     function arrowLayers() {
         if (arrows.left || !client()) return !!arrows.left;
         ['left', 'right'].forEach((d) => {
@@ -515,6 +532,44 @@ function startOverlay(ctx, lv, opts) {
         ['left', 'right'].forEach((d) => cr.set(arrows[d], { opacity: on && (dir === d || dir === 'both') ? lit : 0 }));
     }
     const arrowTimer = si(arrowTick, ARROW_TICK_MS);
+
+    /* ---------- the lane change warning on the HUD (lv.laneChange(): { left, right } | null) ---------- */
+    const lcwRefs = {};
+    const lcwShown = {};
+    const lcwOn = () => settings.get('blindSpot') !== 'off' && settings.get('show') !== 'off' && !(lv.parked && lv.parked())
+        && typeof lv.laneChange === 'function' && !hudTaken();
+    function lcwLayer(side, col) {
+        const k = side + col;
+        if (lcwRefs[k] !== undefined || !client()) return lcwRefs[k];
+        const c = new Canvas(LCW.w, LCW.h);
+        drawCarSign(c, col === 'red' ? LCW_RED : LCW_AMBER);
+        const ref = cr.image({ target: 'hud', klass: 'overlay', z: 12, x: LCW[side], y: LCW.y, w: LCW.w, h: LCW.h, iw: LCW.w, ih: LCW.h, visible: false, opacity: 0 });
+        if (ref) cr.pixels(ref, null, Buffer.from(c.d.buffer, c.d.byteOffset, c.d.length));
+        lcwRefs[k] = ref || null;
+        return lcwRefs[k];
+    }
+    /** One side's sign: 'off', 'amber', 'red' (lit) or 'dark' (red, between flashes); only a change goes to the renderer. */
+    function lcwSet(side, want) {
+        if ((lcwShown[side] || 'off') === want) return;
+        const amber = want === 'off' && !lcwRefs[side + 'amber'] ? null : lcwLayer(side, 'amber');
+        const red = want === 'off' && !lcwRefs[side + 'red'] ? null : lcwLayer(side, 'red');
+        if ((want !== 'off' && (!amber || !red)) || !cr) return;
+        const lit = hudOpacity();
+        if (amber) cr.set(amber, { visible: want === 'amber', opacity: want === 'amber' ? lit : 0 });
+        if (red) cr.set(red, { visible: want === 'red' || want === 'dark', opacity: want === 'red' ? lit : 0 });
+        lcwShown[side] = want;
+    }
+    function lcwTick() {
+        const w = lcwOn() ? lv.laneChange() : null;
+        const dir = typeof lv.indicator === 'function' ? lv.indicator() || 'off' : 'off', tm = now();
+        const flashOn = (tm - blinkFrom) % (BLINK_ON_MS + BLINK_OFF_MS) < BLINK_ON_MS;
+        ['left', 'right'].forEach((side) => {
+            if (!w || !w[side]) return lcwSet(side, 'off');
+            const toward = dir === side || dir === 'both';
+            lcwSet(side, toward ? (flashOn ? 'red' : 'dark') : 'amber');
+        });
+    }
+    const lcwTimer = si(lcwTick, ARROW_TICK_MS);
     process.on('exit', () => { hideArrows(); });
 
     return {
@@ -522,7 +577,7 @@ function startOverlay(ctx, lv, opts) {
         shown: () => visible,
         /** The Waze map as status.json says: { showing, target, pct }. */
         map: () => Object.assign({}, map),
-        stop() { ci(poll); ci(draw); ci(arrowTimer); if (watcher) watcher.close(); hide(); hideArrows(); if (cr) cr.close(); },
+        stop() { ci(poll); ci(draw); ci(arrowTimer); ci(lcwTimer); if (watcher) watcher.close(); hide(); hideArrows(); ['left', 'right'].forEach((d) => lcwSet(d, 'off')); if (cr) cr.close(); },
         /** For the diagnostics: the renderer link and the Waze map as status.json says. */
         status: () => ({
             renderer: cr ? (cr.ready ? 'connected' : 'connecting') : 'not needed yet',
@@ -531,7 +586,7 @@ function startOverlay(ctx, lv, opts) {
         }),
         /** The turn signal arrows: { shown, phase } (phase true: lit). */
         arrows: () => ({ shown: arrowsShown, phase: lastPhase, refs: Object.assign({}, arrows) }),
-        _arrowTick: arrowTick,
+        _arrowTick: arrowTick, _lcwTick: lcwTick, lcw: () => ({ shown: Object.assign({}, lcwShown), refs: Object.assign({}, lcwRefs) }),
         _tick: tick, _read: readStatus,
     };
 }

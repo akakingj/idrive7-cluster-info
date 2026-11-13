@@ -38,6 +38,10 @@ The package keeps its plain version (no `-ko` suffix): the Store looks for `dist
 | Info | Panel slots 1-3 | power, battery, oil > boost, torque, oil |
 
 ## Added
+- Cluster Info > Lane change warning on the HUD (on): the car's lane change warning (a car beside or coming up behind,
+  from its driving assistant's de.bmw.dass lane change service, shared/dap.js) as a car sign outside each turn arrow,
+  amber, red and flashing with the arrows while the turn signal points at it. A car without the assistant sends none.
+  Show the panel Off takes the arrows and the signs off too.
 - Layouts > Fuel % from: Engine unit (default; its own tank level, OBD PID 0x2F, the % Live Data shows) or
   Litres / tank size (the car's whole litres over Fuel tank size: a few % lower on a G20). The litres stay the fallback
   while the engine unit doesn't answer.

@@ -1,6 +1,7 @@
 'use strict';
 /**
- * dap.js - what the car's driving assistant (Driving Assistant Professional) knows, for Modern wide's road: the
+ * dap.js - what the car's driving assistant (Driving Assistant Professional) knows, for Modern wide's road (and the lane
+ * change warning for Cluster Info's HUD): the
  * cruise control's state, its set speed and gap; whether the steering assist is holding the lane; lane departure
  * and lane change (blind spot) warnings; and the vehicles around (the one the cruise control follows, the nearest
  * in each lane beside). All from the services the car's own assisted driving view is built from, which this G05's
@@ -111,7 +112,10 @@ function startDap(ctx, log, opts) {
         [S_OBJ]: (v) => { raw('objects', v); const p = pick(decodeObjects(v, cfg), st.target); st.lead = p.lead; st.left = p.left; st.right = p.right; fresh(); },
     };
     const status = {};
-    Object.keys(SERVICES).forEach((iface) => {
+    // (opts.only: the services to subscribe to, by their short names: ibvip, lateral, lca, objects; Cluster Info takes
+    // only the lane change warning's)
+    const SHORT = { [S_IBVIP]: 'ibvip', [S_LAT]: 'lateral', [S_LCA]: 'lca', [S_OBJ]: 'objects' };
+    Object.keys(SERVICES).filter((iface) => !opts || !opts.only || opts.only.indexOf(SHORT[iface]) >= 0).forEach((iface) => {
         ctx.signals.watch(iface, '1', { [SERVICES[iface]]: on[iface] }, log)
             .then((s) => { status[iface.split('.').pop()] = s.error ? 'error: ' + s.error : 'subscribed'; })
             .catch((e) => { status[iface.split('.').pop()] = 'error: ' + e; });

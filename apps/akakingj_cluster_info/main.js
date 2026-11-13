@@ -19,6 +19,7 @@ const Car = require('./kit/car');
 const { startOverlay, drawBadge, badgeRect, mapRect } = require('./overlay');
 const { startProviders, DIR } = require('./providers');
 const IND = require('./indicators');
+const { startDap } = require('./dap');
 
 const W = 1600, H = 520;
 const GO = '#2fd27a';
@@ -210,6 +211,11 @@ mgu.run({
             indicator: () => live.indicator,
             night: () => live.night === true,
         };
+        // the lane change warning (a car beside or coming up behind), from the car's driving assistant (dap.js; only
+        // its lane change service): on the HUD by the arrows. A car without the assistant sends none: nothing shown.
+        // (subscribed whatever the setting, so turning it on needs no restart; the overlay looks at the setting)
+        const lcw = startDap(ctx, log, { only: ['lca'] });
+        src.laneChange = () => { const d = lcw && lcw.state(); return d ? d.lcw : null; };
         let overlay = null, overlayError = null;
         try { overlay = startOverlay(ctx, src); } catch (e) { overlayError = String(e); log.warn('overlay: ' + e); }
 
@@ -248,10 +254,13 @@ mgu.run({
                 ['Turn signals', st('turn signals') + (live.indicator !== 'off' ? ' (now ' + live.indicator + ')' : '')
                     + '   ·   Day / night: ' + (live.night === null ? st('day / night') + ', none received' : live.night ? 'night' : 'day')
                     + '   ·   Driver profile: ' + (live.profile || (st('driver profile') === 'subscribed' ? 'none read yet' : st('driver profile')))],
+                ['Lane change warning', settings.get('blindSpot') === 'off' ? 'off (settings)' : (() => { const w = src.laneChange(), ss = lcw.status();
+                    return (w ? (w.left || w.right ? 'now ' + (w.left && w.right ? 'both sides' : w.left ? 'left' : 'right') : 'nothing beside') : 'no data from the car')
+                        + '   ·   ' + (ss.AssistedDrivingViewLateralCollisionAvoidance || 'waiting') + ', ' + ((ss.seen && ss.seen.lca) || 0) + ' received'; })()],
             ];
             lines.forEach(([k, v], i) => {
-                cv.text(k, 48, 300 + i * 40, 20, t.dim, { font: 'bold' });
-                cv.text(v, 260, 300 + i * 40, 20, t.text, { font: 'label', literal: true });
+                cv.text(k, 48, 296 + i * 36, 20, t.dim, { font: 'bold' });
+                cv.text(v, 260, 296 + i * 36, 20, t.text, { font: 'label', literal: true });
             });
             const raws = Object.keys(live.raw).map((k) => k + ': ' + live.raw[k]).join('   ').slice(0, 190);
             cv.text(raws || 'No raw turn signal or day / night value received yet.', 48, 488, 16, t.dim, { font: 'label', literal: true });

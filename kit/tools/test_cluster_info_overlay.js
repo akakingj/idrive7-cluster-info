@@ -289,6 +289,33 @@ class FakeCR extends EventEmitter {
     t += 6000; ov._arrowTick();       // (not touched for 6 s: Redline stopped)
     check('the claim gone stale: the arrows back', () => assert(ov.arrows().shown));
     check('and the status says free', () => assert.strictEqual(ov.status().hud, 'free'));
+
+    /* the lane change warning: a car sign outside the arrow, amber; red and flashing with the turn signal toward it */
+    let lw = null;
+    lv.laneChange = () => lw;
+    ind = 'off'; t += 1300; ov._arrowTick(); ov._lcwTick();
+    check('no warning: no sign', () => assert.deepStrictEqual(ov.lcw().shown, {}));
+    lw = { left: true, right: false }; t += 10; ov._lcwTick();
+    const lam = cr.layers.get(ov.lcw().refs.leftamber), lrd = cr.layers.get(ov.lcw().refs.leftred);
+    check('a car on the left: the left sign amber, outside the left arrow, on the HUD', () => {
+        assert(lam.target === 'hud' && lam.visible && lam.opacity === 1 && !lrd.visible);
+        assert(lam.x + lam.w <= cr.layers.get(refs.left).x, 'outside the arrow');
+        assert.strictEqual(ov.lcw().shown.right || 'off', 'off');
+    });
+    ind = 'left'; ov._arrowTick(); ov._lcwTick();
+    check('turn signal toward it: red, lit with the arrow', () => assert(lrd.visible && lrd.opacity === 1 && !lam.visible));
+    t += 400; ov._arrowTick(); ov._lcwTick();
+    check('and dark with it', () => assert(lrd.visible && lrd.opacity === 0));
+    ind = 'right'; t += 10; ov._arrowTick(); ov._lcwTick();
+    check('turn signal the other way: amber again', () => assert(lam.visible && lam.opacity === 1 && !lrd.visible));
+    lw = null; t += 10; ov._lcwTick();
+    check('the warning gone: no sign', () => assert(!lam.visible && !lrd.visible));
+    lw = { left: true, right: true }; settings.v.blindSpot = 'off'; t += 10; ov._lcwTick();
+    check('setting off: no sign', () => assert(!cr.layers.get(ov.lcw().refs.rightamber || -1) || !cr.layers.get(ov.lcw().refs.rightamber).visible));
+    settings.v.blindSpot = 'on'; settings.v.show = 'off'; ind = 'left'; t += 10; ov._arrowTick(); ov._lcwTick();
+    t += 1300; ov._arrowTick();
+    check('Show the panel Off: no sign and no arrows either (one switch)', () => assert(!lam.visible && !lrd.visible && !ov.arrows().shown));
+    settings.v.show = 'map';
     ov.stop();
 
     if (process.argv[2]) {
