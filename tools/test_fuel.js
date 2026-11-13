@@ -24,12 +24,17 @@ const check = async (name, fn) => { await fn(); ok++; console.log('ok   ' + name
 
 (async () => {
     const spec = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'akakingj_cluster_layouts', 'app.json'), 'utf8'));
-    await check('both apps ask the engine unit for the tank level and offer Fuel % from', () => {
-        ['akakingj_cluster_layouts', 'akakingj_cluster_centre'].forEach((a) => {
+    await check('Layouts asks the engine unit for the tank level and offers Fuel % from; Centre (no fuel %) doesn\'t ask', () => {
+        const centre = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', 'akakingj_cluster_centre', 'app.json'), 'utf8'));
+        assert(!centre.config.dme.tank && !centre.settings.some((x) => x.key === 'fuelFrom'), 'Centre: no tank read');
+        ['akakingj_cluster_layouts'].forEach((a) => {
             const j = JSON.parse(fs.readFileSync(path.join(__dirname, '..', 'apps', a, 'app.json'), 'utf8'));
             assert.deepStrictEqual(j.config.dme.tank.map((c) => c.did || 'OBD ' + c.obd), ['F42F', 'OBD 2F'], a);
             const s = j.settings.find((x) => x.key === 'fuelFrom');
             assert(s && s.default === 'engine' && s.options.map((o) => o[0]).join() === 'engine,litres', a + ' fuelFrom');
+            // a full tank (255) and an empty one (0) are inside the candidates' range, not thrown away
+            ['tank', 'pedal', 'throttle'].forEach((k) => j.config.dme[k].filter((c) => c.obd || c.factor > 0.39).forEach((c) => [0, 255].forEach((raw) => { const v = raw * c.factor + (c.offset || 0); assert(v >= c.min && v <= c.max, a + ' ' + k + ' raw ' + raw + ' -> ' + v); })));
+            j.config.dme.tank.forEach((c) => [0, 255].forEach((raw) => { const v = raw * c.factor + (c.offset || 0); assert(v >= c.min && v <= c.max, a + ' raw ' + raw + ' -> ' + v); }));
         });
     });
 

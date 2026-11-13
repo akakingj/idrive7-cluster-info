@@ -2,7 +2,7 @@
   "id": "akakingj_cluster_layouts",
   "title": "AK Cluster Layouts",
   "description": "Your own layout on the whole instrument cluster (round dials, gear, temperatures), drawn by the cluster itself",
-  "version": "0.28.10",
+  "version": "0.28.11",
   "startType": "autostart",
   "vendor": "custom",
   "loggingId": "AKCL",
@@ -1856,7 +1856,7 @@
           "factor": 0.392157,
           "offset": 0,
           "min": 0,
-          "max": 100,
+          "max": 101,
           "note": "OBD PID 0x49, accelerator pedal position D"
         }
       ],
@@ -1890,7 +1890,7 @@
           "factor": 0.392157,
           "offset": 0,
           "min": 0,
-          "max": 100,
+          "max": 101,
           "note": "OBD PID 0x11, absolute throttle position"
         }
       ],
@@ -1902,7 +1902,7 @@
           "factor": 0.392157,
           "offset": 0,
           "min": 0,
-          "max": 100,
+          "max": 101,
           "note": "fuel tank level (OBD PID 0x2F) over UDS, the engine unit's own fill in %"
         },
         {
@@ -1912,7 +1912,7 @@
           "factor": 0.392157,
           "offset": 0,
           "min": 0,
-          "max": 100,
+          "max": 101,
           "note": "the same PID with OBD service 01, as Live Data's 'Fuel tank level' reads it"
         }
       ]
