@@ -296,8 +296,9 @@ mgu.run({
             cv.text(((ctx.spec && ctx.spec.title) || 'Cluster Layouts') + ' ' + ((ctx.spec && ctx.spec.version) || ''), 48, 80, 44, t.text, { font: 'bold', literal: true });
             lines.forEach(([k, v], i) => {
                 // (rows 56 apart: the sixth ran into the notice along the bottom)
-                cv.text(k, 48, 150 + i * 56, 22, t.dim, { font: 'bold', literal: true });
-                cv.text(String(v).slice(0, 120), 330, 150 + i * 56, k.indexOf('(car)') >= 0 ? 17 : 22, t.text, { font: 'label', literal: true });
+                // (the row names and the first row's state in the build's language; the readings as they are)
+                cv.text(k, 48, 150 + i * 56, 22, t.dim, { font: 'bold' });
+                cv.text(String(v).slice(0, 120), 330, 150 + i * 56, k.indexOf('(car)') >= 0 ? 17 : 22, t.text, { font: 'label', literal: i > 0 });
             });
             creditFooter(cv, t);
             return ui.image('MAIN_GFX', cv);

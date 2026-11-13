@@ -10,6 +10,8 @@
     "build": {
       "python": "kit/tools/build.py",
       "args": [
+        "--language",
+        "ko",
         "{id}"
       ],
       "sdk": "oap-sdk",

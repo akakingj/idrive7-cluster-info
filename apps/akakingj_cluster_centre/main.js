@@ -217,7 +217,8 @@ mgu.run({
                 cv.image(PREVIEW_ID, 24, 30, pw, ph);
             } else if (typeof cv.drawImage === 'function') cv.drawImage(sc.d, SW, SH, 24, 30, pw, ph);
             const st = cluster.status(), ds = data.status();
-            const x = pw + 52, line = (i, a, b) => { cv.text(a, x, 60 + i * 50, 18, t.dim, { font: 'bold', literal: true }); cv.text(String(b).slice(0, 34), x, 84 + i * 50, 18, t.text, { font: 'label', literal: true }); };
+            // (the row names and the states of the first three rows in the build's language; the readings as they are)
+            const x = pw + 52, line = (i, a, b) => { cv.text(a, x, 60 + i * 50, 18, t.dim, { font: 'bold' }); cv.text(String(b).slice(0, 34), x, 84 + i * 50, 18, t.text, { font: 'label', literal: i > 2 }); };
             line(0, 'In the cluster', !showing() ? 'off (stock map)' : st.shown ? 'showing' : blockedByLayout() ? 'waiting: a layout shows (set its centre to these pages)' : 'waiting');
             line(1, 'Page', page ? (list.indexOf(page) + 1) + ' of ' + list.length + ': ' + PAGES[page].title.toLowerCase() : 'none chosen');
             line(2, 'Next page', num('rotate', 0) ? 'every ' + num('rotate', 0) + ' s' : 'with Next page');

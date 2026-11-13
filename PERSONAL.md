@@ -17,6 +17,13 @@ Icons: a gauge with an M-coloured accent and L / C / I (`icon.png` in each app's
 MGU Store: Settings > Add source > `akakingj/idrive7-cluster-info` > branch `personal-kr`.
 Remove the original Cluster Layouts / Centre / Info (or turn their Show off): both would draw on the cluster.
 
+## Language
+The Store builds the apps in Korean (`mgu-repo.json`: `--language ko`): the iDrive screens, the settings and their
+choices are Korean (`kit/runtime/locales/ko.tsv`, then `python3 kit/tools/sync_locales.py ko`; the font is Noto Sans
+KR, `kit/localization/fonts/korean.json`). The cluster display itself stays English (OIL, COOLANT, km/h ...).
+The package keeps its plain version (no `-ko` suffix): the Store looks for `dist/<id>@<version>.tgz`.
+`node tools/test_korean.js` fails on a name with no Korean.
+
 ## Defaults
 | App | Setting | Original > here |
 |---|---|---|

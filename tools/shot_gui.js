@@ -6,7 +6,8 @@ const ROOT = path.join(__dirname, '..');
 const id = process.argv[2], out = process.argv[3];
 process.env.CLUSTER_INFO_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ci-'));
 process.env.CLUSTER_PRESENCE_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'cp-'));
-execFileSync('python3', [path.join(ROOT, 'kit', 'tools', 'build.py'), id], { cwd: ROOT, stdio: 'pipe' });
+// (SHOT_LANG=ko: the Korean build, as the Store builds it)
+execFileSync('python3', [path.join(ROOT, 'kit', 'tools', 'build.py')].concat(process.env.SHOT_LANG ? ['--language', process.env.SHOT_LANG] : [], [id]), { cwd: ROOT, stdio: 'pipe' });
 const { headUnit } = require(path.join(ROOT, 'kit', 'tools', 'hu-stub.js'));
 let tag = 'main', n = 0;
 const save = (name, cv) => { try { const png = Buffer.isBuffer(cv) ? cv : cv.png ? cv.png() : null; if (png) { fs.writeFileSync(path.join(out, id + '_' + (++n) + '_' + tag + '_' + name + '.png'), png); } } catch (e) { console.error('save', e.message); } };

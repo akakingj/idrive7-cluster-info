@@ -17,7 +17,7 @@ import json, os, re, shutil, sys, tarfile, tempfile, uuid
 from xml.sax.saxutils import escape
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import pack_data  # noqa: E402
-from localize import unicode_resources, localize_spec, load_locale, languages, zh_credit
+from localize import unicode_resources, localize_spec, load_locale, languages, zh_credit, normalize_language
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.abspath(os.path.join(HERE, '..', '..'))
@@ -376,6 +376,7 @@ def build_start_widget(spec, app_id, icon_src, out):
 
 
 def build(app_id, language='en'):
+    language = normalize_language(language)
     spec = json.load(open(os.path.join(APPS, app_id, 'app.json'), encoding='utf-8'))
     spec = localize_spec(spec, language)
     spec.setdefault('id', app_id)
@@ -459,6 +460,12 @@ def build(app_id, language='en'):
             shutil.copytree(p, os.path.join(src, 'javascript', 'kit', f))
         else:
             shutil.copy(p, os.path.join(src, 'javascript', 'kit', f))
+    if language == 'ko':
+        # Korean: its own atlas (Noto Sans KR) in place of the Chinese one; loading both could fragment the
+        # renderer's glyph shelves
+        os.remove(os.path.join(src, 'javascript', 'kit', 'fonts', 'cjk.json'))
+        for name in ('korean.json', 'OFL-NotoSansKR.txt'):
+            shutil.copy(os.path.join(KIT, 'localization', 'fonts', name), os.path.join(src, 'javascript', 'kit', 'fonts', name))
     if language == 'zh-CN':
         # Diagnostic glyphs are Chinese-only; keep the English runtime atlas intact.
         if app_id == 'dtc_scanner':
@@ -560,7 +567,7 @@ def build(app_id, language='en'):
 def main():
     import argparse
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--language', choices=languages(), default='en')
+    parser.add_argument('--language', type=normalize_language, choices=languages(), default='en')
     parser.add_argument('apps', nargs='*')
     args = parser.parse_args()
     ids = args.apps or sorted(d for d in os.listdir(APPS) if os.path.exists(os.path.join(APPS, d, 'app.json')))

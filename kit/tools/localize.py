@@ -13,6 +13,11 @@ def zh_credit():
     return json.loads((ROOT / 'kit/localization/credit.zh-CN.json').read_text(encoding='utf-8'))
 
 
+def normalize_language(language):
+    """Accept regional Korean tags (ko-KR, ko_KR) as one catalog and package identity."""
+    return 'ko' if language.lower().replace('_', '-') in ('ko', 'ko-kr') else language
+
+
 def languages():
     return ['en'] + sorted(p.stem for p in LOCALES.glob('*.json') if p.stem != 'en')
 
@@ -29,11 +34,16 @@ def text(value, words):
 
 
 def package_version(version, language):
+    # (Korean keeps the plain version: the MGU Store builds the apps in Korean (mgu-repo.json) and looks for
+    # dist/<id>@<version>.tgz with the app.json version, so a '-ko.1' suffix would hide the package)
+    if language in ('en', 'ko'):
+        return version
     revisions = json.loads((Path(__file__).parent / 'locale-revisions.json').read_text(encoding='utf-8'))
     return version if language == 'en' else version + '-' + language.lower().replace('-', '.') + '.' + str(revisions.get(language, 1))
 
 
 def localize_spec(spec, language):
+    language = normalize_language(language)
     words = load_locale(language)
     s = copy.deepcopy(spec)
     s['version'] = package_version(s['version'], language)
@@ -48,6 +58,9 @@ def localize_spec(spec, language):
                 item[2] = text(item[2], words)
     for setting in s.get('settings', []):
         setting['label'] = text(setting['label'], words)
+        if isinstance(setting.get('section'), str):
+            # (the HMI's list puts the section ahead of the label: build.py full_label)
+            setting['section'] = text(setting['section'], words)
         for option in setting.get('options', []):
             option[1] = text(option[1], words)
     return s
