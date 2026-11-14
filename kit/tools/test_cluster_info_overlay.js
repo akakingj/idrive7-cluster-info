@@ -308,6 +308,15 @@ class FakeCR extends EventEmitter {
     lw = { left: false, right: true }; t += 10; ov._lcwTick();
     const rsg = cr.layers.get(ov.lcw().refs.right), rar = cr.layers.get(refs.right);
     check('the car now on the right: left off, right on, outside the right arrow', () => assert(!lsg.visible && rsg.visible && rsg.x >= rar.x + rar.w));
+    // (2026-11-14) the left arrow left of the middle, the right one at the right of what the HUD shows (x ~680), its sign
+    // outside it and still on the glass; the two far apart
+    check('the arrows: left of the middle, the right one at the HUD\'s right edge, its sign still on the glass', () => {
+        const lar = cr.layers.get(refs.left);
+        assert(lar.x + lar.w <= 400 && rar.x >= 560, 'left ' + lar.x + ', right ' + rar.x);
+        assert(rsg.x + rsg.w <= 680 && rsg.x + rsg.w >= 660, 'the right sign ends at ' + (rsg.x + rsg.w));
+        assert(lsg.x + lsg.w <= lar.x, 'the left sign outside the left arrow');
+        assert(rar.y === lar.y, 'one height');
+    });
     lw = null; t += 10; ov._lcwTick();
     check('the warning gone: no sign', () => assert(!lsg.visible && !rsg.visible));
     lw = { left: true, right: true }; settings.v.blindSpot = 'off'; t += 10; ov._lcwTick();
