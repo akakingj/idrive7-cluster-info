@@ -172,7 +172,8 @@ function startInfo(set) {
     const themes = require(path.join(ROOT, 'kit', 'runtime', 'themes'));
     const src = fs.readFileSync(path.join(APPS.info, 'overlay.js'), 'utf8');
     const grab = (re, d) => { const m = src.match(re); return m ? m[1] : d; };
-    const ARROW = (() => { try { return Function('return ' + grab(/const ARROW = (\{[^}]*\})/, 'null'))(); } catch (e) { return null; } })() || { w: 30, h: 24, y: 146, left: 349, right: 421 };
+    // the overlay's own (a literal read from the source before it was exported)
+    const ARROW = ov.ARROW || (() => { try { return Function('return ' + grab(/const ARROW = (\{[^}]*\})/, 'null'))(); } catch (e) { return null; } })() || { w: 30, h: 24, y: 146, left: 349, right: 421 };
     const NIGHT_DIM = Number(grab(/const NIGHT_DIM = ([\d.]+)/, '0.6'));
     const VALUES = { battery: 'BATT', oil: 'OIL', coolant: 'COOL', soc: 'SOC', boost: 'BOOST', rpm: 'RPM', torque: 'NM' };
     const t = Object.assign({}, themes.theme ? themes.theme(set.theme) : {});
