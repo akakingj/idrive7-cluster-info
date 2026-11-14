@@ -36,12 +36,13 @@ const HUD_RIGHT_GAP = 4;        // HUD: the panel's gap from the right edge of w
 const HUD_SPEED_CLEAR = 405;     // left edge limit: the speed readout ends at x ~331 and Waze's car icon at ~400 (85 % map, G05)
 const HUD_MAX_H = 60;             // the HUD panel's height at most (the room right of the speed limits it first)
 const HUD_MAX_PCT = 85;           // the HUD map's widest (waze-on-cluster hud_width_pct)
-// turn signal arrows on the HUD: small, a pair at the top middle, inside the standard map's top edge
-const ARROW = { w: 30, h: 24, y: 146, left: 349, right: 421 };   // the cluster's proportions (5:4)
+// turn signal arrows on the HUD: small, a pair at the top middle, inside the standard map's top edge; the right one
+// 40 px further right than the left one's mirror (2026-11-14: on the glass the two read as almost the same place)
+const ARROW = { w: 30, h: 24, y: 146, left: 349, right: 461 };   // the cluster's proportions (5:4)
 const INDICATOR_GREEN = '#22d046';   // the cluster's indicator green
 // the lane change warning beside the arrows: outside each arrow, while the car says one is beside or coming up behind on
 // that side (turn signal or not), this car in yellow and the other's bonnet in red behind it, outward
-const LCW = { w: 34, h: 44, y: 134, left: 349 - 40, right: 421 + 30 + 6 };
+const LCW = { w: 34, h: 44, y: 134, left: ARROW.left - 40, right: ARROW.right + ARROW.w + 6 };
 const LCW_SELF = '#ffd200', LCW_OTHER = '#ff2a1a';
 const EXTRA_COL = 1.0;            // an extra value's column, of the panel's height (fits "188°")             // an extra value's column, of the meter's base width
 const NIGHT_DIM = 0.6;            // the HUD extras at night, of their brightness by day
